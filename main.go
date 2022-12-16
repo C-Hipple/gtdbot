@@ -1,19 +1,12 @@
 package main
 
-import (
-	"fmt"
-)
-
 func main() {
-	fmt.Println("Org Code Review")
-	// PrintOrgFile(GetOrgFile())
-	items := ParseCodeReview(GetOrgFile())
-	for _, item := range items {
-		fmt.Println(item)
-	}
 
-	fmt.Println("Cards!")
+	ms := ManagerService{Workflows: []Workflow{
 
-	main_leankit()
-
+		//NewSyncLeankitToOrg(BOARD_CORE, []string{LANE_CHRIS_DOING_NOW}, "Cards", []Filter{MyUserFilter}),
+		//NewSyncLeankitToOrg(BOARD_CORE, []string{LANE_NEEDS_REVIEW}, "Code Review", []Filter{NotMeFilter}),
+		TaskService{},
+	}}
+	ms.Start()
 }

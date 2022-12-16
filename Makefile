@@ -11,7 +11,7 @@ fmt:
 
 .PHONY: run
 run:
-	make install; ~/go/bin/gtdbot
+	make build; ./gtdbot
 
 
 .PHONY: install
@@ -19,4 +19,6 @@ install:
 	$(GO) install $(GOFILES)
 
 
-
+.PHONY: build
+install:
+	$(GO) build
