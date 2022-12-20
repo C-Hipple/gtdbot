@@ -1,0 +1,9 @@
+* Work
+** DONE Cards [0/0]
+*** nonsense
+** DONE Code Review [1/1]
+*** CANCELLED https://multimediallc.leankit.com/card/30502079553398 Each Django template tag must have a docstring
+CLOSED: [2022-12-20 Tue 10:35]
+Assigned User: Wilson Loggains
+PR: https://github.com/multimediallc/chaturbate/pull/9192
+*** nonsense

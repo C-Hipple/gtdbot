@@ -3,6 +3,7 @@ GO ?= go
 GOFMT ?= gofmt "-s"
 GO_VERSION=$(shell $(GO) version | cut -c 14- | cut -d' ' -f1 | cut -d'.' -f2)
 PACKAGES ?= $(shell $(GO) list ./...)
+COMPILED_EXEC_FILE = "./gtdbot"
 
 .PHONY: fmt
 fmt:
@@ -11,7 +12,7 @@ fmt:
 
 .PHONY: run
 run:
-	make build; ./gtdbot
+	make build; $(COMPILED_EXEC_FILE)
 
 
 .PHONY: install
@@ -20,5 +21,5 @@ install:
 
 
 .PHONY: build
-install:
+build:
 	$(GO) build
