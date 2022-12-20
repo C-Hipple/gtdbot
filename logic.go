@@ -18,9 +18,9 @@ type LanesGroup struct {
 }
 
 type SyncLeankitLaneToOrg struct {
-	Lanes       LanesGroup
-	OrgSection  Section
-	Filters     []Filter
+	Lanes      LanesGroup
+	OrgSection Section
+	Filters    []Filter
 }
 
 func NewSyncLeankitToOrg(board_id string, lanes []string, section_name string, filters []Filter) SyncLeankitLaneToOrg {
@@ -38,14 +38,13 @@ func (wf SyncLeankitLaneToOrg) Run(c chan int, idx int) {
 	c <- idx
 }
 
-func SyncCardToSection(card Card, section Section) bool{
+func SyncCardToSection(card Card, section Section) bool {
 	if CheckCardAlreadyInSection(card, section) {
 		return false
 	}
 	AddTODO(GetOrgFile(), section, card)
 	return true
 }
-
 
 func (wf SyncLeankitLaneToOrg) PostProcess(n int) {
 }

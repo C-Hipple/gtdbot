@@ -1,7 +1,6 @@
 package main
 
 import (
-	"bytes"
 	"encoding/json"
 	"fmt"
 	"io/ioutil"
@@ -55,6 +54,17 @@ func (c Card) FullLine(indent_level int) string {
 	return strings.Repeat("*", indent_level) + " TODO " + c.URL() + " " + c.Title
 }
 
+func (c Card) Details() []string {
+	var details []string
+	if len(c.Users) > 0 {
+		details = append(details, "Assigned User: " + c.Users[0].FullName)
+	}
+	if len(c.Links) > 0 {
+		details = append(details, "PR: " + c.Links[0].Url)
+	}
+	return details
+}
+
 func (c Card) URL() string {
 	return BASE_HOST + "/card/" + c.Id
 }
@@ -70,6 +80,14 @@ func (c Card) GetCardChildren() []Card {
 	url := API_BASE + "/card/" + c.Id + "/connection/children"
 	fmt.Println(url)
 	return []Card{}
+}
+
+func (c Card) GetStatus() bool {
+	return false
+}
+
+func (c Card) CheckDone() bool {
+	return false
 }
 
 func (l Link) PRNumber() int {
@@ -130,7 +148,11 @@ func getCards(board_id string, lane_ids []string, filters []Filter) []Card {
 	}
 
 	username := os.Getenv("GTDBOT_LK_API_USERNAME")
-	password := os.Getenv("GTDBOT_LK_API_PASS")
+	password := os.Getenv("GTDBOT_LK_API_PASSWORD")
+	if !validate_auth(username, password) {
+		fmt.Println("Username and Password are not set!")
+		os.Exit(1)
+	}
 	req.SetBasicAuth(username, password)
 
 	resp, err2 := client.Do(req)
@@ -148,8 +170,8 @@ func getCards(board_id string, lane_ids []string, filters []Filter) []Card {
 	return cards
 }
 
+// todo use partial function
 func MyUserFilter(cards []Card) []Card {
-	fmt.Println(cards)
 	CardsOut := []Card{}
 	for _, card := range cards {
 		if card.UserID() == MY_USER_ID {
@@ -157,13 +179,10 @@ func MyUserFilter(cards []Card) []Card {
 		}
 	}
 
-	fmt.Println(CardsOut)
 	return CardsOut
 }
 
 func NotMeFilter(cards []Card) []Card {
-	fmt.Println("Cards entering the Not Me Filter")
-	fmt.Println(cards)
 	CardsOut := []Card{}
 	for _, card := range cards {
 		fmt.Println(card.Title, card.UserID(), MY_USER_ID)
@@ -171,17 +190,7 @@ func NotMeFilter(cards []Card) []Card {
 			CardsOut = append(CardsOut, card)
 		}
 	}
-	fmt.Println(CardsOut)
 	return CardsOut
-}
-
-func pretty_print(body []byte) {
-	var pretty_json bytes.Buffer
-	err := json.Indent(&pretty_json, body, "", "\t")
-	if err != nil {
-		fmt.Println("Error prettyifying json", err)
-	}
-	fmt.Println(string(pretty_json.Bytes()))
 }
 
 func lk_main() {
@@ -193,4 +202,14 @@ func lk_main() {
 		}
 	}
 
+}
+
+func CardFromOrgLineItem(line_item LeankitCardOrgLineItem) Card {
+	fmt.Println("Card From Org Line Item Not Implemented! ")
+	os.Exit(1)
+	return Card{}
+}
+
+func validate_auth(username string, password string) bool {
+	return !(username == "" && password == "")
 }

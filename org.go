@@ -5,11 +5,12 @@ import (
 	"fmt"
 	"io/ioutil"
 	"os"
-	"path/filepath"
+	"regexp"
 	"strings"
 )
 
-const OrgFilePath = "/Users/chrishipple/gtd/gtd.org"
+// const OrgFilePath = "/Users/chrishipple/gtd/gtd.org"
+const OrgFilePath = "/Users/chrishipple/gtdbot/test_org_file.org"
 const SectionIndentDepth = 2
 
 type LeankitCardOrgLineItem struct {
@@ -19,12 +20,32 @@ type LeankitCardOrgLineItem struct {
 	// Notes []string will be the other things below it..
 }
 
-func (cr LeankitCardOrgLineItem) FullLine(level int) string {
-	return strings.Repeat("*", level) + " " + cr.Status + " " + cr.Url + " " + cr.Title
+func (li LeankitCardOrgLineItem) ID() string {
+	id_regex, _ := regexp.Compile("[0-9]+")
+	return id_regex.FindString(li.Url)
+}
+
+func (li LeankitCardOrgLineItem) FullLine(indent_level int) string {
+	return strings.Repeat("*", indent_level) + " " + li.Status + " " + li.Url + " " + li.Title
+}
+
+func (li LeankitCardOrgLineItem) Details() []string {
+	return []string{}
+}
+
+func (li LeankitCardOrgLineItem) GetStatus() string {
+	return li.Status
 }
 
 type OrgTODO interface {
-	FullLine(int) string
+	FullLine(indent_level int) string
+	Details() []string
+	GetStatus() string
+	CheckDone() bool
+}
+
+func (li LeankitCardOrgLineItem) CheckDone() bool {
+	return li.GetStatus() == "DONE" || li.GetStatus() == "CANCELLED"
 }
 
 type Section struct {
@@ -35,18 +56,56 @@ type Section struct {
 	File        *os.File
 }
 
+func (s Section) GetStatus() string {
+	if s.CheckAllComplete() {
+		return "DONE"
+	}
+	return "TODO"
+}
+
+func (s Section) CalculateDoneRatio() string {
+	// This is the [0/0] at the end
+	return "[" + len(s.Items) + "/" + s.DoneCount() + "]"
+}
+
+func (s Section) Header() string {
+	header_items := []string{
+		strings.Repeat("*", s.IndentLevel-1), // header is 1 less indent than items
+		s.GetStatus(),
+		s.Description,
+		s.CalculateDoneRatio(),
+	}
+
+	return strings.Join(header_items, " ")
+}
+
+func (s Section) CheckAllComplete() bool {
+	return s.DoneCount() == len(s.Items)
+}
+
+func (s Section) DoneCount() int {
+	var done_count int
+	for _, item := range s.Items {
+		if item.CheckDone() {
+			done_count = done_count + 1
+		}
+	}
+	return done_count
+}
+
 func PrintOrgFile(file *os.File) {
 	res, _ := ioutil.ReadAll(file)
 	fmt.Println(string(res))
 }
 
 func ParseOrgFileSection(file *os.File, section_name string, header_indent_level int) (Section, error) {
-	split, _ := LinesFromReader(file)
-	in_section := false
+	org_serializer := OrgSerializer{}
+	all_lines, _ := LinesFromReader(file)
+
 	var reviews []LeankitCardOrgLineItem
 	start_line := 0
-
-	for i, line := range split {
+	in_section := false
+	for i, line := range all_lines {
 		// fmt.Println(line)
 		if !strings.HasPrefix(line, "*") {
 			continue // this is helper text or some other nonsense
@@ -63,13 +122,11 @@ func ParseOrgFileSection(file *os.File, section_name string, header_indent_level
 			continue
 		}
 		if in_section && strings.HasPrefix(line, stars+"*") {
-			// each one has the format ** TODO URL Title.  Check stars to allow for auxillary text between items
-			split_line_item := strings.Split(line, " ")
-			if len(split_line_item) < 4 {
-				continue // This is not from a leankit card from this bot, can be ignored.
+			item, serialize_err := org_serializer.Serialize(line)
+			if serialize_err != nil {
+				continue
 			}
-			reviews = append(reviews,
-				LeankitCardOrgLineItem{split_line_item[3], split_line_item[1], split_line_item[2]})
+			reviews = append(reviews, item)
 		}
 	}
 	if start_line == 0 {
@@ -99,8 +156,9 @@ func GetOrgFile() *os.File {
 }
 
 func AddTODO(file *os.File, section Section, new_item OrgTODO) {
+	serializer := OrgSerializer{}
 	// https://siongui.github.io/2017/01/30/go-insert-line-or-string-to-file/#:~:text=If%20you%20want%20to%20insert,the%20end%20of%20the%20string.
-	InsertLineToFile(file, new_item.FullLine(section.IndentLevel), section.StartLine+1)
+	InsertLinesToFile(file, serializer.Deserialize(new_item, section.IndentLevel), section.StartLine+1)
 }
 
 func GetOrgSection(section_name string) Section {
@@ -112,20 +170,9 @@ func GetOrgSection(section_name string) Section {
 	return section
 }
 
-func InsertLineToFile(file *os.File, newline string, at_line_number int) error {
-	//new line is at the at_line_number, not after, pushes everything below it.
-	lines, _ := LinesFromReader(file)
-	file_content := ""
-	for i, line := range lines {
-		if i == at_line_number {
-			file_content += newline
-			if !strings.HasSuffix(newline, "\n") {
-				file_content += "\n"
-			}
-		}
-		file_content += line
-		file_content += "\n"
-	}
-	path, _ := filepath.Abs(file.Name())
-	return os.WriteFile(path, []byte(file_content), 0644)
-}
+// func UpdateOrgSectionHeader(section Section) {
+// 	var done_count int64
+// 		InsertLinesToFile(*section.File, []string{"Header"}, section.)
+
+// 	}
+// }

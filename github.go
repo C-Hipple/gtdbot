@@ -11,6 +11,9 @@ import (
 	//"strconv"
 )
 
+type PullRequest interface {
+}
+
 func github_main() {
 	ctx := context.Background()
 	ts := oauth2.StaticTokenSource(
@@ -73,6 +76,6 @@ func GetGithubClient() *github.Client {
 	return github.NewClient(tc)
 }
 
-func GetLeankitCardTitle(pr *github.PullRequest) string {
+func GetLeankitCardTitle(pr PullRequest) string {
 	return "abc"
 }
