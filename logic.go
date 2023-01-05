@@ -5,7 +5,6 @@ import (
 	//"io"
 	"strings"
 	// "github.com/martinlindhe/notify"
-	"github.com/google/go-github/v48/github"
 )
 
 type Workflow interface {
@@ -56,28 +55,4 @@ func CheckCardAlreadyInSection(card Card, section Section) bool {
 		}
 	}
 	return false
-}
-
-type UpdatePRLinkWorkflow struct{}
-
-func (uprl UpdatePRLinkWorkflow) Run(c chan int, idx int) {
-	client := GetGithubClient()
-	prs := getPRs(client)
-	my_eng_board_cards := getCards(BOARD_ENGINEERING, []string{LANE_ENG_CORE_NEEDS_REVIEW}, nil)
-
-	// N x N matching
-	for _, pr := range prs {
-		for _, card := range my_eng_board_cards {
-			fmt.Println(pr.Title)
-			fmt.Println(card.Title)
-		}
-	}
-}
-
-func UppdatePRLink(pr *github.PullRequest, new_link string) {
-	for _, line := range strings.Split(*pr.Body, "\n") {
-		if strings.Contains(line, "link_to_card") {
-		}
-	}
-
 }

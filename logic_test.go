@@ -4,7 +4,7 @@ import "testing"
 
 func TestCardInSection(t *testing.T) {
 	section := Fixture_Section()
-	card := Fixture_Card()
+	card := Fixture_Card("1")
 
 	if !CheckCardAlreadyInSection(card, section) {
 		t.Errorf("Unable to find the card in section: %s - %s", card.Title, section.Description)

@@ -4,7 +4,8 @@ import "strconv"
 
 func Fixture_LeankitCardOrgLineItem(num int) LeankitCardOrgLineItem {
 	str_value_of_num := strconv.FormatInt(int64(num), 10)
-	return LeankitCardOrgLineItem{"Title" + str_value_of_num, "TODO", "abc.com/" + str_value_of_num}
+	notes := []string{"Assigned User: Chris", "PR: github.com/user/repo/" + str_value_of_num}
+	return LeankitCardOrgLineItem{"Title" + str_value_of_num, "TODO", "abc.com/" + str_value_of_num, notes}
 }
 
 func Fixture_Section() Section {
@@ -21,6 +22,9 @@ func Fixture_Section() Section {
 
 }
 
-func Fixture_Card() Card {
-	return Card{Id: "123", Title: "Title"}
+func Fixture_Card(id string) Card {
+	if id == "" {
+		id = "123"
+	}
+	return Card{Id: id, Title: "Title"}
 }

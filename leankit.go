@@ -2,6 +2,7 @@ package main
 
 import (
 	"encoding/json"
+	"errors"
 	"fmt"
 	"io/ioutil"
 	"net/http"
@@ -38,6 +39,8 @@ type Card struct {
 	Title string `json:"title"`
 	Links []Link `json:"externalLinks"`
 	Users []User `json:"assignedUsers"`
+	Body  string `json:"description"`
+	Board Board  `json:"board"`
 }
 
 type User struct {
@@ -50,17 +53,31 @@ type Link struct {
 	Url   string `json:"url"`
 }
 
+type Board struct {
+	Id    string `json:"id"`
+	Title string `json:"title"`
+}
+
 func (c Card) FullLine(indent_level int) string {
 	return strings.Repeat("*", indent_level) + " TODO " + c.URL() + " " + c.Title
+}
+
+func (c Card) GetCleanBody() string {
+	// Removes <p> and </p> html tags that LK api puts on description field.
+	return c.Body[3 : len(c.Body)-4]
 }
 
 func (c Card) Details() []string {
 	var details []string
 	if len(c.Users) > 0 {
-		details = append(details, "Assigned User: " + c.Users[0].FullName)
+		details = append(details, "Assigned User: "+c.Users[0].FullName)
 	}
 	if len(c.Links) > 0 {
-		details = append(details, "PR: " + c.Links[0].Url)
+		details = append(details, "PR: "+c.Links[0].Url)
+	}
+	if len(c.Body) > 0 {
+		details = append(details, "Card Description: \n")
+		details = append(details, c.GetCleanBody())
 	}
 	return details
 }
@@ -79,15 +96,24 @@ func (c Card) UserID() string {
 func (c Card) GetCardChildren() []Card {
 	url := API_BASE + "/card/" + c.Id + "/connection/children"
 	fmt.Println(url)
-	return []Card{}
+	children, err := MakeCardsAPICall(url, []Filter{})
+	if err != nil {
+		// better handling?  children is already empty card slice
+		return []Card{}
+	}
+	return children
 }
 
-func (c Card) GetStatus() bool {
-	return false
+func (c Card) GetStatus() string {
+	return "TODO"
 }
 
 func (c Card) CheckDone() bool {
 	return false
+}
+
+func (c Card) IsEngineeringCard() bool {
+	return c.Board.Id == BOARD_ENGINEERING
 }
 
 func (l Link) PRNumber() int {
@@ -111,7 +137,7 @@ func SerializeResponseToCards(resp *http.Response) []Card {
 		fmt.Println("Error on Reading body: ", err)
 	}
 
-	if true {
+	if false {
 		pretty_print(body_bytes)
 	}
 
@@ -128,7 +154,6 @@ func SerializeResponseToCards(resp *http.Response) []Card {
 type Filter func([]Card) []Card
 
 func getCards(board_id string, lane_ids []string, filters []Filter) []Card {
-	client := http.Client{Timeout: 30 * time.Second}
 	url := API_BASE + "/card?board=" + board_id
 
 	if len(lane_ids) > 0 {
@@ -139,14 +164,21 @@ func getCards(board_id string, lane_ids []string, filters []Filter) []Card {
 		}
 		url = url + strings.Join(lane_ids, ",")
 	}
-	fmt.Println(url)
+	//fmt.Println(url)
+	cards, err := MakeCardsAPICall(url, filters)
+	if err != nil {
+		fmt.Println("Error!")
+	}
+	return cards
+}
 
+func MakeCardsAPICall(url string, filters []Filter) ([]Card, error) {
+	client := http.Client{Timeout: 30 * time.Second}
 	req, err := http.NewRequest("GET", url, nil)
 	if err != nil {
 		fmt.Println("Error! Exiting: ", err)
 		os.Exit(1)
 	}
-
 	username := os.Getenv("GTDBOT_LK_API_USERNAME")
 	password := os.Getenv("GTDBOT_LK_API_PASSWORD")
 	if !validate_auth(username, password) {
@@ -157,9 +189,9 @@ func getCards(board_id string, lane_ids []string, filters []Filter) []Card {
 
 	resp, err2 := client.Do(req)
 	if err2 != nil || resp.StatusCode > 200 {
-		fmt.Println("Error on Do! Exiting: ", err2)
-		fmt.Println("Status Code:", resp.StatusCode, "Means", http.StatusText(resp.StatusCode))
-		os.Exit(1)
+		txt := fmt.Sprintf("Status Code:", resp.StatusCode, "Means", http.StatusText(resp.StatusCode))
+		fmt.Println(txt)
+		return []Card{}, errors.New("Did not get a 200 status code from API: " + txt)
 	}
 	defer resp.Body.Close()
 
@@ -167,7 +199,7 @@ func getCards(board_id string, lane_ids []string, filters []Filter) []Card {
 	for _, filter_func := range filters {
 		cards = filter_func(cards)
 	}
-	return cards
+	return cards, nil
 }
 
 // todo use partial function

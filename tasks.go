@@ -1,6 +1,11 @@
 package main
 
-import "github.com/google/go-github/v48/github" // with go modules enabled (GO111MODULE=on or outside GOPATH)
+import (
+	"fmt"
+	"strings"
+
+	"github.com/google/go-github/v48/github"
+) // with go modules enabled (GO111MODULE=on or outside GOPATH)
 
 type TaskStatus int
 
@@ -22,11 +27,13 @@ func NewTask(card Card, pr *github.PullRequest) *Task {
 	return &Task{card, pr, WAITING}
 }
 
-type TaskService struct{}
+type PRLinkUpdateService struct{}
 
-func (ts TaskService) Run(c chan int, idx int) {
+func (ts PRLinkUpdateService) Run(c chan int, idx int) {
 	tasks := RunMatching()
 	SyncMatchedTasks(tasks, GetOrgSection("Cards"))
+	UpdatePRLinksInBody(tasks)
+	c <- idx
 }
 
 func Match(cards []Card, prs []*github.PullRequest) []*Task {
@@ -51,14 +58,40 @@ func CheckMatches(card Card, pr *github.PullRequest) bool {
 func RunMatching() []*Task {
 	client := GetGithubClient()
 	prs := getPRs(client)
+	prs = FilterPRsByAuthor(prs, "C-Hipple")
 	cards := getCards(BOARD_CORE, CORE_ACTIVE_LANES[:], []Filter{MyUserFilter})
+	fmt.Printf("Gathered %d PRs and %d Cards", len(prs), len(cards))
 	return Match(cards, prs)
 }
 
-func SyncMatchedTasks(tasks []*Task, to_section Section) bool {
-	var res bool
+func SyncMatchedTasks(tasks []*Task, to_section Section) {
 	for _, task := range tasks {
-		res = SyncCardToSection(task.card, to_section)
+		SyncCardToSection(task.card, to_section)
 	}
-	return res
+}
+
+func UpdatePRLinksInBody(tasks []*Task) {
+	for _, task := range tasks {
+		if task.pr == nil {
+			continue
+		}
+		if CheckBodyURLNotYetSet(*task.pr.Body) || CheckBodyNeedsUpdatedToEngCardURL(task) {
+			UpdatePRBody(task.pr, ReplaceURLInBody(*task.pr.Body, task.card.Title, task.card.URL()))
+			fmt.Println("Updated Body of PR: ", task.pr.GetURL())
+		}
+	}
+}
+
+func CheckBodyNeedsUpdatedToEngCardURL(task *Task) bool {
+	if strings.Contains(*task.pr.Body, task.card.Id) {
+		children := task.card.GetCardChildren()
+		for _, child := range children {
+			if child.IsEngineeringCard() {
+				return true
+			}
+		}
+	}
+	// if there are no engineering children cards or if it's already updated
+	return false
+
 }

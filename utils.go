@@ -13,6 +13,21 @@ import (
 	//"os"
 )
 
+func ReplaceLineInFile(file *os.File, new_line string, at_line_number int) error {
+	lines, _ := LinesFromReader(file)
+	file_content := ""
+	for i, line := range lines {
+		if i == at_line_number {
+			file_content += new_line
+			continue
+		}
+		file_content += line
+		file_content += "\n"
+	}
+	path, _ := filepath.Abs(file.Name())
+	return os.WriteFile(path, []byte(file_content), 0644)
+}
+
 func InsertLinesToFile(file *os.File, new_lines []string, at_line_number int) error {
 	//new line is at the at_line_number, not after, pushes everything below it.
 	lines, _ := LinesFromReader(file)
