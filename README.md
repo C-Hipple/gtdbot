@@ -11,9 +11,18 @@ Simple bot to help with my gtd workflows
 ```bash
 EXPORT GTDBOT_LK_API_USERNAME = "Username"
 EXPORT GTDBOT_LK_API_PASS = "Password"
+export GTDBOT_GITHUB_TOKEN="Github Token"
 
 make build
 make run
 ```
 
 see Makefile for more options
+
+# Workflows
+
+
+
+# WIP Stuff
+
+Tasks are the overall combination of 

@@ -1,9 +1,12 @@
 * Work
 ** DONE Cards [0/0]
+*** TODO https://multimediallc.leankit.com/card/30502079768716 Rebase Python3.8 on django 2.2
+Assigned User: Chris Hipple
+Card Description: 
+Ensure that all of our cards created are still relevant, create new ones if necessary
 *** nonsense
-** DONE Code Review [1/1]
-*** CANCELLED https://multimediallc.leankit.com/card/30502079553398 Each Django template tag must have a docstring
-CLOSED: [2022-12-20 Tue 10:35]
-Assigned User: Wilson Loggains
-PR: https://github.com/multimediallc/chaturbate/pull/9192
+** DONE Code Review [0/0]
+*** TODO https://multimediallc.leankit.com/card/30502078997324 Linter hardcoded  <a href=""/> in templates
+Assigned User: Jaime Vinas
+PR: https://github.com/multimediallc/chaturbate/pull/9212
 *** nonsense

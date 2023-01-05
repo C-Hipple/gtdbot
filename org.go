@@ -6,18 +6,17 @@ import (
 	"io/ioutil"
 	"os"
 	"regexp"
+	"strconv"
 	"strings"
 )
 
-// const OrgFilePath = "/Users/chrishipple/gtd/gtd.org"
-const OrgFilePath = "/Users/chrishipple/gtdbot/test_org_file.org"
 const SectionIndentDepth = 2
 
 type LeankitCardOrgLineItem struct {
 	Title  string
 	Status string
 	Url    string
-	// Notes []string will be the other things below it..
+	Notes  []string // will be the other things below it..
 }
 
 func (li LeankitCardOrgLineItem) ID() string {
@@ -30,7 +29,7 @@ func (li LeankitCardOrgLineItem) FullLine(indent_level int) string {
 }
 
 func (li LeankitCardOrgLineItem) Details() []string {
-	return []string{}
+	return li.Notes
 }
 
 func (li LeankitCardOrgLineItem) GetStatus() string {
@@ -65,7 +64,7 @@ func (s Section) GetStatus() string {
 
 func (s Section) CalculateDoneRatio() string {
 	// This is the [0/0] at the end
-	return "[" + len(s.Items) + "/" + s.DoneCount() + "]"
+	return "[" + strconv.Itoa(len(s.Items)) + "/" + strconv.Itoa(s.DoneCount()) + "]"
 }
 
 func (s Section) Header() string {
@@ -105,6 +104,8 @@ func ParseOrgFileSection(file *os.File, section_name string, header_indent_level
 	var reviews []LeankitCardOrgLineItem
 	start_line := 0
 	in_section := false
+	building_item := false
+	var item_lines []string
 	for i, line := range all_lines {
 		// fmt.Println(line)
 		if !strings.HasPrefix(line, "*") {
@@ -122,11 +123,16 @@ func ParseOrgFileSection(file *os.File, section_name string, header_indent_level
 			continue
 		}
 		if in_section && strings.HasPrefix(line, stars+"*") {
-			item, serialize_err := org_serializer.Serialize(line)
-			if serialize_err != nil {
-				continue
+			if building_item {
+				building_item = false
+				item, serialize_err := org_serializer.Serialize(item_lines)
+				if serialize_err != nil {
+					continue
+				}
+				reviews = append(reviews, item)
 			}
-			reviews = append(reviews, item)
+			item_lines = append(item_lines, line)
+			building_item = true
 		}
 	}
 	if start_line == 0 {
@@ -147,6 +153,8 @@ func CheckForHeader(section_name string, line string, stars string) bool {
 }
 
 func GetOrgFile() *os.File {
+
+	OrgFilePath := os.Getenv("OrgFilePath")
 	file, err := os.Open(OrgFilePath)
 	if err != nil {
 		fmt.Println("Error Opening file: ", err)
@@ -173,6 +181,7 @@ func GetOrgSection(section_name string) Section {
 // func UpdateOrgSectionHeader(section Section) {
 // 	var done_count int64
 // 		InsertLinesToFile(*section.File, []string{"Header"}, section.)
+//       ReplaceLineInFile(*section.File, )
 
 // 	}
 // }
