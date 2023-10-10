@@ -9,7 +9,7 @@ type ManagerService struct {
 	Workflows []Workflow
 }
 
-func (ms ManagerService) Start() {
+func (ms ManagerService) Run() {
 	fmt.Println("Starting Service")
 	ch := make(chan int)
 	for i, workflow := range ms.Workflows {

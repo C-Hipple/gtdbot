@@ -101,7 +101,7 @@ func ParseOrgFileSection(file *os.File, section_name string, header_indent_level
 	org_serializer := OrgSerializer{}
 	all_lines, _ := LinesFromReader(file)
 
-	var reviews []LeankitCardOrgLineItem
+	var found_items []LeankitCardOrgLineItem
 	start_line := 0
 	in_section := false
 	building_item := false
@@ -129,7 +129,7 @@ func ParseOrgFileSection(file *os.File, section_name string, header_indent_level
 				if serialize_err != nil {
 					continue
 				}
-				reviews = append(reviews, item)
+				found_items = append(found_items, item)
 			}
 			item_lines = append(item_lines, line)
 			building_item = true
@@ -140,8 +140,8 @@ func ParseOrgFileSection(file *os.File, section_name string, header_indent_level
 
 	}
 	sec := Section{Description: section_name, IndentLevel: 3, StartLine: start_line}
-	// would've thought I could do Items: reviews ^^ but it's a typing issue :(
-	for _, review := range reviews {
+	// would've thought I could do Items: found_items ^^ but it's a typing issue :(
+	for _, review := range found_items {
 		sec.Items = append(sec.Items, review)
 	}
 	return sec, nil
@@ -157,7 +157,7 @@ func GetOrgFile() *os.File {
 	OrgFilePath := os.Getenv("OrgFilePath")
 	file, err := os.Open(OrgFilePath)
 	if err != nil {
-		fmt.Println("Error Opening file: ", err)
+		fmt.Println("Error Opening Org filefile: ", file, err)
 		os.Exit(1)
 	}
 	return file
