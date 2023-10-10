@@ -57,7 +57,7 @@ func CheckMatches(card Card, pr *github.PullRequest) bool {
 
 func RunMatching() []*Task {
 	client := GetGithubClient()
-	prs := getPRs(client)
+	prs := getPRs(client, "open", "multimediallc", "chaturbate")
 	prs = FilterPRsByAuthor(prs, "C-Hipple")
 	cards := getCards(BOARD_CORE, CORE_ACTIVE_LANES[:], []Filter{MyUserFilter})
 	fmt.Printf("Gathered %d PRs and %d Cards", len(prs), len(cards))

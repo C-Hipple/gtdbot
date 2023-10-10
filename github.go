@@ -34,7 +34,7 @@ func github_main() {
 	}
 	fmt.Println(len(repos))
 	// for _, repo := range repos {
-	// 	fmt.Println(*repo.Name)
+	//	fmt.Println(*repo.Name)
 	// }
 	//pr, _, err2 := client.PullRequests.Get(ctx, "C-Hipple", "C-Hipple.github.io", 1)
 	pr, _, err2 := client.PullRequests.Get(ctx, "multimediallc", "chaturbate", 9035)
@@ -47,24 +47,43 @@ func github_main() {
 
 	//client.PullRequests.Edit(ctx, "C-Hipple", "C-Hipple.github.io", 1, pr)
 	// client.PullRequests.Edit(ctx, "multimediallc", "chaturbate", 9035, pr)
-	prs := getPRs(client)
+	prs := getPRs(client, "open", "multimediallc", "chaturbate")
 	for _, pr := range prs {
 		fmt.Println(*pr.Title)
 	}
 }
 
-// TODO Implement this so I can do the requested by core pod filter
-type PRFilter func([]*github.PullRequest, string) []*github.PullRequest
+type PRFilter func([]*github.PullRequest) []*github.PullRequest
 
-type PRFilterSet struct {
-	filters []PRFilter
+func getPRs(client *github.Client, state string, owner string, repo string) []*github.PullRequest {
+	per_page := 100
+	options := github.PullRequestListOptions{State: state, ListOptions: github.ListOptions{PerPage: per_page, Page: 1}}
+	var prs []*github.PullRequest
+
+	for {
+		new_prs, _, err := client.PullRequests.List(context.Background(), owner, repo, &options)
+		if err != nil {
+			fmt.Println("Error!", err)
+			//os.Exit(1)
+			break
+		}
+		prs = append(prs, new_prs...)
+		if len(new_prs) != per_page {
+			break
+		}
+		options.Page += 1
+	}
+
+	fmt.Println("Found", len(prs), "PRs")
+	return prs
 }
 
-func getPRs(client *github.Client) []*github.PullRequest {
-	options := github.PullRequestListOptions{State: "open", ListOptions: github.ListOptions{PerPage: 300}} // TODO: proper pagination
-	prs, _, _ := client.PullRequests.List(context.Background(), "multimediallc", "chaturbate", &options)
+
+func ApplyPRFilters(prs []*github.PullRequest, filters []PRFilter) []*github.PullRequest {
+	for _, filter := range filters {
+		prs = filter(prs)
+	}
 	return prs
-	//return FilterPRsByAuthor(prs, "C-Hipple") // definitely want to keep for safety.  Noone cares if I gg my own PRs desc
 }
 
 func FilterPRsByAuthor(prs []*github.PullRequest, author string) []*github.PullRequest {
@@ -77,9 +96,82 @@ func FilterPRsByAuthor(prs []*github.PullRequest, author string) []*github.PullR
 	return filtered
 }
 
+func FilterPRsByState(prs []*github.PullRequest, state string) []*github.PullRequest {
+	filtered := []*github.PullRequest{}
+	for _, pr := range prs {
+		if *pr.State == state {
+			filtered = append(filtered, pr)
+		}
+	}
+	return filtered
+}
+
+func FilterPRsByLabel(prs []*github.PullRequest, label string) []*github.PullRequest {
+	filtered := []*github.PullRequest{}
+	for _, pr := range prs {
+		for _, pr_label := range pr.Labels {
+			if *pr_label.Name == label {
+				filtered = append(filtered, pr)
+				break
+			}
+		}
+	}
+	return filtered
+}
+
+func MyPRs(prs []*github.PullRequest) []*github.PullRequest {
+	return FilterPRsByAuthor(prs, "C-Hipple")
+}
+
+func FilterNotDraft(prs []*github.PullRequest) []*github.PullRequest {
+	filtered := []*github.PullRequest{}
+	for _, pr := range prs {
+		if !*pr.Draft {
+			filtered = append(filtered, pr)
+		}
+	}
+	return filtered
+}
+
+func FilterMyTeamRequested(prs []*github.PullRequest) []*github.PullRequest {
+	filtered := []*github.PullRequest{}
+	for _, pr := range prs {
+		for _, team := range pr.RequestedTeams {
+			if *team.Name == "Core Pod Review Backend" {
+				filtered = append(filtered, pr)
+				break
+			}
+		}
+	}
+	// print deubbing
+	fmt.Println("My Team PRs:")
+	for _, pr := range filtered {
+		fmt.Println(*pr.Title)
+	}
+	return filtered
+}
+
+func FilterMyReviewRequested(prs []*github.PullRequest) []*github.PullRequest {
+	filtered := []*github.PullRequest{}
+	for _, pr := range prs {
+		for _, reviewer := range pr.RequestedReviewers {
+			if *reviewer.Login == "C-Hipple" {
+				filtered = append(filtered, pr)
+				break
+			}
+		}
+	}
+	return filtered
+}
+
 func GetGithubClient() *github.Client {
 	ctx := context.Background()
 	token := os.Getenv("GTDBOT_GITHUB_TOKEN")
+	if token == "" {
+		fmt.Println("Error! No Github Token!")
+		os.Exit(1)
+	}
+
 	ts := oauth2.StaticTokenSource(
 		&oauth2.Token{AccessToken: token},
 	)
@@ -95,6 +187,7 @@ func CheckBodyURLNotYetSet(body string) bool {
 	return strings.Contains(body, "[Card Title]")
 
 }
+
 
 func ReplaceURLInBody(body string, title string, url string) string {
 	lines := strings.Split(body, "\n")
@@ -135,28 +228,3 @@ func FilterPRsByAssignedTeam(prs []*github.PullRequest, target_team string) []*g
 	}
 	return filtered
 }
-
-func GetTeamAssignedPrs(team_name string) []*github.PullRequest {
-	client := GetGithubClient()
-	prs := getPRs(client)
-	return FilterPRsByAssignedTeam(prs, team_name)
-}
-
-type SyncTeamAssignedPRsWorkflow struct {
-	TeamName   string
-	OrgSection Section
-}
-
-func NewSyncTeamAssignedPRsWorkflow(team_name string, org_section_name string) SyncTeamAssignedPRsWorkflow {
-	return SyncTeamAssignedPRsWorkflow{team_name, GetOrgSection(org_section_name)}
-}
-
-func (s SyncTeamAssignedPRsWorkflow) Run(c chan int, idx int) {
-	prs := GetTeamAssignedPrs(s.TeamName)
-	SyncPRsToSection(prs, s.OrgSection)
-	CheckFinishedPRsStillInSection(prs, s.OrgSection)
-	c <- idx
-}
-
-func SyncPRsToSection(prs []*github.PullRequest, section Section)               {}
-func CheckFinishedPRsStillInSection(prs []*github.PullRequest, section Section) {}
