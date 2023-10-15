@@ -3,8 +3,8 @@ package main
 import (
 	"fmt"
 	//"io"
-	"strings"
 	"strconv"
+	"strings"
 	// "github.com/martinlindhe/notify"
 	"github.com/google/go-github/v48/github" // with go modules enabled (GO111MODULE=on or outside GOPATH)
 )
@@ -25,7 +25,7 @@ type SyncLeankitLaneToOrg struct {
 }
 
 func NewSyncLeankitToOrg(board_id string, lanes []string, section_name string, filters []Filter) SyncLeankitLaneToOrg {
-	return SyncLeankitLaneToOrg{Lanes: LanesGroup{board_id, lanes}, OrgSection: GetOrgSection(section_name), Filters: filters}
+	return SyncLeankitLaneToOrg{Lanes: LanesGroup{board_id, lanes}, OrgSection: GetOrgSection("gtd.org", section_name), Filters: filters}
 }
 
 func (wf SyncLeankitLaneToOrg) Run(c chan int, idx int) {
@@ -43,7 +43,7 @@ func SyncCardToSection(card Card, section Section) bool {
 	if CheckCardAlreadyInSection(card, section) {
 		return false
 	}
-	AddTODO(GetOrgFile(), section, card)
+	AddTODO(section, card)
 	return true
 }
 
@@ -95,24 +95,23 @@ func (prb PRToOrgBridge) Details() []string {
 	return details
 }
 
-
 func SyncPRToSection(pr *github.PullRequest, section Section) bool {
 	if CheckPRAlreadyInSection(pr, section) {
 		return false
 	}
-	AddTODO(GetOrgFile(), section, PRToOrgBridge{pr})
+	AddTODO(section, PRToOrgBridge{pr})
 	return true
 }
-
 
 func CheckPRAlreadyInSection(pr *github.PullRequest, section Section) bool {
 	for _, line_item := range section.Items {
 		// print debugging
 		fmt.Println(line_item.FullLine(0))
+		if strings.Contains(line_item.FullLine(0), strconv.FormatInt(int64(pr.GetNumber()), 10)) {
 
-		if strings.Contains(line_item.FullLine(0), strconv.FormatInt(*pr.ID, 10)) {
 			return true
 		}
 	}
+
 	return false
 }

@@ -5,7 +5,7 @@ import (
 )
 
 func TestDeserial(t *testing.T) {
-	os := OrgSerializer{}
+	os := OrgLKSerializer{}
 	item := Fixture_LeankitCardOrgLineItem(0)
 	res := os.Deserialize(item, 2)
 	if res[0] != "** TODO "+item.Url+" "+item.Title {
