@@ -31,7 +31,7 @@ type PRLinkUpdateService struct{}
 
 func (ts PRLinkUpdateService) Run(c chan int, idx int) {
 	tasks := RunMatching()
-	SyncMatchedTasks(tasks, GetOrgSection("Cards"))
+	SyncMatchedTasks(tasks, GetOrgSection("gtd.org", "Cards"))
 	UpdatePRLinksInBody(tasks)
 	c <- idx
 }

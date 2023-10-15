@@ -10,13 +10,13 @@ func main() {
 
 		// New workflows
 		SyncReviewRequestsWorkflow{
-			owner:   "multimediallc",
-			repo:    "chaturbate",
+			owner: "multimediallc",
+			repo:  "chaturbate",
 			filters: []PRFilter{
 				FilterNotDraft,
-				FilterMyTeamRequested,
+				FilterMyReviewRequested,
 			},
-			org_file: "reviews.org",
+			org_file_name:      "reviews.org",
 			section_title: "Team Reviews",
 		},
 		// SyncReviewRequestsWorkflow{

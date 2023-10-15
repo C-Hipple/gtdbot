@@ -78,7 +78,6 @@ func getPRs(client *github.Client, state string, owner string, repo string) []*g
 	return prs
 }
 
-
 func ApplyPRFilters(prs []*github.PullRequest, filters []PRFilter) []*github.PullRequest {
 	for _, filter := range filters {
 		prs = filter(prs)
@@ -161,6 +160,11 @@ func FilterMyReviewRequested(prs []*github.PullRequest) []*github.PullRequest {
 			}
 		}
 	}
+	// print deubbing
+	fmt.Println("My Review Requested PRs:")
+	for _, pr := range filtered {
+		fmt.Println(pr.GetNumber(), *pr.Title)
+	}
 	return filtered
 }
 
@@ -187,7 +191,6 @@ func CheckBodyURLNotYetSet(body string) bool {
 	return strings.Contains(body, "[Card Title]")
 
 }
-
 
 func ReplaceURLInBody(body string, title string, url string) string {
 	lines := strings.Split(body, "\n")
