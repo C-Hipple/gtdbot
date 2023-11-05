@@ -189,7 +189,7 @@ func MakeCardsAPICall(url string, filters []Filter) ([]Card, error) {
 
 	resp, err2 := client.Do(req)
 	if err2 != nil || resp.StatusCode > 200 {
-		txt := fmt.Sprintf("Status Code:", resp.StatusCode, "Means", http.StatusText(resp.StatusCode))
+		txt := fmt.Sprintf("Status Code: %d Means %s", resp.StatusCode, http.StatusText(resp.StatusCode))
 		fmt.Println(txt)
 		return []Card{}, errors.New("Did not get a 200 status code from API: " + txt)
 	}
