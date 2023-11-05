@@ -14,30 +14,39 @@ func main() {
 			repo:  "chaturbate",
 			filters: []PRFilter{
 				FilterNotDraft,
-				FilterMyReviewRequested,
+				FilterMyTeamRequested,
 			},
 			org_file_name:      "reviews.org",
 			section_title: "Team Reviews",
 		},
-		// SyncReviewRequestsWorkflow{
+		SyncReviewRequestsWorkflow{
 
-		//	owner:   "multimediallc",
-		//	repo:    "chaturbate",
-		//	filters: []PRFilter{
-		//		FilterMyReviewRequested,
-		//	},
-		//	org_file: "reviews.org",
-		//	section_title: "My Review Requests",
-		// },
-		// SyncReviewRequestsWorkflow{
-		//	owner:   "multimediallc",
-		//	repo:    "pytest-select-by-coverage",
-		//	filters: []PRFilter{
-		//		FilterMyReviewRequested,
-		//	},
-		//	org_file: "reviews.org",
-		//	section_title: "Other Repos",
-		// },
+			owner:   "multimediallc",
+			repo:    "chaturbate",
+			filters: []PRFilter{
+				FilterMyReviewRequested,
+			},
+			org_file_name: "reviews.org",
+			section_title: "My Review Requests",
+		},
+		SyncReviewRequestsWorkflow{
+			owner:   "multimediallc",
+			repo:    "pytest-select-by-coverage",
+			filters: []PRFilter{
+				FilterMyTeamRequested,
+			},
+			org_file_name: "reviews.org",
+			section_title: "Other Repos",
+		},
+		SyncReviewRequestsWorkflow{
+			owner:   "multimediallc",
+			repo:    "pytest-select-by-coverage",
+			filters: []PRFilter{
+				FilterMyReviewRequested,
+			},
+			org_file_name: "reviews.org",
+			section_title: "Other Repos",
+		},
 	}}
 	ms.Run()
 }

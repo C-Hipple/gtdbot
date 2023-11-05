@@ -81,26 +81,3 @@ func GetOrgFile(filename string) *os.File {
 	}
 	return file
 }
-
-func AddTODO(section Section, new_item OrgTODO) {
-	serializer := OrgLKSerializer{}
-	// https://siongui.github.io/2017/01/30/go-insert-line-or-string-to-file/#:~:text=If%20you%20want%20to%20insert,the%20end%20of%20the%20string.
-	InsertLinesToFile(section.GetFile(), serializer.Deserialize(new_item, section.IndentLevel), section.StartLine+1)
-}
-
-func GetOrgSection(filename string, section_name string) Section {
-	section, err := ParseOrgFileSection(GetOrgFile(filename), section_name, 1)
-	if err != nil {
-		fmt.Println("Error parsing section", section_name, err)
-		os.Exit(1)
-	}
-	return section
-}
-
-// func UpdateOrgSectionHeader(section Section) {
-//	var done_count int64
-//		InsertLinesToFile(*section.File, []string{"Header"}, section.)
-//       ReplaceLineInFile(*section.File, )
-
-//	}
-// }
