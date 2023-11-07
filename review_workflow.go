@@ -22,11 +22,6 @@ func (w SyncReviewRequestsWorkflow) Run(c chan int, idx int) {
 	)
 	prs = ApplyPRFilters(prs, w.filters)
 	doc := GetOrgDocument(w.org_file_name)
-	fmt.Println("Got org doc: ", doc)
-	for _, section := range doc.Sections {
-		fmt.Println("Section: ", section.Description)
-	}
-
 	section, err := doc.GetSection(w.section_title)
 	if err != nil {
 		fmt.Println("Error getting section: ", err, w.section_title)
@@ -34,6 +29,7 @@ func (w SyncReviewRequestsWorkflow) Run(c chan int, idx int) {
 		return
 	}
 	for _, pr := range prs {
+		fmt.Println("Syncing PR: ", pr.GetTitle())
 		SyncTODOToSection(doc, pr, section)
 	}
 	c <- idx

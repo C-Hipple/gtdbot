@@ -76,6 +76,10 @@ func (prb PRToOrgBridge) FullLine(indent_level int) string {
 	return fmt.Sprintf("%s TODO %s\t\t:%s:", strings.Repeat("*", indent_level), prb.Title(), *prb.PR.Head.Repo.Name)
 }
 
+func (prb PRToOrgBridge) Summary() string {
+	return prb.Title()
+}
+
 func (prb PRToOrgBridge) CheckDone() bool {
 	return *prb.PR.State == "closed"
 }
@@ -95,25 +99,35 @@ func (prb PRToOrgBridge) Details() []string {
 	return details
 }
 
-func (prb PRToOrgBridge) String() string{
+func (prb PRToOrgBridge) String() string {
 	return prb.Title()
 }
 
 func SyncTODOToSection(doc OrgDocument, pr *github.PullRequest, section Section) bool {
 	if CheckTODOAlreadyInSection(PRToOrgBridge{pr}, section) {
+		fmt.Println("Already in section: ", pr.GetTitle())
 		return false
 	}
+	fmt.Println("Not in section: ", pr.GetTitle())
 	AddTODO(doc, section, PRToOrgBridge{pr})
 	return true
 }
 
 func CheckTODOAlreadyInSection(todo OrgTODO, section Section) bool {
 	for _, line_item := range section.Items {
-		// print debugging
-		if strings.Contains(line_item.FullLine(0), todo.FullLine(0)) {
+		// my line_item has like alll of the things
+		fmt.Println(line_item.Summary())
+		fmt.Println(todo.Summary())
+		fmt.Println("")
+
+		if strings.Contains(line_item.Summary(), todo.Summary()) {
+			return true
+		}
+		if line_item.Summary() == todo.Summary() {
 			return true
 		}
 	}
+	//fmt.Println("")
 
 	return false
 }

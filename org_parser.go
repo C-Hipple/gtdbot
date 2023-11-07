@@ -2,23 +2,21 @@
 package main
 
 import (
+	"errors"
 	"fmt"
+	"io/ioutil"
 	"os"
 	"strconv"
 	"strings"
-	"io/ioutil"
-	"errors"
 )
 
-
-func GetOrgStatuses () []string {
+func GetOrgStatuses() []string {
 	return []string{"TODO", "DONE", "CANCELLED", "BLOCKED", "PROGRESS", "WAITING", "TENTATIVE", "DELEGATED"}
 }
 
-
 type OrgDocument struct {
-	Filename string
-	Sections []Section
+	Filename   string
+	Sections   []Section
 	Serializer OrgSerializer
 }
 
@@ -46,7 +44,6 @@ func (o OrgDocument) Refresh() {
 func (o OrgDocument) GetSection(section_name string) (Section, error) {
 	for _, section := range o.Sections {
 		if section.Description == section_name {
-			fmt.Println("Found section: ", section)
 			return section, nil
 		}
 	}
@@ -83,10 +80,9 @@ func (s Section) Header() string {
 	return strings.Join(header_items, " ")
 }
 
-func (o OrgDocument) GetFile () *os.File {
+func (o OrgDocument) GetFile() *os.File {
 	return GetOrgFile(o.Filename)
 }
-
 
 func (s Section) CheckAllComplete() bool {
 	return s.DoneCount() == len(s.Items)
@@ -107,7 +103,6 @@ func AddTODO(doc OrgDocument, section Section, new_item OrgTODO) {
 	new_lines := doc.Serializer.Deserialize(new_item, section.IndentLevel)
 	InsertLinesToFile(doc.GetFile(), new_lines, section.StartLine+1)
 }
-
 
 func ParseSectionsFromFile(file_name string, serializer BaseOrgSerializer) ([]Section, error) {
 	file := GetOrgFile(file_name)
@@ -132,12 +127,13 @@ func ParseSectionsFromFile(file_name string, serializer BaseOrgSerializer) ([]Se
 
 		if in_section && strings.HasPrefix(line, "*") && !strings.HasPrefix(line, "**") {
 			// Check if we're into the next section at the same indent level as the header
-			sections = append(sections, Section {
+			sections = append(sections, Section{
 				Description: CleanHeader(header),
-					StartLine: start_line,
-					IndentLevel: strings.Count(header, "*") + 1,
-					Items: items,
-				})
+				StartLine:   start_line,
+				//IndentLevel: strings.Count(header, "*") + 1,
+				IndentLevel: 2,
+				Items:       items,
+			})
 
 			// cleanup, get ready for next section
 			items = []OrgTODO{}
@@ -145,10 +141,10 @@ func ParseSectionsFromFile(file_name string, serializer BaseOrgSerializer) ([]Se
 			in_section = false
 		}
 
-		if CheckForHeader("TODO", line, "*") {
+		if CheckForHeader("TODO", line, "*") || CheckForHeader("DONE", line, "*") {
 			in_section = true
 			start_line = i
-			header = line
+			header = CleanHeader(line)
 			continue
 		}
 
@@ -165,6 +161,16 @@ func ParseSectionsFromFile(file_name string, serializer BaseOrgSerializer) ([]Se
 			building_item = true
 		}
 	}
+	// if we're at the end of the file, we need to add the last section
+	if in_section {
+		sections = append(sections, Section{
+			Description: CleanHeader(header),
+			StartLine:   start_line,
+			IndentLevel: strings.Count(header, "*") + 1,
+			Items:       items,
+		})
+	}
+
 	// if start_line == 0 {
 	//	return sections, errors.New("Did not find parsed section.")
 	// }
@@ -172,9 +178,9 @@ func ParseSectionsFromFile(file_name string, serializer BaseOrgSerializer) ([]Se
 }
 
 type OrgItem struct {
-	header string
-	details  []string
-	status   string
+	header  string
+	details []string
+	status  string
 }
 
 // Implement the OrgTODO Interface for OrgItem
@@ -190,11 +196,13 @@ func (oi OrgItem) GetStatus() string {
 	return oi.status
 }
 
+func (oi OrgItem) Summary() string {
+	return oi.header
+}
+
 func (oi OrgItem) CheckDone() bool {
 	return oi.GetStatus() == "DONE" || oi.GetStatus() == "CANCELLED"
 }
-
-
 
 func PrintOrgFile(file *os.File) {
 	res, _ := ioutil.ReadAll(file)
@@ -206,7 +214,7 @@ type OrgSerializer interface {
 	Serialize(lines []string) (OrgTODO, error)
 }
 
-type BaseOrgSerializer struct {}
+type BaseOrgSerializer struct{}
 
 func (bos BaseOrgSerializer) String() string {
 	return "BaseOrgSerializer"
@@ -227,7 +235,6 @@ func (bos BaseOrgSerializer) Serialize(lines []string) (OrgTODO, error) {
 	status := findOrgStatus(lines[0])
 	return OrgItem{header: lines[0], status: status, details: lines[1:]}, nil
 }
-
 
 func findOrgStatus(line string) string {
 	for _, status := range GetOrgStatuses() {

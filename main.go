@@ -1,28 +1,21 @@
 package main
 
-func main() {
-	ms := ManagerService{Workflows: []Workflow{
-		// Several deprecated workflows
-		//NewSyncLeankitToOrg(BOARD_CORE, []string{LANE_CHRIS_DOING_NOW}, "Cards", []Filter{MyUserFilter}),
-		//NewSyncLeankitToOrg(BOARD_CORE, []string{LANE_NEEDS_REVIEW}, "Code Review", []Filter{NotMeFilter}),
-		//PRLinkUpdateService{},
-		//SyncTeamAssignedPRsService{"Core Pod"},
+import "os"
 
-		// New workflows
+func getManager() ManagerService {
+	return NewManagerService([]Workflow{
 		SyncReviewRequestsWorkflow{
 			owner: "owner",
 			repo:  "repo",
 			filters: []PRFilter{
-				FilterNotDraft,
 				FilterMyTeamRequested,
 			},
-			org_file_name:      "reviews.org",
+			org_file_name: "reviews.org",
 			section_title: "Team Reviews",
 		},
 		SyncReviewRequestsWorkflow{
-
-			owner:   "owner",
-			repo:    "repo",
+			owner: "owner",
+			repo:  "repo",
 			filters: []PRFilter{
 				FilterMyReviewRequested,
 			},
@@ -30,8 +23,8 @@ func main() {
 			section_title: "My Review Requests",
 		},
 		SyncReviewRequestsWorkflow{
-			owner:   "owner",
-			repo:    "pytest-select-by-coverage",
+			owner: "owner",
+			repo:  "pytest-select-by-coverage",
 			filters: []PRFilter{
 				FilterMyTeamRequested,
 			},
@@ -39,14 +32,27 @@ func main() {
 			section_title: "Other Repos",
 		},
 		SyncReviewRequestsWorkflow{
-			owner:   "owner",
-			repo:    "pytest-select-by-coverage",
+			owner: "owner",
+			repo:  "pytest-select-by-coverage",
 			filters: []PRFilter{
 				FilterMyReviewRequested,
 			},
 			org_file_name: "reviews.org",
 			section_title: "Other Repos",
 		},
-	}}
-	ms.Run()
+	},
+	)
+}
+
+func main() {
+	ms := getManager()
+
+	args := os.Args[1:]
+	if len(args) > 0 {
+		if args[0] == "--oneoff" {
+			ms.Run(true)
+			return
+		}
+	}
+	ms.Run(false)
 }
