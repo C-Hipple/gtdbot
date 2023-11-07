@@ -6,20 +6,40 @@ import (
 )
 
 type ManagerService struct {
-	Workflows []Workflow
+	Workflows     []Workflow
+	workflow_chan chan int
+	sleep_time    time.Duration
 }
 
-func (ms ManagerService) Run() {
+func NewManagerService(workflows []Workflow) ManagerService {
+	return ManagerService{
+		Workflows:     workflows,
+		workflow_chan: make(chan int),
+		sleep_time:    1 * time.Minute,
+	}
+}
+
+func (ms ManagerService) Run(oneoff bool) {
 	fmt.Println("Starting Service")
-	ch := make(chan int)
 	for i, workflow := range ms.Workflows {
-		go workflow.Run(ch, i)
+		go workflow.Run(ms.workflow_chan, i)
 	}
 
-	for idx := range ch {
+	if oneoff {
+		// just wait untill all workflows are done
+		var count int
+		for range ms.workflow_chan {
+			count++
+			if count == len(ms.Workflows) {
+				return
+			}
+		}
+	}
+
+	for idx := range ms.workflow_chan {
 		go func(idx int) {
-			time.Sleep(60 * time.Second)
-			ms.Workflows[idx].Run(ch, idx)
+			time.Sleep(ms.sleep_time)
+			ms.Workflows[idx].Run(ms.workflow_chan, idx)
 		}(idx)
 	}
 }

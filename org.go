@@ -25,6 +25,10 @@ func (li LeankitCardOrgLineItem) FullLine(indent_level int) string {
 	return strings.Repeat("*", indent_level) + " " + li.Status + " " + li.Url + " " + li.Title
 }
 
+func (li LeankitCardOrgLineItem) Summary() string {
+	return li.Title
+}
+
 func (li LeankitCardOrgLineItem) Details() []string {
 	return li.Notes
 }
@@ -35,6 +39,7 @@ func (li LeankitCardOrgLineItem) GetStatus() string {
 
 type OrgTODO interface {
 	FullLine(indent_level int) string
+	Summary() string
 	Details() []string
 	GetStatus() string
 	CheckDone() bool
@@ -52,12 +57,14 @@ func (li LeankitCardOrgLineItem) CheckDone() bool {
 	return li.GetStatus() == "DONE" || li.GetStatus() == "CANCELLED"
 }
 
-
 func CleanHeader(line string) string {
 	line = strings.ReplaceAll(line, "*", "")
 	line = strings.ReplaceAll(line, "TODO", "")
 	line = strings.ReplaceAll(line, "DONE", "")
 	line = strings.TrimSpace(line)
+	if strings.Contains(line, "[") {
+		line = strings.Split(line, "[")[0]
+	}
 	return line
 }
 
