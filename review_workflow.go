@@ -13,7 +13,7 @@ type SyncReviewRequestsWorkflow struct {
 	section_title string
 }
 
-func (w SyncReviewRequestsWorkflow) Run(c chan int, idx int) {
+func (w SyncReviewRequestsWorkflow) Run(c chan FileChanges, idx int) {
 	prs := getPRs(
 		GetGithubClient(),
 		"open",
@@ -25,13 +25,10 @@ func (w SyncReviewRequestsWorkflow) Run(c chan int, idx int) {
 	section, err := doc.GetSection(w.section_title)
 	if err != nil {
 		fmt.Println("Error getting section: ", err, w.section_title)
-		c <- idx
 		return
 	}
 	for _, pr := range prs {
-		fmt.Println("Syncing PR: ", pr.GetTitle())
-		SyncTODOToSection(doc, pr, section)
+		output := SyncTODOToSection(doc, pr, section)
+		c <- output
 	}
-	c <- idx
-
 }

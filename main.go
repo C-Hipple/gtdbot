@@ -2,7 +2,7 @@ package main
 
 import "os"
 
-func getManager() ManagerService {
+func getManager(oneoff bool) ManagerService {
 	return NewManagerService([]Workflow{
 		SyncReviewRequestsWorkflow{
 			owner: "owner",
@@ -40,19 +40,28 @@ func getManager() ManagerService {
 			org_file_name: "reviews.org",
 			section_title: "Other Repos",
 		},
+		SyncReviewRequestsWorkflow{
+			owner: "owner",
+			repo:  "coreteam-devkit",
+			filters: []PRFilter{
+				FilterMyReviewRequested,
+			},
+			org_file_name: "reviews.org",
+			section_title: "Other Repos",
+		},
 	},
+		oneoff,
 	)
 }
 
 func main() {
-	ms := getManager()
-
+	oneoff := false
 	args := os.Args[1:]
 	if len(args) > 0 {
 		if args[0] == "--oneoff" {
-			ms.Run(true)
-			return
+			oneoff = true
 		}
 	}
-	ms.Run(false)
+	ms := getManager(oneoff)
+	ms.Run()
 }

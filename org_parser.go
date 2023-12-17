@@ -200,6 +200,10 @@ func (oi OrgItem) Summary() string {
 	return oi.header
 }
 
+func (oi OrgItem) ID() string {
+	return oi.Details()[0]
+}
+
 func (oi OrgItem) CheckDone() bool {
 	return oi.GetStatus() == "DONE" || oi.GetStatus() == "CANCELLED"
 }
@@ -215,10 +219,7 @@ type OrgSerializer interface {
 }
 
 type BaseOrgSerializer struct{}
-
-func (bos BaseOrgSerializer) String() string {
-	return "BaseOrgSerializer"
-}
+// Implement the OrgSerializer interface with our most generic structs / interfaces
 
 func (bos BaseOrgSerializer) Deserialize(item OrgTODO, indent_level int) []string {
 	var result []string
