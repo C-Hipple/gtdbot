@@ -50,6 +50,16 @@ func (o OrgDocument) GetSection(section_name string) (Section, error) {
 	return Section{}, errors.New("Section not found")
 }
 
+func (o OrgDocument) PrintAll() {
+	fmt.Println("Printing all sections from Document: ", o.Filename)
+	for _, section := range o.Sections {
+		fmt.Println(section.Header())
+		for _, item := range section.Items {
+			fmt.Println(item.FullLine(section.IndentLevel + 1))
+		}
+	}
+}
+
 type Section struct {
 	Description string
 	StartLine   int
@@ -104,6 +114,16 @@ func AddTODO(doc OrgDocument, section Section, new_item OrgTODO) {
 	InsertLinesToFile(doc.GetFile(), new_lines, section.StartLine+1)
 }
 
+type ParseDebugger struct {
+	active bool
+}
+
+func (pd ParseDebugger) Println(line ...any) {
+	if pd.active {
+		fmt.Println(line)
+	}
+}
+
 func ParseSectionsFromFile(file_name string, serializer BaseOrgSerializer) ([]Section, error) {
 	file := GetOrgFile(file_name)
 	all_lines, _ := LinesFromReader(file)
@@ -113,20 +133,34 @@ func ParseSectionsFromFile(file_name string, serializer BaseOrgSerializer) ([]Se
 	var header string
 	start_line := 0
 	in_section := false
+	print_debugger := ParseDebugger{active: false}
 
 	var items []OrgTODO
 	var item_lines []string
 	building_item := false
 
 	for i, line := range all_lines {
+		print_debugger.Println("line:", line)
 		if !strings.HasPrefix(line, "*") {
 			if building_item {
 				item_lines = append(item_lines, line)
+				print_debugger.Println("Building item: ", line)
+				continue
 			}
+			panic("Rogue line: " + line)
 		}
 
 		if in_section && strings.HasPrefix(line, "*") && !strings.HasPrefix(line, "**") {
 			// Check if we're into the next section at the same indent level as the header
+			if building_item {
+				building_item = false
+				item, serialize_err := serializer.Serialize(item_lines)
+				if serialize_err != nil {
+					panic("Error serializing item: " + serialize_err.Error())
+				}
+				items = append(items, item)
+				print_debugger.Println("Adding item: ", item.Summary(), item.Details())
+			}
 			sections = append(sections, Section{
 				Description: CleanHeader(header),
 				StartLine:   start_line,
@@ -139,12 +173,17 @@ func ParseSectionsFromFile(file_name string, serializer BaseOrgSerializer) ([]Se
 			items = []OrgTODO{}
 			header = ""
 			in_section = false
+			building_item = false
 		}
 
 		if CheckForHeader("TODO", line, "*") || CheckForHeader("DONE", line, "*") {
 			in_section = true
 			start_line = i
 			header = CleanHeader(line)
+			print_debugger.Println("Found Section Header: ", header)
+			items = []OrgTODO{}
+			building_item = false
+			item_lines = []string{}
 			continue
 		}
 
@@ -153,12 +192,19 @@ func ParseSectionsFromFile(file_name string, serializer BaseOrgSerializer) ([]Se
 				building_item = false
 				item, serialize_err := serializer.Serialize(item_lines)
 				if serialize_err != nil {
-					continue
+					panic("Error serializing item: " + serialize_err.Error())
 				}
 				items = append(items, item)
+				print_debugger.Println("Adding item: ", item.Summary(), item.Details())
+
+				// print_debugger.Println("Starting to build item: ", line)
+				// item_lines = []string{line}
+				// building_item = true
 			}
-			item_lines = append(item_lines, line)
+			print_debugger.Println("Starting to build item: ", line)
+			item_lines = []string{line}
 			building_item = true
+			continue
 		}
 	}
 	// if we're at the end of the file, we need to add the last section
@@ -219,6 +265,7 @@ type OrgSerializer interface {
 }
 
 type BaseOrgSerializer struct{}
+
 // Implement the OrgSerializer interface with our most generic structs / interfaces
 
 func (bos BaseOrgSerializer) Deserialize(item OrgTODO, indent_level int) []string {
