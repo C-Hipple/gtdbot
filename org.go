@@ -43,6 +43,7 @@ type OrgTODO interface {
 	Details() []string
 	GetStatus() string
 	CheckDone() bool
+	ID() string
 }
 
 func InterfaceCheck(a OrgTODO) bool {

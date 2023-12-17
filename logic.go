@@ -3,14 +3,20 @@ package main
 import (
 	"fmt"
 	//"io"
-	"strconv"
 	"strings"
 	// "github.com/martinlindhe/notify"
 	"github.com/google/go-github/v48/github" // with go modules enabled (GO111MODULE=on or outside GOPATH)
 )
 
 type Workflow interface {
-	Run(chan int, int)
+	Run(chan FileChanges, int)
+}
+
+type FileChanges struct {
+	change_type string
+	start_line  int
+	filename    string
+	lines       []string
 }
 
 // type LanesGroup struct {
@@ -64,8 +70,8 @@ type PRToOrgBridge struct {
 	PR *github.PullRequest
 }
 
-func (prb PRToOrgBridge) Id() string {
-	return strconv.FormatInt(*prb.PR.ID, 10)
+func (prb PRToOrgBridge) ID() string {
+	return fmt.Sprintf("%d", *prb.PR.Number)
 }
 
 func (prb PRToOrgBridge) Title() string {
@@ -73,7 +79,11 @@ func (prb PRToOrgBridge) Title() string {
 }
 
 func (prb PRToOrgBridge) FullLine(indent_level int) string {
-	return fmt.Sprintf("%s TODO %s\t\t:%s:", strings.Repeat("*", indent_level), prb.Title(), *prb.PR.Head.Repo.Name)
+	line := fmt.Sprintf("%s TODO %s\t\t:%s:", strings.Repeat("*", indent_level), prb.Title(), *prb.PR.Head.Repo.Name)
+	if *prb.PR.Draft {
+		line = line + ":draft:"
+	}
+	return line
 }
 
 func (prb PRToOrgBridge) Summary() string {
@@ -93,6 +103,7 @@ func (prb PRToOrgBridge) GetStatus() string {
 
 func (prb PRToOrgBridge) Details() []string {
 	details := []string{}
+	details = append(details, fmt.Sprintf("%d\n", prb.PR.GetNumber()))
 	details = append(details, fmt.Sprintf("%s\n", prb.PR.GetHTMLURL()))
 	details = append(details, fmt.Sprintf("Title: %s\n", prb.PR.GetTitle()))
 	details = append(details, fmt.Sprintf("Author: %s\n", prb.PR.GetUser().GetLogin()))
@@ -103,31 +114,33 @@ func (prb PRToOrgBridge) String() string {
 	return prb.Title()
 }
 
-func SyncTODOToSection(doc OrgDocument, pr *github.PullRequest, section Section) bool {
-	if CheckTODOAlreadyInSection(PRToOrgBridge{pr}, section) {
-		fmt.Println("Already in section: ", pr.GetTitle())
-		return false
+func SyncTODOToSection(doc OrgDocument, pr *github.PullRequest, section Section) FileChanges {
+	pr_as_org := PRToOrgBridge{pr}
+	if CheckTODOAlreadyInSection(pr_as_org, section) {
+		return FileChanges{
+			change_type: "No Change"}
 	}
-	fmt.Println("Not in section: ", pr.GetTitle())
-	AddTODO(doc, section, PRToOrgBridge{pr})
-	return true
+	return FileChanges{
+		change_type: "Addition",
+		start_line:  section.StartLine + 1,
+		filename:    doc.Filename,
+		lines:       doc.Serializer.Deserialize(pr_as_org, section.IndentLevel),
+	}
 }
 
 func CheckTODOAlreadyInSection(todo OrgTODO, section Section) bool {
 	for _, line_item := range section.Items {
-		// my line_item has like alll of the things
-		fmt.Println(line_item.Summary())
-		fmt.Println(todo.Summary())
-		fmt.Println("")
-
 		if strings.Contains(line_item.Summary(), todo.Summary()) {
 			return true
 		}
 		if line_item.Summary() == todo.Summary() {
 			return true
 		}
+		for _, detail := range line_item.Details() {
+			if strings.Contains(detail, todo.ID()) {
+				return true
+			}
+		}
 	}
-	//fmt.Println("")
-
 	return false
 }
