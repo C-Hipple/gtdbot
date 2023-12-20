@@ -13,10 +13,19 @@ type ManagerService struct {
 }
 
 
+func ListenChanges(channel chan FileChanges) {
+	for file_change := range channel {
+		if file_change.change_type == "Addition" {
+			fmt.Println("Adding PR: ", file_change.lines[3])
+			InsertLinesToFile(GetOrgFile(file_change.filename), file_change.lines, file_change.start_line)
+		}
+	}
+}
+
 func NewManagerService(workflows []Workflow, oneoff bool) ManagerService {
 	var cycle_count int
 	if oneoff {
-		cycle_count = 1
+		cycle_count = 0
 	} else {
 		cycle_count = 9999
 	}
@@ -25,17 +34,22 @@ func NewManagerService(workflows []Workflow, oneoff bool) ManagerService {
 		Workflows:     workflows,
 		workflow_chan: make(chan FileChanges),
 		sleep_time:    1 * time.Minute,
-		cycle_count: cycle_count,
+		cycle_count:   cycle_count,
 	}
 }
 
 func (ms ManagerService) Run() {
 	fmt.Println("Starting Service")
-	for i, workflow := range ms.Workflows {
-		go workflow.Run(ms.workflow_chan, i)
-	}
+	go ListenChanges(ms.workflow_chan)
 
 	for i := 0; i <= ms.cycle_count; i++ {
+
+		fmt.Println("Cycle: ", i)
+
+		for i, workflow := range ms.Workflows {
+			go workflow.Run(ms.workflow_chan, i)
+		}
+
 		var changes []FileChanges
 		for change := range ms.workflow_chan {
 			changes = append(changes, change)
@@ -43,19 +57,5 @@ func (ms ManagerService) Run() {
 				break
 			}
 		}
-		ms.ApplyFileChanges(changes)
 	}
-}
-
-func (ms ManagerService) ApplyFileChanges(changes []FileChanges) {
-	// naive solution which opens and closes the file for each one.
-	fmt.Println("Applying File Changes")
-	for _, file_changes := range changes {
-		if file_changes.change_type == "Addition" {
-			fmt.Println("Adding PR: ", file_changes.lines[3])
-			InsertLinesToFile(GetOrgFile(file_changes.filename), file_changes.lines, file_changes.start_line)
-		}
-		// TODO: Handle other change types
-	}
-	fmt.Println("Done Applying File Changes")
 }

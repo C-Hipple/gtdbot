@@ -73,8 +73,6 @@ func getPRs(client *github.Client, state string, owner string, repo string) []*g
 		}
 		options.Page += 1
 	}
-
-	fmt.Println("Found", len(prs), "PRs")
 	return prs
 }
 
@@ -142,11 +140,6 @@ func FilterMyTeamRequested(prs []*github.PullRequest) []*github.PullRequest {
 			}
 		}
 	}
-	// print deubbing
-	fmt.Println("My Team PRs:")
-	for _, pr := range filtered {
-		fmt.Println(*pr.Title)
-	}
 	return filtered
 }
 
@@ -159,11 +152,6 @@ func FilterMyReviewRequested(prs []*github.PullRequest) []*github.PullRequest {
 				break
 			}
 		}
-	}
-	// print deubbing
-	fmt.Println("My Review Requested PRs:")
-	for _, pr := range filtered {
-		fmt.Println(pr.GetNumber(), *pr.Title)
 	}
 	return filtered
 }
