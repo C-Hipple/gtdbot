@@ -1,5 +1,5 @@
 // Tools for parsing an org file into a struct
-package main
+package org
 
 import (
 	"errors"
@@ -8,6 +8,7 @@ import (
 	"os"
 	"strconv"
 	"strings"
+	"gtdbot/utils"
 )
 
 func GetOrgStatuses() []string {
@@ -111,7 +112,7 @@ func (s Section) DoneCount() int {
 func AddTODO(doc OrgDocument, section Section, new_item OrgTODO) {
 	section.Items = append(section.Items, new_item)
 	new_lines := doc.Serializer.Deserialize(new_item, section.IndentLevel)
-	InsertLinesToFile(doc.GetFile(), new_lines, section.StartLine+1)
+	utils.InsertLinesToFile(doc.GetFile(), new_lines, section.StartLine+1)
 }
 
 type ParseDebugger struct {
@@ -126,7 +127,7 @@ func (pd ParseDebugger) Println(line ...any) {
 
 func ParseSectionsFromFile(file_name string, serializer BaseOrgSerializer) ([]Section, error) {
 	file := GetOrgFile(file_name)
-	all_lines, _ := LinesFromReader(file)
+	all_lines, _ := utils.LinesFromReader(file)
 	file.Close()
 
 	var sections []Section
@@ -291,55 +292,4 @@ func findOrgStatus(line string) string {
 		}
 	}
 	return ""
-
-}
-
-func ParseOrgFileSection(file *os.File, section_name string, header_indent_level int) (Section, error) {
-	org_serializer := OrgLKSerializer{}
-	all_lines, _ := LinesFromReader(file)
-
-	var found_items []LeankitCardOrgLineItem
-	start_line := 0
-	in_section := false
-	building_item := false
-	var item_lines []string
-	for i, line := range all_lines {
-		// fmt.Println(line)
-		if !strings.HasPrefix(line, "*") {
-			continue // this is helper text or some other nonsense
-		}
-		stars := strings.Repeat("*", header_indent_level)
-		if in_section && strings.HasPrefix(line, stars) && !strings.HasPrefix(line, stars+"*") {
-			// Check if we're into the next section at the same indent level as the header
-			in_section = false
-			break
-		}
-		if CheckForHeader(section_name, line, stars) {
-			in_section = true
-			start_line = i
-			continue
-		}
-		if in_section && strings.HasPrefix(line, stars+"*") {
-			if building_item {
-				building_item = false
-				item, serialize_err := org_serializer.Serialize(item_lines)
-				if serialize_err != nil {
-					continue
-				}
-				found_items = append(found_items, item)
-			}
-			item_lines = append(item_lines, line)
-			building_item = true
-		}
-	}
-	if start_line == 0 {
-		return Section{}, errors.New("Did not find parsed section.")
-
-	}
-	sec := Section{Description: section_name, IndentLevel: 3, StartLine: start_line}
-	// would've thought I could do Items: found_items ^^ but it's a typing issue :(
-	for _, review := range found_items {
-		sec.Items = append(sec.Items, review)
-	}
-	return sec, nil
 }

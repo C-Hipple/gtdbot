@@ -1,6 +1,8 @@
 Just random musings
 
-* Passing partial Task structs
+* Task Tools:
+Tasks are currently deprecated and don't work.  Now that our leankit workflow has switched up it's a lot less important.
+** Passing partial Task structs
 
 Gather Cards and Gather PRs both return task ob
 in Matching, that list is filtered 
@@ -13,11 +15,7 @@ Then we can implement serialization/deserialization for all cases easily in org_
 
 We need both 
 
-
-* Passing cards, PRs, 
-
-
-* Matching
+** Matching
 ** Return 1 slice of []Task
 Then syncing org files has to look at all the different Tasks and figure out where they go
 That requires org sync logic to know that XYZ cards to go this section, other cards to go other sections 
@@ -30,11 +28,10 @@ v1 different sections, v2 use org tags
 Internal Code Review vs Code Review
 
 * Workflows
-v1 Workflows get the data they need
-v2 There's a centralized gathering which saves API calls, then workflows are able to pick off the data they need. 
-
+[x] Workflows get the data they need
+[ ] There's a centralized gathering which saves API calls, then workflows are able to pick off the data they need. 
 
 * Writing to the org file
-v1 yeehaww each routine can write, we'll see if has problems
-v2: gather up the changes from each in some kind of struct, then have a function which does all the writes in 1 open/close.
+[x] yeehaww each routine can write, we'll see if has problems
+[x] gather up the changes from each in some kind of struct, then have a function which does all the writes in 1 open/close.
 
