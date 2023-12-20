@@ -31,3 +31,4 @@ jobs:
           path: VetResults-results.json
       - name: Format Check
         run: go fmt ./...
+        run: if [ "$(gofmt -s -l . | wc -l)" -gt 0 ]; then exit 1; fi
