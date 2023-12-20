@@ -2,9 +2,9 @@ package workflows
 
 import (
 	"fmt"
-	"strings"
 	"github.com/google/go-github/v48/github"
 	"gtdbot/org"
+	"strings"
 )
 
 type Workflow interface {
