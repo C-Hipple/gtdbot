@@ -1,8 +1,10 @@
-package main
+package workflows
 
 import (
 	"fmt"
 	"time"
+	"gtdbot/org"
+	"gtdbot/utils"
 )
 
 type ManagerService struct {
@@ -17,7 +19,7 @@ func ListenChanges(channel chan FileChanges) {
 	for file_change := range channel {
 		if file_change.change_type == "Addition" {
 			fmt.Println("Adding PR: ", file_change.lines[3])
-			InsertLinesToFile(GetOrgFile(file_change.filename), file_change.lines, file_change.start_line)
+			utils.InsertLinesToFile(org.GetOrgFile(file_change.filename), file_change.lines, file_change.start_line)
 		}
 	}
 }

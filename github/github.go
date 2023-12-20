@@ -1,4 +1,4 @@
-package main
+package github
 
 import (
 	//"strings"
@@ -47,7 +47,7 @@ func github_main() {
 
 	//client.PullRequests.Edit(ctx, "C-Hipple", "C-Hipple.github.io", 1, pr)
 	// client.PullRequests.Edit(ctx, "owner", "repo", 9035, pr)
-	prs := getPRs(client, "open", "owner", "repo")
+	prs := GetPRs(client, "open", "owner", "repo")
 	for _, pr := range prs {
 		fmt.Println(*pr.Title)
 	}
@@ -55,7 +55,7 @@ func github_main() {
 
 type PRFilter func([]*github.PullRequest) []*github.PullRequest
 
-func getPRs(client *github.Client, state string, owner string, repo string) []*github.PullRequest {
+func GetPRs(client *github.Client, state string, owner string, repo string) []*github.PullRequest {
 	per_page := 100
 	options := github.PullRequestListOptions{State: state, ListOptions: github.ListOptions{PerPage: per_page, Page: 1}}
 	var prs []*github.PullRequest

@@ -1,53 +1,56 @@
 package main
 
-import "os"
+import ("os"
+	"gtdbot/workflows"
+	"gtdbot/github"
+)
 
-func getManager(oneoff bool) ManagerService {
-	return NewManagerService([]Workflow{
-		SyncReviewRequestsWorkflow{
-			owner: "owner",
-			repo:  "repo",
-			filters: []PRFilter{
-				FilterMyTeamRequested,
+func getManager(oneoff bool) workflows.ManagerService {
+	return workflows.NewManagerService([]workflows.Workflow{
+		workflows.SyncReviewRequestsWorkflow{
+			Owner: "owner",
+			Repo:  "repo",
+			Filters: []github.PRFilter{
+				github.FilterMyTeamRequested,
 			},
-			org_file_name: "reviews.org",
-			section_title: "Team Reviews",
+			OrgFileName: "reviews.org",
+			SectionTitle: "Team Reviews",
 		},
-		SyncReviewRequestsWorkflow{
-			owner: "owner",
-			repo:  "repo",
-			filters: []PRFilter{
-				FilterMyReviewRequested,
+		workflows.SyncReviewRequestsWorkflow{
+			Owner: "owner",
+			Repo:  "repo",
+			Filters: []github.PRFilter{
+				github.FilterMyReviewRequested,
 			},
-			org_file_name: "reviews.org",
-			section_title: "My Review Requests",
+			OrgFileName: "reviews.org",
+			SectionTitle: "My Review Requests",
 		},
-		SyncReviewRequestsWorkflow{
-			owner: "owner",
-			repo:  "pytest-select-by-coverage",
-			filters: []PRFilter{
-				FilterMyTeamRequested,
+		workflows.SyncReviewRequestsWorkflow{
+			Owner: "owner",
+			Repo:  "pytest-select-by-coverage",
+			Filters: []github.PRFilter{
+				github.FilterMyTeamRequested,
 			},
-			org_file_name: "reviews.org",
-			section_title: "Other Repos",
+			OrgFileName: "reviews.org",
+			SectionTitle: "Other Repos",
 		},
-		SyncReviewRequestsWorkflow{
-			owner: "owner",
-			repo:  "pytest-select-by-coverage",
-			filters: []PRFilter{
-				FilterMyReviewRequested,
+		workflows.SyncReviewRequestsWorkflow{
+			Owner: "owner",
+			Repo:  "pytest-select-by-coverage",
+			Filters: []github.PRFilter{
+				github.FilterMyReviewRequested,
 			},
-			org_file_name: "reviews.org",
-			section_title: "Other Repos",
+			OrgFileName: "reviews.org",
+			SectionTitle: "Other Repos",
 		},
-		SyncReviewRequestsWorkflow{
-			owner: "owner",
-			repo:  "coreteam-devkit",
-			filters: []PRFilter{
-				FilterMyReviewRequested,
+		workflows.SyncReviewRequestsWorkflow{
+			Owner: "owner",
+			Repo:  "coreteam-devkit",
+			Filters: []github.PRFilter{
+				github.FilterMyReviewRequested,
 			},
-			org_file_name: "reviews.org",
-			section_title: "Other Repos",
+			OrgFileName: "reviews.org",
+			SectionTitle: "Other Repos",
 		},
 	},
 		oneoff,
