@@ -1,8 +1,9 @@
 package main
 
-import ("os"
-	"gtdbot/workflows"
+import (
 	"gtdbot/github"
+	"gtdbot/workflows"
+	"os"
 )
 
 func getManager(oneoff bool) workflows.ManagerService {
@@ -13,7 +14,7 @@ func getManager(oneoff bool) workflows.ManagerService {
 			Filters: []github.PRFilter{
 				github.FilterMyTeamRequested,
 			},
-			OrgFileName: "reviews.org",
+			OrgFileName:  "reviews.org",
 			SectionTitle: "Team Reviews",
 		},
 		workflows.SyncReviewRequestsWorkflow{
@@ -22,7 +23,7 @@ func getManager(oneoff bool) workflows.ManagerService {
 			Filters: []github.PRFilter{
 				github.FilterMyReviewRequested,
 			},
-			OrgFileName: "reviews.org",
+			OrgFileName:  "reviews.org",
 			SectionTitle: "My Review Requests",
 		},
 		workflows.SyncReviewRequestsWorkflow{
@@ -31,7 +32,7 @@ func getManager(oneoff bool) workflows.ManagerService {
 			Filters: []github.PRFilter{
 				github.FilterMyTeamRequested,
 			},
-			OrgFileName: "reviews.org",
+			OrgFileName:  "reviews.org",
 			SectionTitle: "Other Repos",
 		},
 		workflows.SyncReviewRequestsWorkflow{
@@ -40,7 +41,7 @@ func getManager(oneoff bool) workflows.ManagerService {
 			Filters: []github.PRFilter{
 				github.FilterMyReviewRequested,
 			},
-			OrgFileName: "reviews.org",
+			OrgFileName:  "reviews.org",
 			SectionTitle: "Other Repos",
 		},
 		workflows.SyncReviewRequestsWorkflow{
@@ -49,7 +50,7 @@ func getManager(oneoff bool) workflows.ManagerService {
 			Filters: []github.PRFilter{
 				github.FilterMyReviewRequested,
 			},
-			OrgFileName: "reviews.org",
+			OrgFileName:  "reviews.org",
 			SectionTitle: "Other Repos",
 		},
 	},
