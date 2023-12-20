@@ -120,7 +120,7 @@ type ParseDebugger struct {
 
 func (pd ParseDebugger) Println(line ...any) {
 	if pd.active {
-		fmt.Println(line)
+		fmt.Println(line...)
 	}
 }
 
