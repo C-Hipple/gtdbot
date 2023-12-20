@@ -2,9 +2,9 @@ package workflows
 
 import (
 	"fmt"
-	"time"
 	"gtdbot/org"
 	"gtdbot/utils"
+	"time"
 )
 
 type ManagerService struct {
@@ -13,7 +13,6 @@ type ManagerService struct {
 	sleep_time    time.Duration
 	cycle_count   int
 }
-
 
 func ListenChanges(channel chan FileChanges) {
 	for file_change := range channel {

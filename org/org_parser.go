@@ -4,11 +4,11 @@ package org
 import (
 	"errors"
 	"fmt"
+	"gtdbot/utils"
 	"io/ioutil"
 	"os"
 	"strconv"
 	"strings"
-	"gtdbot/utils"
 )
 
 func GetOrgStatuses() []string {
