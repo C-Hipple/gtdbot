@@ -29,3 +29,5 @@ jobs:
         with:
           name: Go-results
           path: VetResults-results.json
+      - name: Format Check
+        run: go fmt ./...
