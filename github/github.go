@@ -1,7 +1,6 @@
 package github
 
 import (
-	//"strings"
 	"context"
 	"fmt"
 	"os"
@@ -9,7 +8,6 @@ import (
 
 	"github.com/google/go-github/v48/github" // with go modules enabled (GO111MODULE=on or outside GOPATH)
 	"golang.org/x/oauth2"
-	//"strconv"
 )
 
 type PullRequest interface {
@@ -19,6 +17,9 @@ func github_main() {
 	// silly little tester function
 	ctx := context.Background()
 	token := os.Getenv("GTDBOT_GITHUB_TOKEN")
+	if token == "" {
+		panic("Unable to get Github Token!")
+	}
 	ts := oauth2.StaticTokenSource(
 		&oauth2.Token{AccessToken: token},
 	)
