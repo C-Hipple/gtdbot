@@ -70,7 +70,7 @@ func Contains(check_val string, slice []string) bool {
 	return false
 }
 
-func pretty_print(body []byte) {
+func PrettyPrint(body []byte) {
 	// Pretty print a json bytes array
 	var pretty_json bytes.Buffer
 	err := json.Indent(&pretty_json, body, "", "\t")

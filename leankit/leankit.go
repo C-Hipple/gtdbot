@@ -139,7 +139,7 @@ func SerializeResponseToCards(resp *http.Response) []Card {
 	}
 
 	if false {
-		pretty_print(body_bytes)
+		PrettyPrint(body_bytes)
 	}
 
 	var cards CardResponse
