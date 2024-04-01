@@ -1,6 +1,6 @@
 module gtdbot
 
-go 1.19
+go 1.22
 
 require (
 	github.com/google/go-github/v48 v48.1.0

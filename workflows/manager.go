@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"gtdbot/org"
 	"gtdbot/utils"
+	"sync"
 	"time"
 )
 
@@ -11,52 +12,55 @@ type ManagerService struct {
 	Workflows     []Workflow
 	workflow_chan chan FileChanges
 	sleep_time    time.Duration
-	cycle_count   int
+	oneoff        bool
 }
 
-func ListenChanges(channel chan FileChanges) {
+func ListenChanges(channel chan FileChanges, wg *sync.WaitGroup) {
 	for file_change := range channel {
+		wg.Add(1)
 		if file_change.change_type == "Addition" {
 			fmt.Println("Adding PR: ", file_change.lines[3])
 			utils.InsertLinesToFile(org.GetOrgFile(file_change.filename), file_change.lines, file_change.start_line)
 		}
+		wg.Done()
 	}
 }
 
 func NewManagerService(workflows []Workflow, oneoff bool) ManagerService {
-	var cycle_count int
-	if oneoff {
-		cycle_count = 0
-	} else {
-		cycle_count = 9999
-	}
 
 	return ManagerService{
 		Workflows:     workflows,
 		workflow_chan: make(chan FileChanges),
 		sleep_time:    1 * time.Minute,
-		cycle_count:   cycle_count,
+		oneoff:        oneoff,
 	}
 }
 
+func (ms ManagerService) RunOnce() {
+	var wg sync.WaitGroup
+	for i, workflow := range ms.Workflows {
+		fmt.Println("Starting Workflow: ", workflow.GetName())
+		wg.Add(1)
+		go workflow.Run(ms.workflow_chan, i, &wg)
+	}
+	wg.Wait()
+}
+
 func (ms ManagerService) Run() {
-	fmt.Println("Starting Service")
-	go ListenChanges(ms.workflow_chan)
-
-	for i := 0; i <= ms.cycle_count; i++ {
-
-		fmt.Println("Cycle: ", i)
-
-		for i, workflow := range ms.Workflows {
-			go workflow.Run(ms.workflow_chan, i)
-		}
-
-		var changes []FileChanges
-		for change := range ms.workflow_chan {
-			changes = append(changes, change)
-			if len(changes) == len(ms.Workflows) {
-				break
-			}
+	fmt.Println("Starting Service: ")
+	var listener_wg sync.WaitGroup
+	listener_wg.Add(1)
+	go ListenChanges(ms.workflow_chan, &listener_wg)
+	if ms.oneoff {
+		fmt.Println("Running Once")
+		ms.RunOnce()
+	} else {
+		for {
+			fmt.Println("Cycle")
+			ms.RunOnce()
+			time.Sleep(ms.sleep_time)
 		}
 	}
+	listener_wg.Done()
+	listener_wg.Wait()
 }
