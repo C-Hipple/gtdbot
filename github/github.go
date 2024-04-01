@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"os"
+	"slices"
 	"strings"
 
 	"github.com/google/go-github/v48/github" // with go modules enabled (GO111MODULE=on or outside GOPATH)
@@ -131,11 +132,30 @@ func FilterNotDraft(prs []*github.PullRequest) []*github.PullRequest {
 	return filtered
 }
 
+func MakeTeamFilters(teams []string) func([]*github.PullRequest) []*github.PullRequest {
+	return func(prs []*github.PullRequest) []*github.PullRequest {
+		filtered := []*github.PullRequest{}
+		for _, pr := range prs {
+			for _, team := range pr.RequestedTeams {
+				if slices.Contains(teams, *team.Name) {
+					filtered = append(filtered, pr)
+					break
+				}
+			}
+		}
+		return filtered
+	}
+}
+
 func FilterMyTeamRequested(prs []*github.PullRequest) []*github.PullRequest {
 	filtered := []*github.PullRequest{}
 	for _, pr := range prs {
 		for _, team := range pr.RequestedTeams {
-			if *team.Name == "Core Pod Review Backend" {
+			if *team.Slug == "growth-pod-review" {
+				filtered = append(filtered, pr)
+				break
+			}
+			if *team.Slug == "purchase-pod-review" {
 				filtered = append(filtered, pr)
 				break
 			}
@@ -160,9 +180,12 @@ func FilterMyReviewRequested(prs []*github.PullRequest) []*github.PullRequest {
 func GetGithubClient() *github.Client {
 	ctx := context.Background()
 	token := os.Getenv("GTDBOT_GITHUB_TOKEN")
+	// fmt.Println("Token: ", token)
 	if token == "" {
 		fmt.Println("Error! No Github Token!")
-		os.Exit(1)
+		//os.Exit(1)
+		// dont' commit me
+		token = "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"
 	}
 
 	ts := oauth2.StaticTokenSource(

@@ -1,14 +1,15 @@
 package main
 
 import (
+	"flag"
 	"gtdbot/github"
 	"gtdbot/workflows"
-	"os"
 )
 
-func getManager(oneoff bool) workflows.ManagerService {
+func get_manager(one_off bool) workflows.ManagerService {
 	return workflows.NewManagerService([]workflows.Workflow{
 		workflows.SyncReviewRequestsWorkflow{
+			Name:  "CB Team Reviews",
 			Owner: "multimediallc",
 			Repo:  "chaturbate",
 			Filters: []github.PRFilter{
@@ -18,6 +19,7 @@ func getManager(oneoff bool) workflows.ManagerService {
 			SectionTitle: "Team Reviews",
 		},
 		workflows.SyncReviewRequestsWorkflow{
+			Name:  "CB Personal Reviews",
 			Owner: "multimediallc",
 			Repo:  "chaturbate",
 			Filters: []github.PRFilter{
@@ -27,45 +29,41 @@ func getManager(oneoff bool) workflows.ManagerService {
 			SectionTitle: "My Review Requests",
 		},
 		workflows.SyncReviewRequestsWorkflow{
+			Name:  "Core Reviews",
 			Owner: "multimediallc",
-			Repo:  "pytest-select-by-coverage",
-			Filters: []github.PRFilter{
-				github.FilterMyTeamRequested,
-			},
-			OrgFileName:  "reviews.org",
-			SectionTitle: "Other Repos",
-		},
-		workflows.SyncReviewRequestsWorkflow{
-			Owner: "multimediallc",
-			Repo:  "pytest-select-by-coverage",
+			Repo:  "chaturbate",
 			Filters: []github.PRFilter{
 				github.FilterMyReviewRequested,
 			},
 			OrgFileName:  "reviews.org",
-			SectionTitle: "Other Repos",
+			SectionTitle: "My Review Requests",
 		},
 		workflows.SyncReviewRequestsWorkflow{
-			Owner: "multimediallc",
-			Repo:  "coreteam-devkit",
-			Filters: []github.PRFilter{
-				github.FilterMyReviewRequested,
-			},
+			Name:         "Select by Coverage Team Reviews",
+			Owner:        "multimediallc",
+			Repo:         "pytest-select-by-coverage",
+			Filters:      []github.PRFilter{},
 			OrgFileName:  "reviews.org",
 			SectionTitle: "Other Repos",
 		},
+		// workflows.SyncReviewRequestsWorkflow{
+		//	Name: "Coreteam Devkit Reviews"
+		//	Owner: "multimediallc",
+		//	Repo:  "coreteam-devkit",
+		//	Filters: []github.PRFilter{
+		//		github.FilterMyReviewRequested,
+		//	},
+		//	OrgFileName:  "reviews.org",
+		//	SectionTitle: "Other Repos",
+		// },
 	},
-		oneoff,
+		one_off,
 	)
 }
 
 func main() {
-	oneoff := false
-	args := os.Args[1:]
-	if len(args) > 0 {
-		if args[0] == "--oneoff" {
-			oneoff = true
-		}
-	}
-	ms := getManager(oneoff)
+	one_off := flag.Bool("oneoff", false, "Pass oneoff to only run once")
+	flag.Parse()
+	ms := get_manager(*one_off)
 	ms.Run()
 }
