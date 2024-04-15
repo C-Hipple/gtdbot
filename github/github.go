@@ -159,6 +159,9 @@ func FilterMyTeamRequested(prs []*github.PullRequest) []*github.PullRequest {
 				filtered = append(filtered, pr)
 				break
 			}
+			if *team.Slug == "growth-and-purchase-pod" {
+				filtered = append(filtered, pr)
+			}
 		}
 	}
 	return filtered
