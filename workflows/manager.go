@@ -19,7 +19,9 @@ func ListenChanges(channel chan FileChanges, wg *sync.WaitGroup) {
 	for file_change := range channel {
 		wg.Add(1)
 		if file_change.change_type == "Addition" {
-			fmt.Println("Adding PR: ", file_change.lines[3])
+			// Print since the change lines have newlines in them
+			fmt.Print("Adding PR: ", file_change.lines[3])
+			fmt.Print(file_change.lines[2])
 			utils.InsertLinesToFile(org.GetOrgFile(file_change.filename), file_change.lines, file_change.start_line)
 		}
 		wg.Done()
@@ -63,4 +65,5 @@ func (ms ManagerService) Run() {
 	}
 	listener_wg.Done()
 	listener_wg.Wait()
+	fmt.Println("Exiting Service")
 }
