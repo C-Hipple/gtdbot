@@ -46,6 +46,26 @@ func get_manager(one_off bool) workflows.ManagerService {
 			OrgFileName:  "reviews.org",
 			SectionTitle: "Other Repos",
 		},
+		workflows.SyncReviewRequestsWorkflow{
+			Name:         "mm-actions Team Reviews",
+			Owner:        "multimediallc",
+			Repo:         "mm-actions",
+			Filters:      []github.PRFilter{
+				github.FilterMyTeamRequested,
+			},
+			OrgFileName:  "reviews.org",
+			SectionTitle: "Other Repos",
+		},
+		workflows.SyncReviewRequestsWorkflow{
+			Name:         "mm-cli Team Reviews",
+			Owner:        "multimediallc",
+			Repo:         "mm-cli",
+			Filters:      []github.PRFilter{
+				github.FilterMyTeamRequested,
+			},
+			OrgFileName:  "reviews.org",
+			SectionTitle: "Other Repos",
+		},
 		// workflows.SyncReviewRequestsWorkflow{
 		//	Name: "Coreteam Devkit Reviews"
 		//	Owner: "multimediallc",
