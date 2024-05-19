@@ -1,4 +1,4 @@
-package github
+package git_tools
 
 import (
 	"context"
@@ -74,6 +74,20 @@ func GetPRs(client *github.Client, state string, owner string, repo string) []*g
 			break
 		}
 		options.Page += 1
+	}
+	return prs
+}
+
+func GetManyPrs(client *github.Client, state string, owner string, repos []string) []*github.PullRequest {
+	var prs []*github.PullRequest
+	for _, repo := range repos {
+		repo_prs := GetPRs(
+			client,
+			state,
+			owner,
+			repo,
+		)
+		prs = append(prs, repo_prs...)
 	}
 	return prs
 }

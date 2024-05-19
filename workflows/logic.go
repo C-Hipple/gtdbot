@@ -11,7 +11,7 @@ import (
 
 type Workflow interface {
 	GetName() string
-	Run(chan FileChanges, int, *sync.WaitGroup)
+	Run(chan FileChanges, *sync.WaitGroup)
 }
 
 type FileChanges struct {
@@ -38,6 +38,10 @@ func (prb PRToOrgBridge) FullLine(indent_level int) string {
 	line := fmt.Sprintf("%s TODO %s\t\t:%s:", strings.Repeat("*", indent_level), prb.Title(), *prb.PR.Head.Repo.Name)
 	if *prb.PR.Draft {
 		line = line + ":draft:"
+	} else if prb.PR.Merged != nil {
+		if *prb.PR.Merged {
+			line = line + ":merged:"
+		}
 	}
 	return line
 }

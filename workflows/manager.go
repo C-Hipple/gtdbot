@@ -44,10 +44,10 @@ func NewManagerService(workflows []Workflow, oneoff bool) ManagerService {
 
 func (ms ManagerService) RunOnce() {
 	var wg sync.WaitGroup
-	for i, workflow := range ms.Workflows {
+	for _, workflow := range ms.Workflows {
 		fmt.Println("Starting Workflow: ", workflow.GetName())
 		wg.Add(1)
-		go workflow.Run(ms.workflow_chan, i, &wg)
+		go workflow.Run(ms.workflow_chan, &wg)
 	}
 	wg.Wait()
 }
