@@ -2,7 +2,7 @@ package main
 
 import (
 	"flag"
-	"gtdbot/github"
+	"gtdbot/git_tools"
 	"gtdbot/workflows"
 )
 
@@ -12,8 +12,8 @@ func get_manager(one_off bool) workflows.ManagerService {
 			Name:  "CB Team Reviews",
 			Owner: "owner",
 			Repo:  "repo",
-			Filters: []github.PRFilter{
-				github.FilterMyTeamRequested,
+			Filters: []git_tools.PRFilter{
+				git_tools.FilterMyTeamRequested,
 			},
 			OrgFileName:  "reviews.org",
 			SectionTitle: "Team Reviews",
@@ -22,8 +22,8 @@ func get_manager(one_off bool) workflows.ManagerService {
 			Name:  "CB Personal Reviews",
 			Owner: "owner",
 			Repo:  "repo",
-			Filters: []github.PRFilter{
-				github.FilterMyReviewRequested,
+			Filters: []git_tools.PRFilter{
+				git_tools.FilterMyReviewRequested,
 			},
 			OrgFileName:  "reviews.org",
 			SectionTitle: "My Review Requests",
@@ -32,8 +32,8 @@ func get_manager(one_off bool) workflows.ManagerService {
 			Name:  "Core Reviews",
 			Owner: "owner",
 			Repo:  "repo",
-			Filters: []github.PRFilter{
-				github.FilterMyReviewRequested,
+			Filters: []git_tools.PRFilter{
+				git_tools.FilterMyReviewRequested,
 			},
 			OrgFileName:  "reviews.org",
 			SectionTitle: "My Review Requests",
@@ -42,7 +42,7 @@ func get_manager(one_off bool) workflows.ManagerService {
 			Name:         "Select by Coverage Team Reviews",
 			Owner:        "owner",
 			Repo:         "pytest-select-by-coverage",
-			Filters:      []github.PRFilter{},
+			Filters:      []git_tools.PRFilter{},
 			OrgFileName:  "reviews.org",
 			SectionTitle: "Other Repos",
 		},
@@ -50,8 +50,8 @@ func get_manager(one_off bool) workflows.ManagerService {
 			Name:         "mm-actions Team Reviews",
 			Owner:        "owner",
 			Repo:         "mm-actions",
-			Filters:      []github.PRFilter{
-				github.FilterMyTeamRequested,
+			Filters:      []git_tools.PRFilter{
+				git_tools.FilterMyTeamRequested,
 			},
 			OrgFileName:  "reviews.org",
 			SectionTitle: "Other Repos",
@@ -60,18 +60,44 @@ func get_manager(one_off bool) workflows.ManagerService {
 			Name:         "mm-cli Team Reviews",
 			Owner:        "owner",
 			Repo:         "mm-cli",
-			Filters:      []github.PRFilter{
-				github.FilterMyTeamRequested,
+			Filters:      []git_tools.PRFilter{
+				git_tools.FilterMyTeamRequested,
 			},
 			OrgFileName:  "reviews.org",
 			SectionTitle: "Other Repos",
 		},
+		workflows.SyncReviewRequestsWorkflow{
+			Name:         "mm-cli Team Reviews",
+			Owner:        "owner",
+			Repo:         "mm-cli",
+			Filters:      []git_tools.PRFilter{
+				git_tools.FilterMyTeamRequested,
+			},
+			OrgFileName:  "reviews.org",
+			SectionTitle: "Other Repos",
+		},
+		workflows.ListMyPRsWorkflow{
+			Repos: []string{"repo", "mm-cli", "cb_billing", "cbjpegstream"},
+			Owner: "owner",
+			PRState: "open",
+			OrgFileName: "reviews.org",
+			SectionTitle: "My Pull Requests",
+		},
+
+		workflows.ListMyPRsWorkflow{
+			Repos: []string{"repo", "mm-cli", "cb_billing", "cbjpegstream"},
+			Owner: "owner",
+			PRState: "closed",
+			OrgFileName: "reviews.org",
+			SectionTitle: "My Closed Pull Requests",
+		},
+
 		// workflows.SyncReviewRequestsWorkflow{
 		//	Name: "Coreteam Devkit Reviews"
 		//	Owner: "owner",
 		//	Repo:  "coreteam-devkit",
-		//	Filters: []github.PRFilter{
-		//		github.FilterMyReviewRequested,
+		//	Filters: []git_tools.PRFilter{
+		//		git_tools.FilterMyReviewRequested,
 		//	},
 		//	OrgFileName:  "reviews.org",
 		//	SectionTitle: "Other Repos",

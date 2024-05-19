@@ -1,4 +1,4 @@
-package github
+package git_tools
 
 import (
 	"context"
