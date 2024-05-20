@@ -59,7 +59,7 @@ func (w ListMyPRsWorkflow) GetName() string {
 func (w ListMyPRsWorkflow) Run(c chan FileChanges, wg *sync.WaitGroup) {
 	defer wg.Done()
 	client := git_tools.GetGithubClient()
-	prs := git_tools.GetManyPrs(client, w.PRState, w.Owner, w.Repos)
+	prs := git_tools.GetManyRepoPRs(client, w.PRState, w.Owner, w.Repos)
 
 	doc := org.GetOrgDocument(w.OrgFileName)
 	section, err := doc.GetSection(w.SectionTitle)

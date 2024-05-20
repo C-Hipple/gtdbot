@@ -62,6 +62,10 @@ func GetPRs(client *github.Client, state string, owner string, repo string) []*g
 	options := github.PullRequestListOptions{State: state, ListOptions: github.ListOptions{PerPage: per_page, Page: 1}}
 	var prs []*github.PullRequest
 
+	// TODO: ??
+	max_additional_calls := 0
+	i := 0
+
 	for {
 		new_prs, _, err := client.PullRequests.List(context.Background(), owner, repo, &options)
 		if err != nil {
@@ -70,15 +74,16 @@ func GetPRs(client *github.Client, state string, owner string, repo string) []*g
 			break
 		}
 		prs = append(prs, new_prs...)
-		if len(new_prs) != per_page {
+		if len(new_prs) != per_page || i >= max_additional_calls {
 			break
 		}
 		options.Page += 1
+		i = i + 1
 	}
 	return prs
 }
 
-func GetManyPrs(client *github.Client, state string, owner string, repos []string) []*github.PullRequest {
+func GetManyRepoPRs(client *github.Client, state string, owner string, repos []string) []*github.PullRequest {
 	var prs []*github.PullRequest
 	for _, repo := range repos {
 		repo_prs := GetPRs(
