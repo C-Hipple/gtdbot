@@ -35,13 +35,12 @@ func (prb PRToOrgBridge) Title() string {
 }
 
 func (prb PRToOrgBridge) FullLine(indent_level int) string {
-	line := fmt.Sprintf("%s TODO %s\t\t:%s:", strings.Repeat("*", indent_level), prb.Title(), *prb.PR.Head.Repo.Name)
+	line := fmt.Sprintf("%s %s %s\t\t:%s:", strings.Repeat("*", indent_level), prb.GetStatus(), prb.Title(), *prb.PR.Head.Repo.Name)
+	//fmt.Println("Here: ", prb.Title(), prb.PR.Merged, prb.PR.MergedAt)
 	if *prb.PR.Draft {
 		line = line + ":draft:"
-	} else if prb.PR.Merged != nil {
-		if *prb.PR.Merged {
-			line = line + ":merged:"
-		}
+	} else if prb.PR.MergedAt != nil {
+		line = line + "merged:"
 	}
 	return line
 }

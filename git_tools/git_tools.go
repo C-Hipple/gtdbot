@@ -2,8 +2,12 @@ package git_tools
 
 import (
 	"context"
+	"errors"
 	"fmt"
+	"io"
+	"net/http"
 	"os"
+	"regexp"
 	"slices"
 	"strings"
 
@@ -62,7 +66,8 @@ func GetPRs(client *github.Client, state string, owner string, repo string) []*g
 	options := github.PullRequestListOptions{State: state, ListOptions: github.ListOptions{PerPage: per_page, Page: 1}}
 	var prs []*github.PullRequest
 
-	// TODO: ??
+	// TODO: Consider if I really want deep lookups.
+	// Setting to 0 limits to 1 API call.
 	max_additional_calls := 0
 	i := 0
 
@@ -259,3 +264,39 @@ func FilterPRsByAssignedTeam(prs []*github.PullRequest, target_team string) []*g
 	}
 	return filtered
 }
+
+func CheckReleased(commit_sha string) bool {
+	return false
+}
+
+type DeployedVersion struct {
+	Tag string
+	SHA string
+}
+
+// TODO cache?
+func GetDeployedVersion() (DeployedVersion, error) {
+	res, err := http.Get("https://www.repo.com/healthcheck/")
+	if err != nil {
+		return DeployedVersion{}, err
+	}
+	body, err := io.ReadAll(res.Body)
+	if err != nil {
+		return DeployedVersion{}, err
+	}
+	//"v24.5.10.0.post4 (sha: 80c7ed3aab56c4549acc895c292bb3b256b2789c)"
+
+	// THis regex matches 3 things for some reason, so we just index properly
+	extractor_regex, _ := regexp.Compile("(v24\\.[\\w+\\.]+)\\s\\(sha:\\s(\\w+)")
+	match := extractor_regex.FindStringSubmatch(string(body))
+	if len(match) < 3 {
+		return DeployedVersion{}, errors.New("Invalid version match")
+	}
+	return DeployedVersion{
+		Tag: match[1],
+		SHA: match[2],
+
+	}, nil
+}
+
+//func GetCommitsForSha(sha string)
