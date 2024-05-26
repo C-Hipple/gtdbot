@@ -20,13 +20,13 @@ func ListenChanges(channel chan FileChanges, wg *sync.WaitGroup) {
 	for file_change := range channel {
 		wg.Add(1)
 		if file_change.change_type == "Addition" {
-			if strings.Contains(file_change.lines[0], "draft") {
-				fmt.Print("Adding Draft PR: ", file_change.lines[3])
+			if strings.Contains(file_change.Lines[0], "draft") {
+				fmt.Print("Adding Draft PR: ", file_change.Lines[3])
 			} else {
-				fmt.Print("Adding PR: ", file_change.lines[3])
+				fmt.Print("Adding PR: ", file_change.Lines[3])
 			}
-			fmt.Print(file_change.lines[2])
-			utils.InsertLinesToFile(org.GetOrgFile(file_change.filename), file_change.lines, file_change.start_line)
+			fmt.Print(file_change.Lines[2])
+			utils.InsertLinesToFile(org.GetOrgFile(file_change.filename), file_change.Lines, file_change.start_line)
 		}
 		wg.Done()
 	}

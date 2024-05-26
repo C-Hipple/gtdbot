@@ -5,6 +5,8 @@ import (
 	"gtdbot/git_tools"
 	"gtdbot/org"
 	"sync"
+	"strings"
+	"strconv"
 )
 
 type SyncReviewRequestsWorkflow struct {
@@ -45,12 +47,14 @@ func (w SyncReviewRequestsWorkflow) GetName() string {
 }
 
 type ListMyPRsWorkflow struct {
-	Repos        []string
-	Owner        string
-	OrgFileName  string
-	SectionTitle string
-	PRState      string
+	Repos           []string
+	Owner           string
+	OrgFileName     string
+	SectionTitle    string
+	PRState         string
+	ReleasedVersion git_tools.DeployedVersion
 }
+
 
 func (w ListMyPRsWorkflow) GetName() string {
 	return "List My PRs"
@@ -70,6 +74,23 @@ func (w ListMyPRsWorkflow) Run(c chan FileChanges, wg *sync.WaitGroup) {
 	prs = git_tools.ApplyPRFilters(prs, []git_tools.PRFilter{git_tools.MyPRs})
 	for _, pr := range prs {
 		output := SyncTODOToSection(doc, pr, section)
+		if pr.MergedAt != nil {
+			// This is a hack, it should be when we make the FileChanges in SyncTODO section
+			// but we'd need the released version and repo info for all repos for the workflows.
+			repo_name := *pr.Base.Repo.Name
+			if repo_name == "repo" {
+				released := git_tools.CheckCommitReleased(client, w.ReleasedVersion.SHA, *pr.MergeCommitSHA)
+				output.Lines = append(output.Lines, "Released: " + strconv.FormatBool(released))
+				output.Lines[0] = strings.Replace(output.Lines[0], "merged", "released", 1)
+
+
+			} else {
+				output.Lines = append(output.Lines, "Released: ???")
+			}
+
+			//fmt.Printf("PR: %v; Released: %v/n", pr.GetTitle(), released)
+		}
+
 		c <- output
 	}
 }
