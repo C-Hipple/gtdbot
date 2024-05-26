@@ -295,8 +295,17 @@ func GetDeployedVersion() (DeployedVersion, error) {
 	return DeployedVersion{
 		Tag: match[1],
 		SHA: match[2],
-
 	}, nil
+}
+
+func CheckCommitReleased(client *github.Client, release_sha string, commit_sha string) bool {
+	res, _, err := client.Repositories.CompareCommits(context.Background(), "multimediallc", "chaturbate", release_sha, commit_sha, &github.ListOptions{Page: 1, PerPage: 100})
+	if err != nil {
+		fmt.Println(err)
+	}
+
+	return slices.Contains([]string{"identical", "behind"}, *res.Status)
+
 }
 
 //func GetCommitsForSha(sha string)

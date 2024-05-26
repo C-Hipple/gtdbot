@@ -18,7 +18,7 @@ type FileChanges struct {
 	change_type string
 	start_line  int
 	filename    string
-	lines       []string
+	Lines       []string
 }
 
 type PRToOrgBridge struct {
@@ -73,6 +73,17 @@ func (prb PRToOrgBridge) String() string {
 	return prb.Title()
 }
 
+// func (prb PRToOrgBridge) GetReleased() string {
+//	repo_name := *prb.PR.Base.Repo.Name
+//	if repo_name == "chaturbate" {
+//		released := git_tools.CheckCommitReleased(client, w.ReleasedVersion.SHA, *pr.MergeCommitSHA)
+//		fmt.Println("Released: ", released)
+
+//	} else {
+//		fmt.Println("Skipping check released due to repo.  PR is for repo: ", repo_name)
+//	}
+// }
+
 // this is the official github package, not our lib, confusing!!
 func SyncTODOToSection(doc org.OrgDocument, pr *github.PullRequest, section org.Section) FileChanges {
 	pr_as_org := PRToOrgBridge{pr}
@@ -84,7 +95,7 @@ func SyncTODOToSection(doc org.OrgDocument, pr *github.PullRequest, section org.
 		change_type: "Addition",
 		start_line:  section.StartLine + 1,
 		filename:    doc.Filename,
-		lines:       doc.Serializer.Deserialize(pr_as_org, section.IndentLevel),
+		Lines:       doc.Serializer.Deserialize(pr_as_org, section.IndentLevel),
 	}
 }
 

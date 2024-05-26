@@ -1,4 +1,4 @@
-package leankit
+package
 
 import (
 	"errors"

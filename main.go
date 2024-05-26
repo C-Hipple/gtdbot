@@ -7,6 +7,11 @@ import (
 )
 
 func get_manager(one_off bool) workflows.ManagerService {
+	release, err := git_tools.GetDeployedVersion()
+	if err != nil {
+		panic(err)
+	}
+
 	return workflows.NewManagerService([]workflows.Workflow{
 		workflows.SyncReviewRequestsWorkflow{
 			Name:  "CB Team Reviews",
@@ -47,49 +52,51 @@ func get_manager(one_off bool) workflows.ManagerService {
 			SectionTitle: "Other Repos",
 		},
 		workflows.SyncReviewRequestsWorkflow{
-			Name:         "mm-actions Team Reviews",
-			Owner:        "multimediallc",
-			Repo:         "mm-actions",
-			Filters:      []git_tools.PRFilter{
+			Name:  "mm-actions Team Reviews",
+			Owner: "multimediallc",
+			Repo:  "mm-actions",
+			Filters: []git_tools.PRFilter{
 				git_tools.FilterMyTeamRequested,
 			},
 			OrgFileName:  "reviews.org",
 			SectionTitle: "Other Repos",
 		},
 		workflows.SyncReviewRequestsWorkflow{
-			Name:         "mm-cli Team Reviews",
-			Owner:        "multimediallc",
-			Repo:         "mm-cli",
-			Filters:      []git_tools.PRFilter{
+			Name:  "mm-cli Team Reviews",
+			Owner: "multimediallc",
+			Repo:  "mm-cli",
+			Filters: []git_tools.PRFilter{
 				git_tools.FilterMyTeamRequested,
 			},
 			OrgFileName:  "reviews.org",
 			SectionTitle: "Other Repos",
 		},
 		workflows.SyncReviewRequestsWorkflow{
-			Name:         "mm-cli Team Reviews",
-			Owner:        "multimediallc",
-			Repo:         "mm-cli",
-			Filters:      []git_tools.PRFilter{
+			Name:  "mm-cli Team Reviews",
+			Owner: "multimediallc",
+			Repo:  "mm-cli",
+			Filters: []git_tools.PRFilter{
 				git_tools.FilterMyTeamRequested,
 			},
 			OrgFileName:  "reviews.org",
 			SectionTitle: "Other Repos",
 		},
 		workflows.ListMyPRsWorkflow{
-			Repos: []string{"chaturbate", "mm-cli", "cb_billing", "cbjpegstream"},
-			Owner: "multimediallc",
-			PRState: "open",
-			OrgFileName: "reviews.org",
-			SectionTitle: "My Pull Requests",
+			Repos:           []string{"chaturbate", "mm-cli", "cb_billing", "cbjpegstream"},
+			Owner:           "multimediallc",
+			PRState:         "open",
+			OrgFileName:     "reviews.org",
+			SectionTitle:    "My Pull Requests",
+			ReleasedVersion: release,
 		},
 
 		workflows.ListMyPRsWorkflow{
-			Repos: []string{"chaturbate", "mm-cli", "cb_billing", "cbjpegstream"},
-			Owner: "multimediallc",
-			PRState: "closed",
-			OrgFileName: "reviews.org",
-			SectionTitle: "My Closed Pull Requests",
+			Repos:           []string{"chaturbate", "mm-cli", "cb_billing", "cbjpegstream"},
+			Owner:           "multimediallc",
+			PRState:         "closed",
+			OrgFileName:     "reviews.org",
+			SectionTitle:    "My Closed Pull Requests",
+			ReleasedVersion: release,
 		},
 
 		// workflows.SyncReviewRequestsWorkflow{
