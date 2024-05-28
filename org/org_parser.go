@@ -228,6 +228,7 @@ type OrgItem struct {
 	header  string
 	details []string
 	status  string
+	tags    []string
 }
 
 // Implement the OrgTODO Interface for OrgItem
@@ -253,6 +254,17 @@ func (oi OrgItem) ID() string {
 
 func (oi OrgItem) CheckDone() bool {
 	return oi.GetStatus() == "DONE" || oi.GetStatus() == "CANCELLED"
+}
+
+
+func findOrgTags(line string) []string {
+	splits := strings.Split(line, ":")
+	if len(splits) == 0 {
+		return []string{}
+	} else {
+		return splits[1:len(splits)-1]
+	}
+
 }
 
 func PrintOrgFile(file *os.File) {
@@ -282,12 +294,13 @@ func (bos BaseOrgSerializer) Serialize(lines []string) (OrgTODO, error) {
 		return OrgItem{}, errors.New("No Lines passed for serialization")
 	}
 	status := findOrgStatus(lines[0])
-	return OrgItem{header: lines[0], status: status, details: lines[1:]}, nil
+	tags := findOrgTags(lines[0])
+	return OrgItem{header: lines[0], status: status, details: lines[1:], tags: tags}, nil
 }
 
 func findOrgStatus(line string) string {
 	for _, status := range GetOrgStatuses() {
-		if strings.Contains(line, "TODO") {
+		if strings.Contains(line, status) {
 			return status
 		}
 	}
