@@ -257,7 +257,7 @@ func (oi OrgItem) CheckDone() bool {
 }
 
 
-func findOrgTags(line string) []string {
+func FindOrgTags(line string) []string {
 	splits := strings.Split(line, ":")
 	if len(splits) == 0 {
 		return []string{}
@@ -294,7 +294,7 @@ func (bos BaseOrgSerializer) Serialize(lines []string) (OrgTODO, error) {
 		return OrgItem{}, errors.New("No Lines passed for serialization")
 	}
 	status := findOrgStatus(lines[0])
-	tags := findOrgTags(lines[0])
+	tags := FindOrgTags(lines[0])
 	return OrgItem{header: lines[0], status: status, details: lines[1:], tags: tags}, nil
 }
 
@@ -305,4 +305,12 @@ func findOrgStatus(line string) string {
 		}
 	}
 	return ""
+}
+
+func FormatTags(tags []string) string {
+	// Format a list of tags so that it's like :tag1:tag2:tag3:
+	if len(tags) == 0 {
+		return ""
+	}
+	return ":" + strings.Join(tags, ":") + ":"
 }

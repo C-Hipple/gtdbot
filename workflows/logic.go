@@ -5,6 +5,7 @@ import (
 	"gtdbot/org"
 	"strings"
 	"sync"
+	"slices"
 
 	"github.com/google/go-github/v48/github"
 )
@@ -35,13 +36,8 @@ func (prb PRToOrgBridge) Title() string {
 }
 
 func (prb PRToOrgBridge) FullLine(indent_level int) string {
-	line := fmt.Sprintf("%s %s %s\t\t:%s:", strings.Repeat("*", indent_level), prb.GetStatus(), prb.Title(), *prb.PR.Head.Repo.Name)
+	line := fmt.Sprintf("%s %s %s\t\t%s", strings.Repeat("*", indent_level), prb.GetStatus(), prb.Title(), org.FormatTags(prb.GetTags()))
 	//fmt.Println("Here: ", prb.Title(), prb.PR.Merged, prb.PR.MergedAt)
-	if *prb.PR.Draft {
-		line = line + ":draft:"
-	} else if prb.PR.MergedAt != nil {
-		line = line + "merged:"
-	}
 	return line
 }
 
@@ -73,6 +69,17 @@ func (prb PRToOrgBridge) String() string {
 	return prb.Title()
 }
 
+func (prb PRToOrgBridge) GetTags() []string {
+	// consider setting this in a New method
+	tags := []string{*prb.PR.Head.Repo.Name}
+	if *prb.PR.Draft {
+		tags = append(tags, "draft")
+	} else if prb.PR.MergedAt != nil {
+		tags = append(tags, "merged")
+	}
+}
+
+
 // func (prb PRToOrgBridge) GetReleased() string {
 //	repo_name := *prb.PR.Base.Repo.Name
 //	if repo_name == "chaturbate" {
@@ -87,7 +94,8 @@ func (prb PRToOrgBridge) String() string {
 // this is the official github package, not our lib, confusing!!
 func SyncTODOToSection(doc org.OrgDocument, pr *github.PullRequest, section org.Section) FileChanges {
 	pr_as_org := PRToOrgBridge{pr}
-	if CheckTODOAlreadyInSection(pr_as_org, section) {
+	item_in_section := CheckTODOAlreadyInSection(pr_as_org, section)
+	if item_in_section != nil {
 		return FileChanges{
 			change_type: "No Change"}
 	}
@@ -99,19 +107,33 @@ func SyncTODOToSection(doc org.OrgDocument, pr *github.PullRequest, section org.
 	}
 }
 
-func CheckTODOAlreadyInSection(todo org.OrgTODO, section org.Section) bool {
+func CheckTODOAlreadyInSection(todo org.OrgTODO, section org.Section) org.OrgTODO {
 	for _, line_item := range section.Items {
 		if strings.Contains(line_item.Summary(), todo.Summary()) {
-			return true
+			return line_item
 		}
 		if line_item.Summary() == todo.Summary() {
-			return true
+			return line_item
 		}
 		for _, detail := range line_item.Details() {
 			if strings.Contains(detail, todo.ID()) {
-				return true
+				return line_item
 			}
 		}
 	}
-	return false
+	return nil
+}
+
+func CheckForUpdates(item_in_section org.OrgTODO, pr_as_org PRToOrgBridge) FileChanges {
+	// For now we're only checking tags.
+	// Eventually will check more
+	existing_tags := org.FindOrgTags(item_in_section.Summary())
+	new_tags := pr_as_org.GetTags()
+	for _, tag := range new_tags {
+		if !slices.Contains(existing_tags, tag) {
+			return FileChanges{
+
+			}
+		}
+	}
 }

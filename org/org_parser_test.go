@@ -8,13 +8,13 @@ import (
 
 func Test_findOrgTags(t *testing.T) {
 	line := "* TODO Example name  :tag1:tag2:"
-	tags := findOrgTags(line)
+	tags := FindOrgTags(line)
 	if !reflect.DeepEqual([]string{"tag1", "tag2"}, tags) {
 		t.Fatalf(":tag1:tag2: parsed to %v", tags)
 	}
 
 	line2 := "* TODO Example name  :tag1:"
-	tags2 := findOrgTags(line2)
+	tags2 := FindOrgTags(line2)
 	if !reflect.DeepEqual([]string{"tag1"}, tags2) {
 		t.Fatalf(":tag1:tag2: parsed to %v", tags2)
 	}
@@ -72,5 +72,15 @@ Author: C-Hipple
 
 	if item.CheckDone() {
 		t.Fatalf("This isn't done!")
+	}
+}
+
+func Test_FormatTags(t *testing.T) {
+	if FormatTags([]string{}) != "" {
+		t.Fatalf("Improperly formatted empty tags list")
+	}
+
+	if FormatTags([]string{"tag1", "tag2"}) != ":tag1:tag2:" {
+		t.Fatalf("Improperly formatted non-empty tags list")
 	}
 }
