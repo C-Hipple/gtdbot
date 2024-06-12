@@ -5,7 +5,7 @@ import (
 	"gtdbot/org"
 	"strings"
 	"sync"
-	"slices"
+	//"slices"
 
 	"github.com/google/go-github/v48/github"
 )
@@ -77,7 +77,9 @@ func (prb PRToOrgBridge) GetTags() []string {
 	} else if prb.PR.MergedAt != nil {
 		tags = append(tags, "merged")
 	}
+	return tags
 }
+
 
 
 // func (prb PRToOrgBridge) GetReleased() string {
@@ -124,16 +126,16 @@ func CheckTODOAlreadyInSection(todo org.OrgTODO, section org.Section) org.OrgTOD
 	return nil
 }
 
-func CheckForUpdates(item_in_section org.OrgTODO, pr_as_org PRToOrgBridge) FileChanges {
-	// For now we're only checking tags.
-	// Eventually will check more
-	existing_tags := org.FindOrgTags(item_in_section.Summary())
-	new_tags := pr_as_org.GetTags()
-	for _, tag := range new_tags {
-		if !slices.Contains(existing_tags, tag) {
-			return FileChanges{
+// func CheckForUpdates(item_in_section org.OrgTODO, pr_as_org PRToOrgBridge) FileChanges {
+//	// For now we're only checking tags.
+//	// Eventually will check more
+//	existing_tags := org.FindOrgTags(item_in_section.Summary())
+//	new_tags := pr_as_org.GetTags()
+//	for _, tag := range new_tags {
+//		if !slices.Contains(existing_tags, tag) {
+//			return FileChanges{
 
-			}
-		}
-	}
-}
+//			}
+//		}
+//	}
+// }
