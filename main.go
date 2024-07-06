@@ -43,14 +43,14 @@ func get_manager(one_off bool) workflows.ManagerService {
 			OrgFileName:  "reviews.org",
 			SectionTitle: "My Review Requests",
 		},
-		workflows.SyncReviewRequestsWorkflow{
-			Name:         "Select by Coverage Team Reviews",
-			Owner:        "multimediallc",
-			Repo:         "pytest-select-by-coverage",
-			Filters:      []git_tools.PRFilter{},
-			OrgFileName:  "reviews.org",
-			SectionTitle: "Other Repos",
-		},
+		// workflows.SyncReviewRequestsWorkflow{
+		//	Name:         "Select by Coverage Team Reviews",
+		//	Owner:        "multimediallc",
+		//	Repo:         "pytest-select-by-coverage",
+		//	Filters:      []git_tools.PRFilter{},
+		//	OrgFileName:  "reviews.org",
+		//	SectionTitle: "Other Repos",
+		// },
 		workflows.SyncReviewRequestsWorkflow{
 			Name:  "mm-actions Team Reviews",
 			Owner: "multimediallc",

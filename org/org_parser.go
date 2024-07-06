@@ -112,7 +112,7 @@ func (s Section) DoneCount() int {
 func AddTODO(doc OrgDocument, section Section, new_item OrgTODO) {
 	section.Items = append(section.Items, new_item)
 	new_lines := doc.Serializer.Deserialize(new_item, section.IndentLevel)
-	utils.InsertLinesToFile(doc.GetFile(), new_lines, section.StartLine+1)
+	utils.InsertLinesInFile(doc.GetFile(), new_lines, section.StartLine+1)
 }
 
 type ParseDebugger struct {
