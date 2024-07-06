@@ -13,26 +13,45 @@ import (
 	//"os"
 )
 
-func ReplaceLineInFile(file *os.File, new_line string, at_line_number int) error {
+// TODO consider being able to do multiiple operations sorted by at_line_number without opening/closing file
+func ReplaceLinesInFile(file *os.File, new_lines []string, at_line_number int) error {
 	lines, _ := LinesFromReader(file)
+	path, _ := filepath.Abs(file.Name())
+	file_content := replaceLines(lines, new_lines, at_line_number)
+	return os.WriteFile(path, []byte(file_content), 0644)
+}
+
+func replaceLines(existing_lines []string, new_lines []string, at_line_number int) string {
 	file_content := ""
-	for i, line := range lines {
+	for i, line := range existing_lines {
+		fmt.Println(i, ": ", line)
 		if i == at_line_number {
-			file_content += new_line
+			fmt.Println("At line; inserting: ", i)
+			file_content += strings.Join(new_lines, "\n") +"\n"
+			continue
+		}
+		if i >= at_line_number && i < at_line_number + len(new_lines) {
+			fmt.Println("At line; skipping: ", i)
 			continue
 		}
 		file_content += line
 		file_content += "\n"
 	}
-	path, _ := filepath.Abs(file.Name())
+	return file_content
+}
+
+func InsertLinesInFile(file *os.File, new_lines []string, at_line_number int) error {
+		//new line is at the at_line_number, not after, pushes everything below it.
+		lines, _ := LinesFromReader(file)
+		file_content := insertLines(lines, new_lines, at_line_number)
+		path, _ := filepath.Abs(file.Name())
 	return os.WriteFile(path, []byte(file_content), 0644)
 }
 
-func InsertLinesToFile(file *os.File, new_lines []string, at_line_number int) error {
-	//new line is at the at_line_number, not after, pushes everything below it.
-	lines, _ := LinesFromReader(file)
+func insertLines(existing_lines []string, new_lines []string, at_line_number int) string {
+	// Helper! for unit tests so we don't need to make a file
 	file_content := ""
-	for i, line := range lines {
+	for i, line := range existing_lines {
 		if i == at_line_number {
 			for _, new_line := range new_lines {
 				file_content += new_line
@@ -44,8 +63,7 @@ func InsertLinesToFile(file *os.File, new_lines []string, at_line_number int) er
 		file_content += line
 		file_content += "\n"
 	}
-	path, _ := filepath.Abs(file.Name())
-	return os.WriteFile(path, []byte(file_content), 0644)
+	return file_content
 }
 
 func LinesFromReader(r io.Reader) ([]string, error) {

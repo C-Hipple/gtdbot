@@ -26,8 +26,11 @@ func ListenChanges(channel chan FileChanges, wg *sync.WaitGroup) {
 				fmt.Print("Adding PR: ", file_change.Lines[3])
 			}
 			fmt.Print(file_change.Lines[2])
-			utils.InsertLinesToFile(org.GetOrgFile(file_change.filename), file_change.Lines, file_change.start_line)
+			utils.InsertLinesInFile(org.GetOrgFile(file_change.filename), file_change.Lines, file_change.start_line)
+		} else if file_change.change_type == "Replace" {
+			utils.ReplaceLinesInFile(org.GetOrgFile(file_change.filename), file_change.Lines, file_change.start_line)
 		}
+
 		wg.Done()
 	}
 }
