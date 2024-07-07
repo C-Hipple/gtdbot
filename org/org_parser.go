@@ -68,6 +68,7 @@ type Section struct {
 	Items       []OrgTODO
 }
 
+
 func (s Section) GetStatus() string {
 	if s.CheckAllComplete() {
 		return "DONE"
@@ -231,6 +232,15 @@ type OrgItem struct {
 	tags    []string
 }
 
+func NewOrgItem(header string, details []string, status string, tags []string) OrgItem {
+	return OrgItem{
+		header,
+		details,
+		status,
+		tags,
+	}
+}
+
 // Implement the OrgTODO Interface for OrgItem
 func (oi OrgItem) FullLine(indent_level int) string {
 	return strings.Repeat("*", indent_level) + oi.header
@@ -256,13 +266,12 @@ func (oi OrgItem) CheckDone() bool {
 	return oi.GetStatus() == "DONE" || oi.GetStatus() == "CANCELLED"
 }
 
-
 func findOrgTags(line string) []string {
 	splits := strings.Split(line, ":")
 	if len(splits) == 0 {
 		return []string{}
 	} else {
-		return splits[1:len(splits)-1]
+		return splits[1 : len(splits)-1]
 	}
 
 }

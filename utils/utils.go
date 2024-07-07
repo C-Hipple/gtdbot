@@ -22,16 +22,15 @@ func ReplaceLinesInFile(file *os.File, new_lines []string, at_line_number int) e
 }
 
 func replaceLines(existing_lines []string, new_lines []string, at_line_number int) string {
+	// Helper so we don't need a file for unit tests
 	file_content := ""
+	// fmt.Println("Calling replace with the newlines: ", new_lines)
 	for i, line := range existing_lines {
-		fmt.Println(i, ": ", line)
 		if i == at_line_number {
-			fmt.Println("At line; inserting: ", i)
-			file_content += strings.Join(new_lines, "\n") +"\n"
+			file_content += strings.Join(new_lines, "\n")
 			continue
 		}
 		if i >= at_line_number && i < at_line_number + len(new_lines) {
-			fmt.Println("At line; skipping: ", i)
 			continue
 		}
 		file_content += line
