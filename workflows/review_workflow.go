@@ -4,9 +4,9 @@ import (
 	"fmt"
 	"gtdbot/git_tools"
 	"gtdbot/org"
-	"sync"
-	"strings"
 	"strconv"
+	"strings"
+	"sync"
 )
 
 type SyncReviewRequestsWorkflow struct {
@@ -47,6 +47,7 @@ func (w SyncReviewRequestsWorkflow) GetName() string {
 }
 
 type ListMyPRsWorkflow struct {
+	Name            string
 	Repos           []string
 	Owner           string
 	OrgFileName     string
@@ -55,9 +56,8 @@ type ListMyPRsWorkflow struct {
 	ReleasedVersion git_tools.DeployedVersion
 }
 
-
 func (w ListMyPRsWorkflow) GetName() string {
-	return "List My PRs"
+	return w.Name
 }
 
 func (w ListMyPRsWorkflow) Run(c chan FileChanges, wg *sync.WaitGroup) {
@@ -80,9 +80,8 @@ func (w ListMyPRsWorkflow) Run(c chan FileChanges, wg *sync.WaitGroup) {
 			repo_name := *pr.Base.Repo.Name
 			if repo_name == "chaturbate" {
 				released := git_tools.CheckCommitReleased(client, w.ReleasedVersion.SHA, *pr.MergeCommitSHA)
-				output.Lines = append(output.Lines, "Released: " + strconv.FormatBool(released))
+				output.Lines = append(output.Lines, "Released: "+strconv.FormatBool(released))
 				output.Lines[0] = strings.Replace(output.Lines[0], "merged", "released", 1)
-
 
 			} else {
 				output.Lines = append(output.Lines, "Released: ???")

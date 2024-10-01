@@ -11,6 +11,7 @@ func get_manager(one_off bool) workflows.ManagerService {
 	if err != nil {
 		panic(err)
 	}
+	repos := []string{"chaturbate", "mm-cli", "mock-affiliate", "devsync", "mock-identity", "cb_billing", "billingv2"}
 
 	return workflows.NewManagerService([]workflows.Workflow{
 		workflows.SyncReviewRequestsWorkflow{
@@ -19,6 +20,7 @@ func get_manager(one_off bool) workflows.ManagerService {
 			Repo:  "chaturbate",
 			Filters: []git_tools.PRFilter{
 				git_tools.FilterMyTeamRequested,
+				git_tools.FilterNotDraft,
 			},
 			OrgFileName:  "reviews.org",
 			SectionTitle: "Team Reviews",
@@ -29,20 +31,29 @@ func get_manager(one_off bool) workflows.ManagerService {
 			Repo:  "chaturbate",
 			Filters: []git_tools.PRFilter{
 				git_tools.FilterMyReviewRequested,
+				git_tools.FilterNotDraft,
 			},
 			OrgFileName:  "reviews.org",
 			SectionTitle: "My Review Requests",
 		},
 		workflows.SyncReviewRequestsWorkflow{
-			Name:  "Core Reviews",
-			Owner: "multimediallc",
-			Repo:  "chaturbate",
-			Filters: []git_tools.PRFilter{
-				git_tools.FilterMyReviewRequested,
-			},
+			Name:         "Falcon Nest Helper",
+			Owner:        "multimediallc",
+			Repo:         "falcon-nest",
+			Filters:      nil,
 			OrgFileName:  "reviews.org",
-			SectionTitle: "My Review Requests",
+			SectionTitle: "Other Repos",
 		},
+		// workflows.SyncReviewRequestsWorkflow{
+		//	Name:  "Core Reviews",
+		//	Owner: "multimediallc",
+		//	Repo:  "chaturbate",
+		//	Filters: []git_tools.PRFilter{
+		//		git_tools.FilterMyReviewRequested,
+		//	},
+		//	OrgFileName:  "reviews.org",
+		//	SectionTitle: "My Review Requests",
+		// },
 		// workflows.SyncReviewRequestsWorkflow{
 		//	Name:         "Select by Coverage Team Reviews",
 		//	Owner:        "multimediallc",
@@ -51,38 +62,40 @@ func get_manager(one_off bool) workflows.ManagerService {
 		//	OrgFileName:  "reviews.org",
 		//	SectionTitle: "Other Repos",
 		// },
-		workflows.SyncReviewRequestsWorkflow{
-			Name:  "mm-actions Team Reviews",
-			Owner: "multimediallc",
-			Repo:  "mm-actions",
-			Filters: []git_tools.PRFilter{
-				git_tools.FilterMyTeamRequested,
-			},
-			OrgFileName:  "reviews.org",
-			SectionTitle: "Other Repos",
-		},
-		workflows.SyncReviewRequestsWorkflow{
-			Name:  "mm-cli Team Reviews",
-			Owner: "multimediallc",
-			Repo:  "mm-cli",
-			Filters: []git_tools.PRFilter{
-				git_tools.FilterMyTeamRequested,
-			},
-			OrgFileName:  "reviews.org",
-			SectionTitle: "Other Repos",
-		},
-		workflows.SyncReviewRequestsWorkflow{
-			Name:  "mm-cli Team Reviews",
-			Owner: "multimediallc",
-			Repo:  "mm-cli",
-			Filters: []git_tools.PRFilter{
-				git_tools.FilterMyTeamRequested,
-			},
-			OrgFileName:  "reviews.org",
-			SectionTitle: "Other Repos",
-		},
+		// workflows.SyncReviewRequestsWorkflow{
+		//	Name:  "mm-actions Team Reviews",
+		//	Owner: "multimediallc",
+		//	Repo:  "mm-actions",
+		//	Filters: []git_tools.PRFilter{
+		//		git_tools.FilterMyTeamRequested,
+		//	},
+		//	OrgFileName:  "reviews.org",
+		//	SectionTitle: "Other Repos",
+		// },
+		// workflows.SyncReviewRequestsWorkflow{
+		//	Name:  "mm-cli Team Reviews",
+		//	Owner: "multimediallc",
+		//	Repo:  "mm-cli",
+		//	Filters: []git_tools.PRFilter{
+		//		git_tools.FilterMyTeamRequested,
+		//	},
+		//	OrgFileName:  "reviews.org",
+		//	SectionTitle: "Other Repos",
+		// },
+		// workflows.SyncReviewRequestsWorkflow{
+		//	Name:  "mm-cli Team Reviews",
+		//	Owner: "multimediallc",
+		//	Repo:  "mm-cli",
+		//	Filters: []git_tools.PRFilter{
+		//		git_tools.FilterMyTeamRequested,
+		//	},
+		//	OrgFileName:  "reviews.org",
+		//	SectionTitle: "Other Repos",
+		// },
+
 		workflows.ListMyPRsWorkflow{
-			Repos:           []string{"chaturbate", "mm-cli", "cb_billing", "cbjpegstream"},
+			Name:            "List my Open PRs",
+			Repos:           repos,
 			Owner:           "multimediallc",
 			PRState:         "open",
 			OrgFileName:     "reviews.org",
@@ -91,7 +104,8 @@ func get_manager(one_off bool) workflows.ManagerService {
 		},
 
 		workflows.ListMyPRsWorkflow{
-			Repos:           []string{"chaturbate", "mm-cli", "cb_billing", "cbjpegstream"},
+			Name:            "List my Closed PRs",
+			Repos:           repos,
 			Owner:           "multimediallc",
 			PRState:         "closed",
 			OrgFileName:     "reviews.org",
