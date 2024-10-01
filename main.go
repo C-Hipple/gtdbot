@@ -21,6 +21,7 @@ func get_manager(one_off bool) workflows.ManagerService {
 			Filters: []git_tools.PRFilter{
 				git_tools.FilterMyTeamRequested,
 				git_tools.FilterNotDraft,
+				git_tools.FilterNotMyPRs,
 			},
 			OrgFileName:  "reviews.org",
 			SectionTitle: "Team Reviews",
