@@ -66,6 +66,7 @@ func (prb PRToOrgBridge) Details() []string {
 	details = append(details, fmt.Sprintf("%s\n", prb.PR.GetHTMLURL()))
 	details = append(details, fmt.Sprintf("Title: %s\n", prb.PR.GetTitle()))
 	details = append(details, fmt.Sprintf("Author: %s\n", prb.PR.GetUser().GetLogin()))
+	details = append(details, fmt.Sprintf("Branch: %s\n", *prb.PR.Head.Label))
 	return details
 }
 
