@@ -119,6 +119,16 @@ func FilterPRsByAuthor(prs []*github.PullRequest, author string) []*github.PullR
 	return filtered
 }
 
+func FilterPRsExcludeAuthor(prs []*github.PullRequest, author string) []*github.PullRequest {
+	filtered := []*github.PullRequest{}
+	for _, pr := range prs {
+		if *pr.User.Login != author {
+			filtered = append(filtered, pr)
+		}
+	}
+	return filtered
+}
+
 func FilterPRsByState(prs []*github.PullRequest, state string) []*github.PullRequest {
 	filtered := []*github.PullRequest{}
 	for _, pr := range prs {
@@ -144,6 +154,10 @@ func FilterPRsByLabel(prs []*github.PullRequest, label string) []*github.PullReq
 
 func MyPRs(prs []*github.PullRequest) []*github.PullRequest {
 	return FilterPRsByAuthor(prs, "C-Hipple")
+}
+
+func FilterNotMyPRs(prs []*github.PullRequest) []*github.PullRequest {
+	return FilterPRsExcludeAuthor(prs, "C-Hipple")
 }
 
 func FilterNotDraft(prs []*github.PullRequest) []*github.PullRequest {
