@@ -186,7 +186,7 @@ func MakeTeamFilters(teams []string) func([]*github.PullRequest) []*github.PullR
 }
 
 func FilterMyTeamRequested(prs []*github.PullRequest) []*github.PullRequest {
-	teams := []string{"growth-pod-review", "purchase-pod-review", "growth-and-purchase-pod", "coreteam-review"}
+	teams := []string{"growth-pod-review", "purchase-pod-review", "growth-and-purchase-pod", "coreteam-review", "chat-pod-review-backend"}
 	filtered := []*github.PullRequest{}
 	for _, pr := range prs {
 		for _, team := range pr.RequestedTeams {
