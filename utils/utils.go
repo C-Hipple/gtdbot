@@ -17,33 +17,33 @@ import (
 func ReplaceLinesInFile(file *os.File, new_lines []string, at_line_number int) error {
 	lines, _ := LinesFromReader(file)
 	path, _ := filepath.Abs(file.Name())
-	file_content := replaceLines(lines, new_lines, at_line_number)
+	file_content := strings.Join(replaceLines(lines, new_lines, at_line_number), "\n")
 	return os.WriteFile(path, []byte(file_content), 0644)
 }
 
-func replaceLines(existing_lines []string, new_lines []string, at_line_number int) string {
-	// Helper so we don't need a file for unit tests
-	file_content := ""
-	// fmt.Println("Calling replace with the newlines: ", new_lines)
+func replaceLines(existing_lines []string, new_lines []string, at_line_number int) []string {
+	var out_lines []string
+	j := 0
 	for i, line := range existing_lines {
-		if i == at_line_number {
-			file_content += strings.Join(new_lines, "\n")
-			continue
+		if i < at_line_number {
+			out_lines = append(out_lines, line)
 		}
-		if i >= at_line_number && i < at_line_number + len(new_lines) {
-			continue
+		if i >= at_line_number && i < at_line_number+len(new_lines) {
+			out_lines = append(out_lines, new_lines[j])
+			j += 1
 		}
-		file_content += line
-		file_content += "\n"
+		if i >= at_line_number+len(new_lines) {
+			out_lines = append(out_lines, line)
+		}
 	}
-	return file_content
+	return out_lines
 }
 
 func InsertLinesInFile(file *os.File, new_lines []string, at_line_number int) error {
-		//new line is at the at_line_number, not after, pushes everything below it.
-		lines, _ := LinesFromReader(file)
-		file_content := insertLines(lines, new_lines, at_line_number)
-		path, _ := filepath.Abs(file.Name())
+	//new line is at the at_line_number, not after, pushes everything below it.
+	lines, _ := LinesFromReader(file)
+	file_content := insertLines(lines, new_lines, at_line_number)
+	path, _ := filepath.Abs(file.Name())
 	return os.WriteFile(path, []byte(file_content), 0644)
 }
 
@@ -95,4 +95,20 @@ func PrettyPrint(body []byte) {
 		fmt.Println("Error prettyifying json", err)
 	}
 	fmt.Println(string(pretty_json.Bytes()))
+}
+
+type Pair[T, U any] struct {
+	First  T
+	Second U
+}
+
+func Zip[T, U any](ts []T, us []U) []Pair[T, U] {
+	if len(ts) != len(us) {
+		panic("slices have different length")
+	}
+	pairs := make([]Pair[T, U], len(ts))
+	for i := 0; i < len(ts); i++ {
+		pairs[i] = Pair[T, U]{ts[i], us[i]}
+	}
+	return pairs
 }
