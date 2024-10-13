@@ -3,10 +3,9 @@ package workflows
 import (
 	"fmt"
 	"gtdbot/org"
-	"gtdbot/utils"
+	"strings"
 	"sync"
 	"time"
-	"strings"
 )
 
 type ManagerService struct {
@@ -19,18 +18,19 @@ type ManagerService struct {
 func ListenChanges(channel chan FileChanges, wg *sync.WaitGroup) {
 	for file_change := range channel {
 		wg.Add(1)
-		if file_change.change_type == "Addition" {
-			if strings.Contains(file_change.Lines[0], "draft") {
-				fmt.Print("Adding Draft PR: ", file_change.Lines[3])
+		doc := org.GetBaseOrgDocument(file_change.Filename)
+		change_lines := doc.Serializer.Deserialize(file_change.Item, file_change.Section.IndentLevel)
+		if file_change.ChangeType == "Addition" {
+			if strings.Contains(change_lines[0], "draft") {
+				fmt.Print("Adding Draft PR: ", change_lines[3])
 			} else {
-				fmt.Print("Adding PR: ", file_change.Lines[3])
+				fmt.Print("Adding PR: ", change_lines[3])
 			}
-			fmt.Print(file_change.Lines[2])
-			utils.InsertLinesInFile(org.GetOrgFile(file_change.filename), file_change.Lines, file_change.start_line)
-		} else if file_change.change_type == "Replace" {
-			utils.ReplaceLinesInFile(org.GetOrgFile(file_change.filename), file_change.Lines, file_change.start_line)
+			fmt.Print(change_lines[2])
+			doc.AddItemInSection(file_change.Section.Name, &file_change.Item)
+		} else if file_change.ChangeType == "Replace" {
+			doc.UpdateItemInSection(file_change.Section.Name, &file_change.Item)
 		}
-
 		wg.Done()
 	}
 }

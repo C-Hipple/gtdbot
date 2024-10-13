@@ -15,10 +15,10 @@ type Workflow interface {
 }
 
 type FileChanges struct {
-	change_type string
-	start_line  int
-	filename    string
-	Lines       []string
+	ChangeType string
+	Filename   string
+	Item       org.OrgTODO
+	Section    org.Section
 }
 
 type PRToOrgBridge struct {
@@ -88,49 +88,25 @@ func (prb PRToOrgBridge) String() string {
 // this is the official github package, not our lib, confusing!!
 func SyncTODOToSection(doc org.OrgDocument, pr *github.PullRequest, section org.Section) FileChanges {
 	pr_as_org := PRToOrgBridge{pr}
-	at_line := CheckTODOInSection(pr_as_org, section)
+	at_line := org.CheckTODOInSection(pr_as_org, section)
 	if at_line != -1 {
 		if true {
 			// Currently the Replace is broken
 			return FileChanges{
-				change_type: "No Change"}
+				ChangeType: "No Change"}
 		}
 		fmt.Println("Replacing / Updating: ", pr_as_org.Title())
-
-		// TODO: TO fix this we need to get teh start_line before we actually write, not when we determine
-		// that it can be updated.  We have a race condition :/
 		return FileChanges{
-			change_type: "Replace",
-			start_line: at_line,
-			filename: doc.Filename,
-			Lines: doc.Serializer.Deserialize(pr_as_org, section.IndentLevel),
+			ChangeType: "Replace",
+			Filename:   doc.Filename,
+			Item:       pr_as_org,
+			Section: section,
 		}
 	}
 	return FileChanges{
-		change_type: "Addition",
-		start_line:  section.StartLine + 1,
-		filename:    doc.Filename,
-		Lines:       doc.Serializer.Deserialize(pr_as_org, section.IndentLevel),
+		ChangeType: "Addition",
+		Filename:   doc.Filename,
+		Item:       pr_as_org,
+		Section: section,
 	}
-}
-
-func CheckTODOInSection(todo org.OrgTODO, section org.Section) int {
-	// returns the line number if it's found, otherwise returns -1
-	serializer := org.BaseOrgSerializer{}
-	at_line := section.StartLine + 1 // account for the section title
-	for _, line_item := range section.Items {
-		if strings.Contains(line_item.Summary(), todo.Summary()) {
-			return at_line
-		}
-		if line_item.Summary() == todo.Summary() {
-			return at_line
-		}
-		for _, detail := range line_item.Details() {
-			if strings.Contains(detail, todo.ID()) {
-				return at_line
-			}
-		}
-		at_line += len(serializer.Deserialize(line_item, section.IndentLevel))
-	}
-	return -1
 }

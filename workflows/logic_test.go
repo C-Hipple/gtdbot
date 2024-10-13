@@ -12,7 +12,7 @@ func makeSection() org.Section{
 	}
 
 	section := org.Section{
-		Description: "Section Desc",
+		Name: "Section Desc",
 		StartLine: 10,
 		IndentLevel: 2,
 		Items: items,
