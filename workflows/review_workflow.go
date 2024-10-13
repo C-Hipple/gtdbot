@@ -78,7 +78,7 @@ func (w ListMyPRsWorkflow) Run(c chan FileChanges, wg *sync.WaitGroup) {
 			repo_name := *pr.Base.Repo.Name
 			if repo_name == "chaturbate" {
 				released := git_tools.CheckCommitReleased(client, w.ReleasedVersion.SHA, *pr.MergeCommitSHA)
-				fmt.Println("Released PR: %s %s", *pr.Title, released)
+				fmt.Printf("Released PR: %s %t", *pr.Title, released)
 				//output.Item.Details() = append(output.Lines, "Released: "+strconv.FormatBool(released))
 				//output.Lines[0] = strings.Replace(output.Lines[0], "merged", "released", 1)
 			}

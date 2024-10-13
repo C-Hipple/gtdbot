@@ -32,17 +32,17 @@ func makeItem(i string) org.OrgTODO {
 func Test_CheckTODOInSection(t *testing.T) {
 	section := makeSection()
 
-	at_line := CheckTODOInSection(makeItem("1"), section)
+	at_line := org.CheckTODOInSection(makeItem("1"), section)
 	if at_line != 11 {
 		t.Fatalf("Incorrect starting line found.  Expected %v, found %v", 11, at_line)
 	}
 
-	at_line = CheckTODOInSection(makeItem("2"), section)
+	at_line = org.CheckTODOInSection(makeItem("2"), section)
 	if at_line != 15 {
 		t.Fatalf("Incorrect starting line found.  Expected %v, found %v", 15, at_line)
 	}
 
-	at_line = CheckTODOInSection(makeItem("4"), section)
+	at_line = org.CheckTODOInSection(makeItem("4"), section)
 	if at_line != -1 {
 		t.Fatalf("Incorrect starting line found.  Expected %v, found %v", -1, at_line)
 	}
