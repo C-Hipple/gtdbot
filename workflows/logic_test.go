@@ -5,17 +5,17 @@ import (
 	"testing"
 )
 
-func makeSection() org.Section{
+func makeSection() org.Section {
 	var items []org.OrgTODO
 	for _, val := range []string{"1", "2", "3"} {
 		items = append(items, makeItem(val))
 	}
 
 	section := org.Section{
-		Name: "Section Desc",
-		StartLine: 10,
+		Name:        "Section Desc",
+		StartLine:   10,
 		IndentLevel: 2,
-		Items: items,
+		Items:       items,
 	}
 	return section
 
@@ -23,7 +23,7 @@ func makeSection() org.Section{
 
 func makeItem(i string) org.OrgTODO {
 	return org.NewOrgItem("header "+i,
-		[]string{"detail 1"+i, "detail 2"+i, "detail 3"+i},
+		[]string{"detail 1" + i, "detail 2" + i, "detail 3" + i},
 		"TODO",
 		[]string{"tag1", "tag2"},
 	)
@@ -45,5 +45,6 @@ func Test_CheckTODOInSection(t *testing.T) {
 	at_line = org.CheckTODOInSection(makeItem("4"), section)
 	if at_line != -1 {
 		t.Fatalf("Incorrect starting line found.  Expected %v, found %v", -1, at_line)
+		g
 	}
 }

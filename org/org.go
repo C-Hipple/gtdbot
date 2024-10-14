@@ -23,7 +23,6 @@ func useInterface(a OrgItem) bool {
 	return InterfaceCheck(a)
 }
 
-
 func CleanHeader(line string) string {
 	line = strings.ReplaceAll(line, "*", "")
 	line = strings.ReplaceAll(line, "TODO", "")
@@ -55,8 +54,6 @@ func GetOrgFile(filename string) *os.File {
 	}
 	return file
 }
-
-
 
 func CheckTODOInSection(todo OrgTODO, section Section) int {
 	// returns the line number if it's found, otherwise returns -1

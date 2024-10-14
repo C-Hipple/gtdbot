@@ -22,7 +22,7 @@ type OrgDocument struct {
 }
 
 func GetBaseOrgDocument(file_name string) OrgDocument {
-	return GetOrgDocument(file_name , BaseOrgSerializer{})
+	return GetOrgDocument(file_name, BaseOrgSerializer{})
 
 }
 
@@ -345,7 +345,7 @@ func findOrgStatus(line string) string {
 	return ""
 }
 
-type MergeInfoOrgSerializer struct {}
+type MergeInfoOrgSerializer struct{}
 
 func (ser MergeInfoOrgSerializer) Deserialize(item OrgTODO, indent_level int) []string {
 	var result []string

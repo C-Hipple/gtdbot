@@ -100,13 +100,13 @@ func SyncTODOToSection(doc org.OrgDocument, pr *github.PullRequest, section org.
 			ChangeType: "Replace",
 			Filename:   doc.Filename,
 			Item:       pr_as_org,
-			Section: section,
+			Section:    section,
 		}
 	}
 	return FileChanges{
 		ChangeType: "Addition",
 		Filename:   doc.Filename,
 		Item:       pr_as_org,
-		Section: section,
+		Section:    section,
 	}
 }
