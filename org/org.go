@@ -3,39 +3,8 @@ package org
 import (
 	"fmt"
 	"os"
-	"regexp"
 	"strings"
 )
-
-const SectionIndentDepth = 2
-
-type LeankitCardOrgLineItem struct {
-	Title  string
-	Status string
-	Url    string
-	Notes  []string // will be the other things below it..
-}
-
-func (li LeankitCardOrgLineItem) ID() string {
-	id_regex, _ := regexp.Compile("[0-9]+")
-	return id_regex.FindString(li.Url)
-}
-
-func (li LeankitCardOrgLineItem) FullLine(indent_level int) string {
-	return strings.Repeat("*", indent_level) + " " + li.Status + " " + li.Url + " " + li.Title
-}
-
-func (li LeankitCardOrgLineItem) Summary() string {
-	return li.Title
-}
-
-func (li LeankitCardOrgLineItem) Details() []string {
-	return li.Notes
-}
-
-func (li LeankitCardOrgLineItem) GetStatus() string {
-	return li.Status
-}
 
 type OrgTODO interface {
 	FullLine(indent_level int) string
@@ -52,10 +21,6 @@ func InterfaceCheck(a OrgTODO) bool {
 
 func useInterface(a OrgItem) bool {
 	return InterfaceCheck(a)
-}
-
-func (li LeankitCardOrgLineItem) CheckDone() bool {
-	return li.GetStatus() == "DONE" || li.GetStatus() == "CANCELLED"
 }
 
 func CleanHeader(line string) string {
@@ -88,4 +53,25 @@ func GetOrgFile(filename string) *os.File {
 		os.Exit(1)
 	}
 	return file
+}
+
+func CheckTODOInSection(todo OrgTODO, section Section) int {
+	// returns the line number if it's found, otherwise returns -1
+	serializer := BaseOrgSerializer{}
+	at_line := section.StartLine + 1 // account for the section title
+	for _, line_item := range section.Items {
+		if strings.Contains(line_item.Summary(), todo.Summary()) {
+			return at_line
+		}
+		if line_item.Summary() == todo.Summary() {
+			return at_line
+		}
+		for _, detail := range line_item.Details() {
+			if strings.Contains(detail, todo.ID()) {
+				return at_line
+			}
+		}
+		at_line += len(serializer.Deserialize(line_item, section.IndentLevel))
+	}
+	return -1
 }
