@@ -4,8 +4,6 @@ import (
 	"fmt"
 	"gtdbot/git_tools"
 	"gtdbot/org"
-	"strconv"
-	"strings"
 	"sync"
 )
 
@@ -30,7 +28,7 @@ func (w SyncReviewRequestsWorkflow) Run(c chan FileChanges, wg *sync.WaitGroup) 
 		w.Repo,
 	)
 	prs = git_tools.ApplyPRFilters(prs, w.Filters)
-	doc := org.GetOrgDocument(w.OrgFileName)
+	doc := org.GetBaseOrgDocument(w.OrgFileName)
 	section, err := doc.GetSection(w.SectionTitle)
 	if err != nil {
 		fmt.Println("Error getting section: ", err, w.SectionTitle)
@@ -65,7 +63,7 @@ func (w ListMyPRsWorkflow) Run(c chan FileChanges, wg *sync.WaitGroup) {
 	client := git_tools.GetGithubClient()
 	prs := git_tools.GetManyRepoPRs(client, w.PRState, w.Owner, w.Repos)
 
-	doc := org.GetOrgDocument(w.OrgFileName)
+	doc := org.GetOrgDocument(w.OrgFileName, org.MergeInfoOrgSerializer{})
 	section, err := doc.GetSection(w.SectionTitle)
 	if err != nil {
 		fmt.Println("Error getting section: ", err, w.SectionTitle)
@@ -74,20 +72,16 @@ func (w ListMyPRsWorkflow) Run(c chan FileChanges, wg *sync.WaitGroup) {
 	prs = git_tools.ApplyPRFilters(prs, []git_tools.PRFilter{git_tools.MyPRs})
 	for _, pr := range prs {
 		output := SyncTODOToSection(doc, pr, section)
-		if pr.MergedAt != nil {
+		if pr.MergedAt != nil && output.ChangeType != "No Change" {
 			// This is a hack, it should be when we make the FileChanges in SyncTODO section
 			// but we'd need the released version and repo info for all repos for the workflows.
 			repo_name := *pr.Base.Repo.Name
 			if repo_name == "chaturbate" {
 				released := git_tools.CheckCommitReleased(client, w.ReleasedVersion.SHA, *pr.MergeCommitSHA)
-				output.Lines = append(output.Lines, "Released: "+strconv.FormatBool(released))
-				output.Lines[0] = strings.Replace(output.Lines[0], "merged", "released", 1)
-
-			} else {
-				output.Lines = append(output.Lines, "Released: ???")
+				fmt.Printf("Released PR: %s %t", *pr.Title, released)
+				//output.Item.Details() = append(output.Lines, "Released: "+strconv.FormatBool(released))
+				//output.Lines[0] = strings.Replace(output.Lines[0], "merged", "released", 1)
 			}
-
-			//fmt.Printf("PR: %v; Released: %v/n", pr.GetTitle(), released)
 		}
 
 		c <- output
