@@ -45,6 +45,5 @@ func Test_CheckTODOInSection(t *testing.T) {
 	at_line = org.CheckTODOInSection(makeItem("4"), section)
 	if at_line != -1 {
 		t.Fatalf("Incorrect starting line found.  Expected %v, found %v", -1, at_line)
-		g
 	}
 }
