@@ -2,6 +2,7 @@ package workflows
 
 import (
 	"fmt"
+	"gtdbot/git_tools"
 	"gtdbot/org"
 	"strings"
 	"sync"
@@ -35,10 +36,21 @@ func ListenChanges(channel chan FileChanges, wg *sync.WaitGroup) {
 	}
 }
 
-func NewManagerService(workflows []Workflow, oneoff bool) ManagerService {
+func NewManagerService(workflows []Workflow, release git_tools.DeployedVersion, oneoff bool) ManagerService {
+	used_workflows := []Workflow{}
+	for _, wf := range workflows {
+		if strings.Contains(fmt.Sprintf("%T", wf), "ListMyPRsWorkflow") {
+			fixed := wf.(ListMyPRsWorkflow)
+			fixed.ReleasedVersion = release
+			used_workflows = append(used_workflows, fixed)
+			fmt.Println("Set the release to be: ", release)
+		} else {
+			used_workflows = append(used_workflows, wf)
+		}
+	}
 
 	return ManagerService{
-		Workflows:     workflows,
+		Workflows:     used_workflows,
 		workflow_chan: make(chan FileChanges),
 		sleep_time:    1 * time.Minute,
 		oneoff:        oneoff,

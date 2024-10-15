@@ -27,7 +27,7 @@ func GetBaseOrgDocument(file_name string) OrgDocument {
 }
 
 func GetOrgDocument(file_name string, serializer OrgSerializer) OrgDocument {
-	sections, err := ParseSectionsFromFile(file_name, serializer.(BaseOrgSerializer))
+	sections, err := ParseSectionsFromFile(file_name, serializer)
 	if err != nil {
 		fmt.Println("Error parsing sections from file: ", err)
 		os.Exit(1)
@@ -155,7 +155,7 @@ func (pd ParseDebugger) Println(line ...any) {
 	}
 }
 
-func ParseSectionsFromFile(file_name string, serializer BaseOrgSerializer) ([]Section, error) {
+func ParseSectionsFromFile(file_name string, serializer OrgSerializer) ([]Section, error) {
 	file := GetOrgFile(file_name)
 	all_lines, _ := utils.LinesFromReader(file)
 	file.Close()
