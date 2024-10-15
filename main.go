@@ -1,6 +1,7 @@
 package main
 
 import (
+	"fmt"
 	"flag"
 	"gtdbot/git_tools"
 	"gtdbot/workflows"
@@ -11,120 +12,10 @@ func get_manager(one_off bool, config *Config) workflows.ManagerService {
 	if err != nil {
 		panic(err)
 	}
-	repos := []string{"chaturbate", "mm-cli", "mock-affiliate", "devsync", "mock-identity", "cb_billing", "billingv2"}
-
-	return workflows.NewManagerService([]workflows.Workflow{
-		workflows.SyncReviewRequestsWorkflow{
-			Name:  "CB Team Reviews",
-			Owner: "multimediallc",
-			Repo:  "chaturbate",
-			Filters: []git_tools.PRFilter{
-				git_tools.FilterMyTeamRequested,
-				git_tools.FilterNotDraft,
-				git_tools.FilterNotMyPRs,
-			},
-			OrgFileName:  "reviews.org",
-			SectionTitle: "Team Reviews",
-		},
-		workflows.SyncReviewRequestsWorkflow{
-			Name:  "CB Personal Reviews",
-			Owner: "multimediallc",
-			Repo:  "chaturbate",
-			Filters: []git_tools.PRFilter{
-				git_tools.FilterMyReviewRequested,
-				git_tools.FilterNotDraft,
-			},
-			OrgFileName:  "reviews.org",
-			SectionTitle: "My Review Requests",
-		},
-		workflows.SyncReviewRequestsWorkflow{
-			Name:         "Falcon Nest Helper",
-			Owner:        "multimediallc",
-			Repo:         "falcon-nest",
-			Filters:      nil,
-			OrgFileName:  "reviews.org",
-			SectionTitle: "Other Repos",
-		},
-		// workflows.SyncReviewRequestsWorkflow{
-		//	Name:  "Core Reviews",
-		//	Owner: "multimediallc",
-		//	Repo:  "chaturbate",
-		//	Filters: []git_tools.PRFilter{
-		//		git_tools.FilterMyReviewRequested,
-		//	},
-		//	OrgFileName:  "reviews.org",
-		//	SectionTitle: "My Review Requests",
-		// },
-		// workflows.SyncReviewRequestsWorkflow{
-		//	Name:         "Select by Coverage Team Reviews",
-		//	Owner:        "multimediallc",
-		//	Repo:         "pytest-select-by-coverage",
-		//	Filters:      []git_tools.PRFilter{},
-		//	OrgFileName:  "reviews.org",
-		//	SectionTitle: "Other Repos",
-		// },
-		// workflows.SyncReviewRequestsWorkflow{
-		//	Name:  "mm-actions Team Reviews",
-		//	Owner: "multimediallc",
-		//	Repo:  "mm-actions",
-		//	Filters: []git_tools.PRFilter{
-		//		git_tools.FilterMyTeamRequested,
-		//	},
-		//	OrgFileName:  "reviews.org",
-		//	SectionTitle: "Other Repos",
-		// },
-		// workflows.SyncReviewRequestsWorkflow{
-		//	Name:  "mm-cli Team Reviews",
-		//	Owner: "multimediallc",
-		//	Repo:  "mm-cli",
-		//	Filters: []git_tools.PRFilter{
-		//		git_tools.FilterMyTeamRequested,
-		//	},
-		//	OrgFileName:  "reviews.org",
-		//	SectionTitle: "Other Repos",
-		// },
-		// workflows.SyncReviewRequestsWorkflow{
-		//	Name:  "mm-cli Team Reviews",
-		//	Owner: "multimediallc",
-		//	Repo:  "mm-cli",
-		//	Filters: []git_tools.PRFilter{
-		//		git_tools.FilterMyTeamRequested,
-		//	},
-		//	OrgFileName:  "reviews.org",
-		//	SectionTitle: "Other Repos",
-		// },
-
-		workflows.ListMyPRsWorkflow{
-			Name:            "List my Open PRs",
-			Repos:           repos,
-			Owner:           "multimediallc",
-			PRState:         "open",
-			OrgFileName:     "reviews.org",
-			SectionTitle:    "My Pull Requests",
-			ReleasedVersion: release,
-		},
-
-		workflows.ListMyPRsWorkflow{
-			Name:            "List my Closed PRs",
-			Repos:           repos,
-			Owner:           "multimediallc",
-			PRState:         "closed",
-			OrgFileName:     "reviews.org",
-			SectionTitle:    "My Closed Pull Requests",
-			ReleasedVersion: release,
-		},
-
-		// workflows.SyncReviewRequestsWorkflow{
-		//	Name: "Coreteam Devkit Reviews"
-		//	Owner: "multimediallc",
-		//	Repo:  "coreteam-devkit",
-		//	Filters: []git_tools.PRFilter{
-		//		git_tools.FilterMyReviewRequested,
-		//	},
-		//	OrgFileName:  "reviews.org",
-		//	SectionTitle: "Other Repos",
-		// },
-	},
+	fmt.Println(config)
+	return workflows.NewManagerService(
+		config.Workflows,
+		release,
 		one_off,
 	)
 }
@@ -132,9 +23,7 @@ func get_manager(one_off bool, config *Config) workflows.ManagerService {
 func main() {
 	one_off := flag.Bool("oneoff", false, "Pass oneoff to only run once")
 	flag.Parse()
-
 	config := load_config()
-	panic("done")
 	ms := get_manager(*one_off, &config)
 	ms.Run()
 }
