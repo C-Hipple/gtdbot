@@ -5,7 +5,7 @@ import (
 	"testing"
 )
 
-func makeSection() org.Section{
+func makeSection() org.Section {
 	var items []org.OrgTODO
 	for _, val := range []string{"1", "2", "3"} {
 		items = append(items, makeItem(val))
@@ -13,9 +13,9 @@ func makeSection() org.Section{
 
 	section := org.Section{
 		Description: "Section Desc",
-		StartLine: 10,
+		StartLine:   10,
 		IndentLevel: 2,
-		Items: items,
+		Items:       items,
 	}
 	return section
 
@@ -23,7 +23,7 @@ func makeSection() org.Section{
 
 func makeItem(i string) org.OrgTODO {
 	return org.NewOrgItem("header "+i,
-		[]string{"detail 1"+i, "detail 2"+i, "detail 3"+i},
+		[]string{"detail 1" + i, "detail 2" + i, "detail 3" + i},
 		"TODO",
 		[]string{"tag1", "tag2"},
 	)

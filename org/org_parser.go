@@ -68,7 +68,6 @@ type Section struct {
 	Items       []OrgTODO
 }
 
-
 func (s Section) GetStatus() string {
 	if s.CheckAllComplete() {
 		return "DONE"

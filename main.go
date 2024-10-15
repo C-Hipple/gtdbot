@@ -1,8 +1,8 @@
 package main
 
 import (
-	"fmt"
 	"flag"
+	"fmt"
 	"gtdbot/git_tools"
 	"gtdbot/workflows"
 )

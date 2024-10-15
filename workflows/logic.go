@@ -101,9 +101,9 @@ func SyncTODOToSection(doc org.OrgDocument, pr *github.PullRequest, section org.
 		// that it can be updated.  We have a race condition :/
 		return FileChanges{
 			change_type: "Replace",
-			start_line: at_line,
-			filename: doc.Filename,
-			Lines: doc.Serializer.Deserialize(pr_as_org, section.IndentLevel),
+			start_line:  at_line,
+			filename:    doc.Filename,
+			Lines:       doc.Serializer.Deserialize(pr_as_org, section.IndentLevel),
 		}
 	}
 	return FileChanges{

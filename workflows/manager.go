@@ -2,12 +2,12 @@ package workflows
 
 import (
 	"fmt"
+	"gtdbot/git_tools"
 	"gtdbot/org"
 	"gtdbot/utils"
-	"gtdbot/git_tools"
+	"strings"
 	"sync"
 	"time"
-	"strings"
 )
 
 type ManagerService struct {

@@ -46,7 +46,7 @@ func load_config() Config {
 	}
 
 	return Config{
-		Repos: intermediate_config.Repos,
+		Repos:     intermediate_config.Repos,
 		Workflows: MatchWorkflows(intermediate_config.Workflows),
 	}
 }
@@ -93,7 +93,6 @@ var filter_func_map = map[string]func(prs []*github.PullRequest) []*github.PullR
 	"FilterMyTeamRequested":   git_tools.FilterMyTeamRequested,
 	"FilterNotMyPRs":          git_tools.FilterNotMyPRs,
 }
-
 
 func BuildFiltersList(names []string) []git_tools.PRFilter {
 	filters := []git_tools.PRFilter{}
