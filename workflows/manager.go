@@ -42,10 +42,10 @@ func NewManagerService(workflows []Workflow, release git_tools.DeployedVersion, 
 	used_workflows := []Workflow{}
 	for _, wf := range workflows {
 		if strings.Contains(fmt.Sprintf("%T", wf), "ListMyPRsWorkflow") {
+			// TODO: match the release getter with the repo
 			fixed := wf.(ListMyPRsWorkflow)
 			fixed.ReleasedVersion = release
 			used_workflows = append(used_workflows, fixed)
-			fmt.Println("Set the release to be: ", release)
 		} else {
 			used_workflows = append(used_workflows, wf)
 		}
