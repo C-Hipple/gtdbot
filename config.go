@@ -28,7 +28,7 @@ type RawWorkflow struct {
 	PRState      string
 }
 
-func load_config() Config {
+func LoadConfig() Config {
 	// Load TOML config
 
 	var intermediate_config struct {
