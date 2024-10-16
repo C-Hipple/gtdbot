@@ -90,12 +90,7 @@ func SyncTODOToSection(doc org.OrgDocument, pr *github.PullRequest, section org.
 	pr_as_org := PRToOrgBridge{pr}
 	at_line := org.CheckTODOInSection(pr_as_org, section)
 	if at_line != -1 {
-		if true {
-			// Currently the Replace is broken
-			return FileChanges{
-				ChangeType: "No Change"}
-		}
-		fmt.Println("Replacing / Updating: ", pr_as_org.Title())
+		// TODO : Determine if actual changes?
 		return FileChanges{
 			ChangeType: "Replace",
 			Filename:   doc.Filename,

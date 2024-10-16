@@ -17,8 +17,21 @@ import (
 func ReplaceLinesInFile(file *os.File, new_lines []string, at_line_number int) error {
 	lines, _ := LinesFromReader(file)
 	path, _ := filepath.Abs(file.Name())
-	file_content := strings.Join(replaceLines(lines, new_lines, at_line_number), "\n")
-	return os.WriteFile(path, []byte(file_content), 0644)
+	updated_lines := strings.Join(FixNewLineEndings(replaceLines(lines, new_lines, at_line_number)), "")
+	return os.WriteFile(path, []byte(updated_lines), 0644)
+}
+
+func FixNewLineEndings(lines []string) []string {
+	// I'm sloppy about what does or does not have a \n at the end
+	out_lines := []string{}
+	for _, line := range lines {
+		if strings.Contains(line, "\n") {
+			out_lines = append(out_lines, line)
+		} else {
+			out_lines = append(out_lines, line+"\n")
+		}
+	}
+	return out_lines
 }
 
 func replaceLines(existing_lines []string, new_lines []string, at_line_number int) []string {
