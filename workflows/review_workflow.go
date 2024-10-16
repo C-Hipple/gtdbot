@@ -36,7 +36,9 @@ func (w SyncReviewRequestsWorkflow) Run(c chan FileChanges, wg *sync.WaitGroup) 
 	}
 	for _, pr := range prs {
 		output := SyncTODOToSection(doc, pr, section)
-		c <- output
+		if output.ChangeType != "No Change" {
+			c <- output
+		}
 	}
 }
 
@@ -72,9 +74,8 @@ func (w ListMyPRsWorkflow) Run(c chan FileChanges, wg *sync.WaitGroup) {
 	prs = git_tools.ApplyPRFilters(prs, []git_tools.PRFilter{git_tools.MyPRs})
 	for _, pr := range prs {
 		output := SyncTODOToSection(doc, pr, section)
+		// TODO This is moving to the serializer
 		if pr.MergedAt != nil && output.ChangeType != "No Change" {
-			// This is a hack, it should be when we make the FileChanges in SyncTODO section
-			// but we'd need the released version and repo info for all repos for the workflows.
 			repo_name := *pr.Base.Repo.Name
 			if repo_name == "chaturbate" {
 				released := git_tools.CheckCommitReleased(client, w.ReleasedVersion.SHA, *pr.MergeCommitSHA)
@@ -83,7 +84,9 @@ func (w ListMyPRsWorkflow) Run(c chan FileChanges, wg *sync.WaitGroup) {
 				//output.Lines[0] = strings.Replace(output.Lines[0], "merged", "released", 1)
 			}
 		}
+		if output.ChangeType != "No Change" {
+			c <- output
+		}
 
-		c <- output
 	}
 }

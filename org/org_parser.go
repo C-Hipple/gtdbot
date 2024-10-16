@@ -67,6 +67,8 @@ func (o OrgDocument) AddItemInSection(section_name string, new_item *OrgTODO) er
 }
 
 func (o OrgDocument) UpdateItemInSection(section_name string, new_item *OrgTODO) error {
+	// TODO If the existing section has more lines than the update, then we need to remove the trailing lines
+	// otherwise the extra lines will persist
 	section, err := o.GetSection(section_name)
 	if err != nil {
 		return err
@@ -345,7 +347,8 @@ func findOrgStatus(line string) string {
 	return ""
 }
 
-type MergeInfoOrgSerializer struct{}
+type MergeInfoOrgSerializer struct {
+}
 
 func (ser MergeInfoOrgSerializer) Deserialize(item OrgTODO, indent_level int) []string {
 	var result []string
