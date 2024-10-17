@@ -118,6 +118,7 @@ type Pair[T, U any] struct {
 
 func Zip[T, U any](ts []T, us []U) []Pair[T, U] {
 	if len(ts) != len(us) {
+		// TODO: consider handling if different lengths
 		panic("slices have different length")
 	}
 	pairs := make([]Pair[T, U], len(ts))
@@ -125,4 +126,13 @@ func Zip[T, U any](ts []T, us []U) []Pair[T, U] {
 		pairs[i] = Pair[T, U]{ts[i], us[i]}
 	}
 	return pairs
+}
+
+
+func Map[T, U any](ts []T, fn func(T) U ) []U {
+	result := make([]U, len(ts));
+	for i, t := range ts {
+		result[i] = fn(t)
+	}
+	return result
 }

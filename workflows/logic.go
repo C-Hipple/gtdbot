@@ -3,6 +3,7 @@ package workflows
 import (
 	"fmt"
 	"gtdbot/org"
+	"gtdbot/utils"
 	"strings"
 	"sync"
 
@@ -68,8 +69,10 @@ func (prb PRToOrgBridge) Details() []string {
 	details = append(details, fmt.Sprintf("Author: %s\n", prb.PR.GetUser().GetLogin()))
 	details = append(details, fmt.Sprintf("Branch: %s\n", *prb.PR.Head.Label))
 	// reviewers & teams need to extract the Name
-	// details = append(details, fmt.Sprintf("Requested Reviewers: %s\n", prb.PR.RequestedReviewers))
-	// details = append(details, fmt.Sprintf("Requested Teams: %s\n", prb.PR.RequestedTeams))
+	details = append(details, fmt.Sprintf("Requested Reviewers: %s\n",
+		utils.Map(prb.PR.RequestedReviewers, getReviewerName)))
+	details = append(details, fmt.Sprintf("Requested Teams: %s\n",
+		utils.Map(prb.PR.RequestedTeams, getTeamName)))
 	// need to escape the * someho
 	// details = append(details, "**** BODY\n %s\n", *prb.PR.Body)
 	return details
@@ -78,6 +81,15 @@ func (prb PRToOrgBridge) Details() []string {
 func (prb PRToOrgBridge) String() string {
 	return prb.Title()
 }
+
+func getReviewerName(reviewer *github.User) string {
+	return *reviewer.Login
+}
+
+func getTeamName(reviewer *github.Team) string {
+	return *reviewer.Name
+}
+
 
 // func (prb PRToOrgBridge) GetReleased() string {
 //	repo_name := *prb.PR.Base.Repo.Name
