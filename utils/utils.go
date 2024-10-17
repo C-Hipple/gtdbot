@@ -60,6 +60,7 @@ func InsertLinesInFile(file *os.File, new_lines []string, at_line_number int) er
 	return os.WriteFile(path, []byte(file_content), 0644)
 }
 
+
 func insertLines(existing_lines []string, new_lines []string, at_line_number int) string {
 	// Helper! for unit tests so we don't need to make a file
 	file_content := ""

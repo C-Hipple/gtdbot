@@ -67,6 +67,11 @@ func (prb PRToOrgBridge) Details() []string {
 	details = append(details, fmt.Sprintf("Title: %s\n", prb.PR.GetTitle()))
 	details = append(details, fmt.Sprintf("Author: %s\n", prb.PR.GetUser().GetLogin()))
 	details = append(details, fmt.Sprintf("Branch: %s\n", *prb.PR.Head.Label))
+	// reviewers & teams need to extract the Name
+	// details = append(details, fmt.Sprintf("Requested Reviewers: %s\n", prb.PR.RequestedReviewers))
+	// details = append(details, fmt.Sprintf("Requested Teams: %s\n", prb.PR.RequestedTeams))
+	// need to escape the * someho
+	// details = append(details, "**** BODY\n %s\n", *prb.PR.Body)
 	return details
 }
 
