@@ -60,7 +60,6 @@ func InsertLinesInFile(file *os.File, new_lines []string, at_line_number int) er
 	return os.WriteFile(path, []byte(file_content), 0644)
 }
 
-
 func insertLines(existing_lines []string, new_lines []string, at_line_number int) string {
 	// Helper! for unit tests so we don't need to make a file
 	file_content := ""
@@ -128,9 +127,8 @@ func Zip[T, U any](ts []T, us []U) []Pair[T, U] {
 	return pairs
 }
 
-
-func Map[T, U any](ts []T, fn func(T) U ) []U {
-	result := make([]U, len(ts));
+func Map[T, U any](ts []T, fn func(T) U) []U {
+	result := make([]U, len(ts))
 	for i, t := range ts {
 		result[i] = fn(t)
 	}

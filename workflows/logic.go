@@ -66,13 +66,20 @@ func (prb PRToOrgBridge) Details() []string {
 	details = append(details, fmt.Sprintf("%d\n", prb.PR.GetNumber()))
 	details = append(details, fmt.Sprintf("%s\n", prb.PR.GetHTMLURL()))
 	details = append(details, fmt.Sprintf("Title: %s\n", prb.PR.GetTitle()))
-	details = append(details, fmt.Sprintf("Author: %s\n", prb.PR.GetUser().GetLogin()))
+
+	user := prb.PR.GetUser()
+	author_string := fmt.Sprintf("Author: %s", user.GetLogin())
+	if user.GetName() != "" {
+		author_string = author_string + fmt.Sprintf(" (%s)", user.GetName())
+	}
+
+	details = append(details, author_string+"\n")
 	details = append(details, fmt.Sprintf("Branch: %s\n", *prb.PR.Head.Label))
 	// reviewers & teams need to extract the Name
 	details = append(details, fmt.Sprintf("Requested Reviewers: %s\n",
-		utils.Map(prb.PR.RequestedReviewers, getReviewerName)))
+		strings.Join(utils.Map(prb.PR.RequestedReviewers, getReviewerName), ", ")))
 	details = append(details, fmt.Sprintf("Requested Teams: %s\n",
-		utils.Map(prb.PR.RequestedTeams, getTeamName)))
+		strings.Join(utils.Map(prb.PR.RequestedTeams, getTeamName), ", ")))
 	// need to escape the * someho
 	// details = append(details, "**** BODY\n %s\n", *prb.PR.Body)
 	return details
@@ -89,7 +96,6 @@ func getReviewerName(reviewer *github.User) string {
 func getTeamName(reviewer *github.Team) string {
 	return *reviewer.Name
 }
-
 
 // func (prb PRToOrgBridge) GetReleased() string {
 //	repo_name := *prb.PR.Base.Repo.Name
@@ -108,6 +114,7 @@ func SyncTODOToSection(doc org.OrgDocument, pr *github.PullRequest, section org.
 	at_line := org.CheckTODOInSection(pr_as_org, section)
 	if at_line != -1 {
 		// TODO : Determine if actual changes?
+		fmt.Println("Doing update for item ", pr_as_org.String())
 		return FileChanges{
 			ChangeType: "Replace",
 			Filename:   doc.Filename,
