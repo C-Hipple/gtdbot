@@ -22,6 +22,7 @@ type RawWorkflow struct {
 	Name         string
 	Owner        string
 	Repo         string
+	Repos        []string
 	Filters      []string
 	OrgFileName  string
 	SectionTitle string
@@ -80,6 +81,7 @@ func BuildListMyPRsWorkflow(raw *RawWorkflow) workflows.Workflow {
 	wf := workflows.ListMyPRsWorkflow{
 		Name:         raw.Name,
 		Owner:        raw.Owner,
+		Repos:        raw.Repos,
 		PRState:      raw.PRState,
 		OrgFileName:  raw.OrgFileName,
 		SectionTitle: raw.SectionTitle,
