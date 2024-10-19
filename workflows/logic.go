@@ -140,7 +140,7 @@ func cleanBody(body *string) string {
 // this is the official github package, not our lib, confusing!!
 func SyncTODOToSection(doc org.OrgDocument, pr *github.PullRequest, section org.Section) FileChanges {
 	pr_as_org := PRToOrgBridge{pr}
-	at_line := org.CheckTODOInSection(pr_as_org, section)
+	at_line, _ := org.CheckTODOInSection(pr_as_org, section)
 	if at_line != -1 {
 		// TODO : Determine if actual changes?
 		fmt.Println("Doing update for item ", pr_as_org.String())

@@ -60,6 +60,7 @@ func InsertLinesInFile(file *os.File, new_lines []string, at_line_number int) er
 	return os.WriteFile(path, []byte(file_content), 0644)
 }
 
+
 func insertLines(existing_lines []string, new_lines []string, at_line_number int) string {
 	// Helper! for unit tests so we don't need to make a file
 	file_content := ""
@@ -76,6 +77,29 @@ func insertLines(existing_lines []string, new_lines []string, at_line_number int
 		file_content += "\n"
 	}
 	return file_content
+}
+
+
+func RemoveLinesInFile(file *os.File, at_line_number int, remove_count int) error {
+	lines, _ := LinesFromReader(file)
+	path, _ := filepath.Abs(file.Name())
+	updated_lines := strings.Join(FixNewLineEndings(removeLines(lines, at_line_number, remove_count)), "")
+	return os.WriteFile(path, []byte(updated_lines), 0644)
+}
+
+
+func removeLines(existing_lines []string, at_line_number int, remove_count int) []string {
+	output_lines := []string{}
+	for i, line := range existing_lines {
+		if i < at_line_number {
+			output_lines = append(output_lines, line)
+		} else if i >= at_line_number && i < at_line_number + remove_count {
+			continue
+		} else {
+			output_lines = append(output_lines, line)
+		}
+	}
+	return output_lines
 }
 
 func LinesFromReader(r io.Reader) ([]string, error) {

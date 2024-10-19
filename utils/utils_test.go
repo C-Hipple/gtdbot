@@ -75,3 +75,35 @@ author
 		t.Fatalf("Updated lines do not match.  Target: %v \nActual %v", target, updated)
 	}
 }
+
+func Test_RemoveLines(t *testing.T) {
+	existing_lines := []string{
+		"* TODO PR #1 <title> :draft:",
+		"sub-header",
+		"add. sub-header",
+		"url",
+		"the_author",
+		"*** Body",
+		"",
+		"In this PR We do things",
+	}
+
+	removed := removeLines(existing_lines, 0, 1)
+	if removed[0] != "sub-header" {
+		t.Fatal("Failed to remove the first line")
+	}
+	if len(removed) != len(existing_lines) -1 {
+
+		t.Fatal("Removed too many lines")
+
+	}
+
+	removed = removeLines(existing_lines, 0, 0)
+	if removed[0] != existing_lines[0] {
+		t.Fatal("Remove 0 lines failed")
+	}
+
+	if len(removed) != len(existing_lines) {
+		t.Fatal("Removed lines when shouldn't ahve")
+	}
+}
