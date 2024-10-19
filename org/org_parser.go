@@ -299,7 +299,7 @@ func (oi OrgItem) CheckDone() bool {
 
 func findOrgTags(line string) []string {
 	splits := strings.Split(line, ":")
-	if len(splits) == 0 {
+	if len(splits) < 2 {
 		return []string{}
 	} else {
 		return splits[1 : len(splits)-1]

@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"gtdbot/org"
 	"gtdbot/utils"
+	"regexp"
 	"strings"
 	"sync"
 
@@ -75,13 +76,12 @@ func (prb PRToOrgBridge) Details() []string {
 
 	details = append(details, author_string+"\n")
 	details = append(details, fmt.Sprintf("Branch: %s\n", *prb.PR.Head.Label))
-	// reviewers & teams need to extract the Name
 	details = append(details, fmt.Sprintf("Requested Reviewers: %s\n",
 		strings.Join(utils.Map(prb.PR.RequestedReviewers, getReviewerName), ", ")))
 	details = append(details, fmt.Sprintf("Requested Teams: %s\n",
 		strings.Join(utils.Map(prb.PR.RequestedTeams, getTeamName), ", ")))
-	// need to escape the * someho
-	// details = append(details, "**** BODY\n %s\n", *prb.PR.Body)
+	escaped_body := escapeBody(prb.PR.Body)
+	details = append(details, "*** BODY\n %s\n", cleanBody(&escaped_body))
 	return details
 }
 
@@ -95,6 +95,35 @@ func getReviewerName(reviewer *github.User) string {
 
 func getTeamName(reviewer *github.Team) string {
 	return *reviewer.Name
+}
+
+func escapeBody(body *string) string {
+	// Body comes in a single string with newlines and can have things that break orgmode like *
+	lines := strings.Split(*body, "\n")
+	if len(lines) == 0 {
+		return ""
+	}
+	output_lines := make([]string, len(lines))
+	for i, line := range lines {
+		if strings.HasPrefix(line, "*") {
+			output_lines[i] = strings.Replace(line, "*", "-", 1)
+		} else {
+			output_lines[i] = line
+		}
+	}
+	return strings.Join(output_lines, "\n")
+}
+
+func cleanBody(body *string) string {
+	// Define the regular expression pattern to match everything between <!-- and -->
+//	re := regexp.MustCompile(`<!--.*?-->`)
+	// TODO more empty line cleaning
+	re := regexp.MustCompile(`(?s)<!--.*?-->`)
+
+	// Replace all matches with an empty string
+	cleaned := re.ReplaceAllString(*body, "")
+
+	return cleaned
 }
 
 // func (prb PRToOrgBridge) GetReleased() string {
