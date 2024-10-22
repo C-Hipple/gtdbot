@@ -2,4 +2,5 @@
 * TODO My Review Requests [0/0]
 * TODO Other Repos [0/0]
 * TODO My Pull Requests [0/0]
+* TODO My Closed Pull Requests [0/0]
 * TODO Other [0/0]

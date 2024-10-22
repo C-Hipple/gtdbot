@@ -73,13 +73,16 @@ func (o OrgDocument) UpdateItemInSection(section_name string, new_item *OrgTODO)
 	if err != nil {
 		return err
 	}
-	start_line := CheckTODOInSection(*new_item, section)
+	start_line, existing_item := CheckTODOInSection(*new_item, section)
 	if start_line == -1 {
 		return errors.New("Item not in section; Cannot update!")
 	}
 
+	lines_count := len(existing_item.Details())
+	utils.RemoveLinesInFile(o.GetFile(), start_line, lines_count)
+
 	new_lines := o.Serializer.Deserialize(*new_item, section.IndentLevel)
-	utils.ReplaceLinesInFile(o.GetFile(), new_lines, start_line)
+	utils.InsertLinesInFile(o.GetFile(), new_lines, start_line)
 	return nil
 }
 
@@ -299,7 +302,7 @@ func (oi OrgItem) CheckDone() bool {
 
 func findOrgTags(line string) []string {
 	splits := strings.Split(line, ":")
-	if len(splits) == 0 {
+	if len(splits) < 2 {
 		return []string{}
 	} else {
 		return splits[1 : len(splits)-1]
