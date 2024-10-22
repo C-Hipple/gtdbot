@@ -116,7 +116,7 @@ func escapeBody(body *string) string {
 
 func cleanBody(body *string) string {
 	// Define the regular expression pattern to match everything between <!-- and -->
-//	re := regexp.MustCompile(`<!--.*?-->`)
+	//	re := regexp.MustCompile(`<!--.*?-->`)
 	// TODO more empty line cleaning
 	re := regexp.MustCompile(`(?s)<!--.*?-->`)
 

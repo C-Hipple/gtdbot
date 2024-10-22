@@ -92,7 +92,7 @@ func Test_RemoveLines(t *testing.T) {
 	if removed[0] != "sub-header" {
 		t.Fatal("Failed to remove the first line")
 	}
-	if len(removed) != len(existing_lines) -1 {
+	if len(removed) != len(existing_lines)-1 {
 
 		t.Fatal("Removed too many lines")
 
