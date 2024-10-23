@@ -65,6 +65,18 @@ func MatchWorkflows(workflow_maps []RawWorkflow, repos *[]string) []workflows.Wo
 	return workflows
 }
 
+func BuildSingleRepoReviewWorkflow(raw *RawWorkflow, repos *[]string) workflows.Workflow {
+	wf := workflows.SingleRepoSyncReviewRequestsWorkflow{
+		Name:         raw.Name,
+		Owner:        raw.Owner,
+		Repo:         raw.Repo,
+		Filters:      BuildFiltersList(raw.Filters),
+		OrgFileName:  raw.OrgFileName,
+		SectionTitle: raw.SectionTitle,
+	}
+	return wf
+}
+
 func BuildSyncReviewRequestWorkflow(raw *RawWorkflow, repos *[]string) workflows.Workflow {
 	wf := workflows.SyncReviewRequestsWorkflow{
 		Name:         raw.Name,

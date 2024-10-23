@@ -7,6 +7,46 @@ import (
 	"sync"
 )
 
+type SingleRepoSyncReviewRequestsWorkflow struct {
+	// Github repo info
+	Name    string
+	Repo    string
+	Owner   string
+	Filters []git_tools.PRFilter
+
+	// org output info
+	OrgFileName  string
+	SectionTitle string
+}
+
+func (w SingleRepoSyncReviewRequestsWorkflow) GetName() string {
+	return w.Name
+}
+
+func (w SingleRepoSyncReviewRequestsWorkflow) Run(c chan FileChanges, wg *sync.WaitGroup) {
+	defer wg.Done()
+
+	prs := git_tools.GetPRs(
+		git_tools.GetGithubClient(),
+		"open",
+		w.Owner,
+		w.Repo,
+	)
+	prs = git_tools.ApplyPRFilters(prs, w.Filters)
+	doc := org.GetBaseOrgDocument(w.OrgFileName)
+	section, err := doc.GetSection(w.SectionTitle)
+	if err != nil {
+		fmt.Println("Error getting section: ", err, w.SectionTitle)
+		return
+	}
+	for _, pr := range prs {
+		output := SyncTODOToSection(doc, pr, section)
+		if output.ChangeType != "No Change" {
+			c <- output
+		}
+	}
+}
+
 type SyncReviewRequestsWorkflow struct {
 	// Github repo info
 	Name    string
