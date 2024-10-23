@@ -48,28 +48,28 @@ func LoadConfig() Config {
 
 	return Config{
 		Repos:     intermediate_config.Repos,
-		Workflows: MatchWorkflows(intermediate_config.Workflows),
+		Workflows: MatchWorkflows(intermediate_config.Workflows, &intermediate_config.Repos),
 	}
 }
 
-func MatchWorkflows(workflow_maps []RawWorkflow) []workflows.Workflow {
+func MatchWorkflows(workflow_maps []RawWorkflow, repos *[]string) []workflows.Workflow {
 	workflows := []workflows.Workflow{}
 	for _, raw_workflow := range workflow_maps {
 		if raw_workflow.WorkflowType == "SyncReviewRequestsWorkflow" {
-			workflows = append(workflows, BuildSyncReviewRequestWorkflow(&raw_workflow))
+			workflows = append(workflows, BuildSyncReviewRequestWorkflow(&raw_workflow, repos))
 		}
 		if raw_workflow.WorkflowType == "ListMyPRsWorkflow" {
-			workflows = append(workflows, BuildListMyPRsWorkflow(&raw_workflow))
+			workflows = append(workflows, BuildListMyPRsWorkflow(&raw_workflow, repos))
 		}
 	}
 	return workflows
 }
 
-func BuildSyncReviewRequestWorkflow(raw *RawWorkflow) workflows.Workflow {
+func BuildSyncReviewRequestWorkflow(raw *RawWorkflow, repos *[]string) workflows.Workflow {
 	wf := workflows.SyncReviewRequestsWorkflow{
 		Name:         raw.Name,
 		Owner:        raw.Owner,
-		Repo:         raw.Repo,
+		Repos:        *repos,
 		Filters:      BuildFiltersList(raw.Filters),
 		OrgFileName:  raw.OrgFileName,
 		SectionTitle: raw.SectionTitle,
@@ -77,11 +77,11 @@ func BuildSyncReviewRequestWorkflow(raw *RawWorkflow) workflows.Workflow {
 	return wf
 }
 
-func BuildListMyPRsWorkflow(raw *RawWorkflow) workflows.Workflow {
+func BuildListMyPRsWorkflow(raw *RawWorkflow, repos *[]string) workflows.Workflow {
 	wf := workflows.ListMyPRsWorkflow{
 		Name:         raw.Name,
 		Owner:        raw.Owner,
-		Repos:        raw.Repos,
+		Repos:        *repos,
 		PRState:      raw.PRState,
 		OrgFileName:  raw.OrgFileName,
 		SectionTitle: raw.SectionTitle,

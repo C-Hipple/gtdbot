@@ -160,6 +160,14 @@ func FilterNotMyPRs(prs []*github.PullRequest) []*github.PullRequest {
 	return FilterPRsExcludeAuthor(prs, "C-Hipple")
 }
 
+func FilterIsCB(prs []*github.PullRequest) []*github.PullRequest {
+	filtered := []*github.PullRequest{}
+	for _, pr := range prs {
+		if pr.
+
+	}
+}
+
 func FilterNotDraft(prs []*github.PullRequest) []*github.PullRequest {
 	filtered := []*github.PullRequest{}
 	for _, pr := range prs {
