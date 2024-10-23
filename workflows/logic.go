@@ -99,6 +99,11 @@ func getTeamName(reviewer *github.Team) string {
 
 func escapeBody(body *string) string {
 	// Body comes in a single string with newlines and can have things that break orgmode like *
+	if body == nil {
+		// pretty sure the library uses json:omitempty?
+		return ""
+	}
+
 	lines := strings.Split(*body, "\n")
 	if len(lines) == 0 {
 		return ""
