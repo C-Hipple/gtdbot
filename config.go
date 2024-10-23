@@ -1,0 +1,110 @@
+package main
+
+import (
+	"fmt"
+	"gtdbot/git_tools"
+	"gtdbot/workflows"
+	"os"
+	"path/filepath"
+
+	"github.com/google/go-github/v48/github"
+	"github.com/pelletier/go-toml/v2"
+)
+
+// Define your classes
+type Config struct {
+	Repos     []string
+	Workflows []workflows.Workflow
+}
+
+type RawWorkflow struct {
+	WorkflowType string
+	Name         string
+	Owner        string
+	Repo         string
+	Repos        []string
+	Filters      []string
+	OrgFileName  string
+	SectionTitle string
+	PRState      string
+}
+
+func LoadConfig() Config {
+	// Load TOML config
+
+	var intermediate_config struct {
+		Repos     []string
+		Workflows []RawWorkflow
+	}
+	home_dir, err := os.UserHomeDir()
+	the_bytes, err := os.ReadFile(filepath.Join(home_dir, ".config/gtdbot.toml"))
+	if err != nil {
+		panic(err)
+	}
+	err = toml.Unmarshal(the_bytes, &intermediate_config)
+	if err != nil {
+		panic(err)
+	}
+
+	return Config{
+		Repos:     intermediate_config.Repos,
+		Workflows: MatchWorkflows(intermediate_config.Workflows),
+	}
+}
+
+func MatchWorkflows(workflow_maps []RawWorkflow) []workflows.Workflow {
+	workflows := []workflows.Workflow{}
+	for _, raw_workflow := range workflow_maps {
+		if raw_workflow.WorkflowType == "SyncReviewRequestsWorkflow" {
+			workflows = append(workflows, BuildSyncReviewRequestWorkflow(&raw_workflow))
+		}
+		if raw_workflow.WorkflowType == "ListMyPRsWorkflow" {
+			workflows = append(workflows, BuildListMyPRsWorkflow(&raw_workflow))
+		}
+	}
+	return workflows
+}
+
+func BuildSyncReviewRequestWorkflow(raw *RawWorkflow) workflows.Workflow {
+	wf := workflows.SyncReviewRequestsWorkflow{
+		Name:         raw.Name,
+		Owner:        raw.Owner,
+		Repo:         raw.Repo,
+		Filters:      BuildFiltersList(raw.Filters),
+		OrgFileName:  raw.OrgFileName,
+		SectionTitle: raw.SectionTitle,
+	}
+	return wf
+}
+
+func BuildListMyPRsWorkflow(raw *RawWorkflow) workflows.Workflow {
+	wf := workflows.ListMyPRsWorkflow{
+		Name:         raw.Name,
+		Owner:        raw.Owner,
+		Repos:        raw.Repos,
+		PRState:      raw.PRState,
+		OrgFileName:  raw.OrgFileName,
+		SectionTitle: raw.SectionTitle,
+	}
+	return wf
+}
+
+var filter_func_map = map[string]func(prs []*github.PullRequest) []*github.PullRequest{
+	"FilterMyReviewRequested": git_tools.FilterMyReviewRequested,
+	"FilterNotDraft":          git_tools.FilterNotDraft,
+	"FilterMyTeamRequested":   git_tools.FilterMyTeamRequested,
+	"FilterNotMyPRs":          git_tools.FilterNotMyPRs,
+}
+
+func BuildFiltersList(names []string) []git_tools.PRFilter {
+	filters := []git_tools.PRFilter{}
+	for _, name := range names {
+		filter_func := filter_func_map[name]
+		if filter_func == nil {
+			fmt.Println("Warning: Unmatched filter function ", name)
+			continue
+		}
+		filters = append(filters, filter_func)
+	}
+	return filters
+}

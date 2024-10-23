@@ -27,7 +27,7 @@ func GetBaseOrgDocument(file_name string) OrgDocument {
 }
 
 func GetOrgDocument(file_name string, serializer OrgSerializer) OrgDocument {
-	sections, err := ParseSectionsFromFile(file_name, serializer.(BaseOrgSerializer))
+	sections, err := ParseSectionsFromFile(file_name, serializer)
 	if err != nil {
 		fmt.Println("Error parsing sections from file: ", err)
 		os.Exit(1)
@@ -67,17 +67,22 @@ func (o OrgDocument) AddItemInSection(section_name string, new_item *OrgTODO) er
 }
 
 func (o OrgDocument) UpdateItemInSection(section_name string, new_item *OrgTODO) error {
+	// TODO If the existing section has more lines than the update, then we need to remove the trailing lines
+	// otherwise the extra lines will persist
 	section, err := o.GetSection(section_name)
 	if err != nil {
 		return err
 	}
-	start_line := CheckTODOInSection(*new_item, section)
+	start_line, existing_item := CheckTODOInSection(*new_item, section)
 	if start_line == -1 {
 		return errors.New("Item not in section; Cannot update!")
 	}
 
+	lines_count := len(existing_item.Details())
+	utils.RemoveLinesInFile(o.GetFile(), start_line, lines_count)
+
 	new_lines := o.Serializer.Deserialize(*new_item, section.IndentLevel)
-	utils.ReplaceLinesInFile(o.GetFile(), new_lines, start_line)
+	utils.InsertLinesInFile(o.GetFile(), new_lines, start_line)
 	return nil
 }
 
@@ -155,7 +160,7 @@ func (pd ParseDebugger) Println(line ...any) {
 	}
 }
 
-func ParseSectionsFromFile(file_name string, serializer BaseOrgSerializer) ([]Section, error) {
+func ParseSectionsFromFile(file_name string, serializer OrgSerializer) ([]Section, error) {
 	file := GetOrgFile(file_name)
 	all_lines, _ := utils.LinesFromReader(file)
 	file.Close()
@@ -297,7 +302,7 @@ func (oi OrgItem) CheckDone() bool {
 
 func findOrgTags(line string) []string {
 	splits := strings.Split(line, ":")
-	if len(splits) == 0 {
+	if len(splits) < 2 {
 		return []string{}
 	} else {
 		return splits[1 : len(splits)-1]
@@ -345,7 +350,8 @@ func findOrgStatus(line string) string {
 	return ""
 }
 
-type MergeInfoOrgSerializer struct{}
+type MergeInfoOrgSerializer struct {
+}
 
 func (ser MergeInfoOrgSerializer) Deserialize(item OrgTODO, indent_level int) []string {
 	var result []string

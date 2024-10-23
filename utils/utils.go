@@ -17,8 +17,21 @@ import (
 func ReplaceLinesInFile(file *os.File, new_lines []string, at_line_number int) error {
 	lines, _ := LinesFromReader(file)
 	path, _ := filepath.Abs(file.Name())
-	file_content := strings.Join(replaceLines(lines, new_lines, at_line_number), "\n")
-	return os.WriteFile(path, []byte(file_content), 0644)
+	updated_lines := strings.Join(FixNewLineEndings(replaceLines(lines, new_lines, at_line_number)), "")
+	return os.WriteFile(path, []byte(updated_lines), 0644)
+}
+
+func FixNewLineEndings(lines []string) []string {
+	// I'm sloppy about what does or does not have a \n at the end
+	out_lines := []string{}
+	for _, line := range lines {
+		if strings.Contains(line, "\n") {
+			out_lines = append(out_lines, line)
+		} else {
+			out_lines = append(out_lines, line+"\n")
+		}
+	}
+	return out_lines
 }
 
 func replaceLines(existing_lines []string, new_lines []string, at_line_number int) []string {
@@ -65,6 +78,27 @@ func insertLines(existing_lines []string, new_lines []string, at_line_number int
 	return file_content
 }
 
+func RemoveLinesInFile(file *os.File, at_line_number int, remove_count int) error {
+	lines, _ := LinesFromReader(file)
+	path, _ := filepath.Abs(file.Name())
+	updated_lines := strings.Join(FixNewLineEndings(removeLines(lines, at_line_number, remove_count)), "")
+	return os.WriteFile(path, []byte(updated_lines), 0644)
+}
+
+func removeLines(existing_lines []string, at_line_number int, remove_count int) []string {
+	output_lines := []string{}
+	for i, line := range existing_lines {
+		if i < at_line_number {
+			output_lines = append(output_lines, line)
+		} else if i >= at_line_number && i < at_line_number+remove_count {
+			continue
+		} else {
+			output_lines = append(output_lines, line)
+		}
+	}
+	return output_lines
+}
+
 func LinesFromReader(r io.Reader) ([]string, error) {
 	var lines []string
 	scanner := bufio.NewScanner(r)
@@ -104,6 +138,7 @@ type Pair[T, U any] struct {
 
 func Zip[T, U any](ts []T, us []U) []Pair[T, U] {
 	if len(ts) != len(us) {
+		// TODO: consider handling if different lengths
 		panic("slices have different length")
 	}
 	pairs := make([]Pair[T, U], len(ts))
@@ -111,4 +146,12 @@ func Zip[T, U any](ts []T, us []U) []Pair[T, U] {
 		pairs[i] = Pair[T, U]{ts[i], us[i]}
 	}
 	return pairs
+}
+
+func Map[T, U any](ts []T, fn func(T) U) []U {
+	result := make([]U, len(ts))
+	for i, t := range ts {
+		result[i] = fn(t)
+	}
+	return result
 }
