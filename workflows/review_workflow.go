@@ -7,7 +7,7 @@ import (
 	"sync"
 )
 
-type SyncReviewRequestsWorkflow struct {
+type SingleRepoSyncReviewRequestsWorkflow struct {
 	// Github repo info
 	Name    string
 	Owner   string
@@ -19,8 +19,13 @@ type SyncReviewRequestsWorkflow struct {
 	SectionTitle string
 }
 
-func (w SyncReviewRequestsWorkflow) Run(c chan FileChanges, wg *sync.WaitGroup) {
+func (w SingleRepoSyncReviewRequestsWorkflow) GetName() string {
+	return w.Name
+}
+
+func (w SingleRepoSyncReviewRequestsWorkflow) Run(c chan FileChanges, wg *sync.WaitGroup) {
 	defer wg.Done()
+
 	prs := git_tools.GetPRs(
 		git_tools.GetGithubClient(),
 		"open",
@@ -42,14 +47,52 @@ func (w SyncReviewRequestsWorkflow) Run(c chan FileChanges, wg *sync.WaitGroup) 
 	}
 }
 
+type SyncReviewRequestsWorkflow struct {
+	// Github repo info
+	Name    string
+	Owner   string
+	Repos   []string
+	Filters []git_tools.PRFilter
+
+	// org output info
+	OrgFileName  string
+	SectionTitle string
+}
+
+func (w SyncReviewRequestsWorkflow) Run(c chan FileChanges, wg *sync.WaitGroup) {
+	defer wg.Done()
+
+	client := git_tools.GetGithubClient()
+	prs := git_tools.GetManyRepoPRs(client, "open", w.Owner, w.Repos)
+	// prs := git_tools.GetPRs(
+	//	git_tools.GetGithubClient(),
+	//	"open",
+	//	w.Owner,
+	//	w.Repo,
+	// )
+	prs = git_tools.ApplyPRFilters(prs, w.Filters)
+	doc := org.GetBaseOrgDocument(w.OrgFileName)
+	section, err := doc.GetSection(w.SectionTitle)
+	if err != nil {
+		fmt.Println("Error getting section: ", err, w.SectionTitle)
+		return
+	}
+	for _, pr := range prs {
+		output := SyncTODOToSection(doc, pr, section)
+		if output.ChangeType != "No Change" {
+			c <- output
+		}
+	}
+}
+
 func (w SyncReviewRequestsWorkflow) GetName() string {
 	return w.Name
 }
 
 type ListMyPRsWorkflow struct {
 	Name            string
-	Repos           []string
 	Owner           string
+	Repos           []string
 	OrgFileName     string
 	SectionTitle    string
 	PRState         string

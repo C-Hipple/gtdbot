@@ -18,47 +18,6 @@ import (
 type PullRequest interface {
 }
 
-func github_main() {
-	// silly little tester function
-	ctx := context.Background()
-	token := os.Getenv("GTDBOT_GITHUB_TOKEN")
-	if token == "" {
-		panic("Unable to get Github Token!")
-	}
-	ts := oauth2.StaticTokenSource(
-		&oauth2.Token{AccessToken: token},
-	)
-	tc := oauth2.NewClient(ctx, ts)
-
-	client := github.NewClient(tc)
-
-	// list all repositories for the authenticated user
-	repos, _, err := client.Repositories.List(ctx, "", nil)
-	if err != nil {
-		fmt.Println("Error!", err)
-		os.Exit(1)
-	}
-	fmt.Println(len(repos))
-	// for _, repo := range repos {
-	//	fmt.Println(*repo.Name)
-	// }
-	//pr, _, err2 := client.PullRequests.Get(ctx, "C-Hipple", "C-Hipple.github.io", 1)
-	pr, _, err2 := client.PullRequests.Get(ctx, "owner", "repo", 9035)
-	if err2 != nil {
-		fmt.Println("Error on getting PR: ", err2)
-	}
-	fmt.Println(*pr.User.Login)
-	//fmt.Println(*pr.Body)
-	//*pr.Body = strings.Replace(*pr.Body, "desc", new string, n int)
-
-	//client.PullRequests.Edit(ctx, "C-Hipple", "C-Hipple.github.io", 1, pr)
-	// client.PullRequests.Edit(ctx, "owner", "repo", 9035, pr)
-	prs := GetPRs(client, "open", "owner", "repo")
-	for _, pr := range prs {
-		fmt.Println(*pr.Title)
-	}
-}
-
 type PRFilter func([]*github.PullRequest) []*github.PullRequest
 
 func GetPRs(client *github.Client, state string, owner string, repo string) []*github.PullRequest {
