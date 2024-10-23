@@ -55,23 +55,23 @@ func GetOrgFile(filename string) *os.File {
 	return file
 }
 
-func CheckTODOInSection(todo OrgTODO, section Section) int {
+func CheckTODOInSection(todo OrgTODO, section Section) (int, OrgTODO) {
 	// returns the line number if it's found, otherwise returns -1
 	serializer := BaseOrgSerializer{}
 	at_line := section.StartLine + 1 // account for the section title
 	for _, line_item := range section.Items {
 		if strings.Contains(line_item.Summary(), todo.Summary()) {
-			return at_line
+			return at_line, line_item
 		}
 		if line_item.Summary() == todo.Summary() {
-			return at_line
+			return at_line, line_item
 		}
 		for _, detail := range line_item.Details() {
 			if strings.Contains(detail, todo.ID()) {
-				return at_line
+				return at_line, line_item
 			}
 		}
 		at_line += len(serializer.Deserialize(line_item, section.IndentLevel))
 	}
-	return -1
+	return -1, nil
 }
