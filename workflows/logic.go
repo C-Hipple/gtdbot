@@ -148,7 +148,6 @@ func SyncTODOToSection(doc org.OrgDocument, pr *github.PullRequest, section org.
 	at_line, _ := org.CheckTODOInSection(pr_as_org, section)
 	if at_line != -1 {
 		// TODO : Determine if actual changes?
-		fmt.Println("Doing update for item ", pr_as_org.String())
 		return FileChanges{
 			ChangeType: "Replace",
 			Filename:   doc.Filename,
