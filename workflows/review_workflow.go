@@ -10,8 +10,8 @@ import (
 type SyncReviewRequestsWorkflow struct {
 	// Github repo info
 	Name    string
+	Repos   []string
 	Owner   string
-	Repo    string
 	Filters []git_tools.PRFilter
 
 	// org output info
@@ -21,12 +21,15 @@ type SyncReviewRequestsWorkflow struct {
 
 func (w SyncReviewRequestsWorkflow) Run(c chan FileChanges, wg *sync.WaitGroup) {
 	defer wg.Done()
-	prs := git_tools.GetPRs(
-		git_tools.GetGithubClient(),
-		"open",
-		w.Owner,
-		w.Repo,
-	)
+
+	client := git_tools.GetGithubClient()
+	prs := git_tools.GetManyRepoPRs(client, "open", w.Owner, w.Repos)
+	// prs := git_tools.GetPRs(
+	//	git_tools.GetGithubClient(),
+	//	"open",
+	//	w.Owner,
+	//	w.Repo,
+	// )
 	prs = git_tools.ApplyPRFilters(prs, w.Filters)
 	doc := org.GetBaseOrgDocument(w.OrgFileName)
 	section, err := doc.GetSection(w.SectionTitle)
