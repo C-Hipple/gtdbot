@@ -58,6 +58,9 @@ func MatchWorkflows(workflow_maps []RawWorkflow, repos *[]string) []workflows.Wo
 		if raw_workflow.WorkflowType == "SyncReviewRequestsWorkflow" {
 			workflows = append(workflows, BuildSyncReviewRequestWorkflow(&raw_workflow, repos))
 		}
+		if raw_workflow.WorkflowType == "SingleRepoSyncReviewRequestsWorkflow" {
+			workflows = append(workflows, BuildSingleRepoReviewWorkflow(&raw_workflow, repos))
+		}
 		if raw_workflow.WorkflowType == "ListMyPRsWorkflow" {
 			workflows = append(workflows, BuildListMyPRsWorkflow(&raw_workflow, repos))
 		}

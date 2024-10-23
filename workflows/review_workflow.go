@@ -10,8 +10,8 @@ import (
 type SingleRepoSyncReviewRequestsWorkflow struct {
 	// Github repo info
 	Name    string
-	Repo    string
 	Owner   string
+	Repo    string
 	Filters []git_tools.PRFilter
 
 	// org output info
@@ -50,8 +50,8 @@ func (w SingleRepoSyncReviewRequestsWorkflow) Run(c chan FileChanges, wg *sync.W
 type SyncReviewRequestsWorkflow struct {
 	// Github repo info
 	Name    string
-	Repos   []string
 	Owner   string
+	Repos   []string
 	Filters []git_tools.PRFilter
 
 	// org output info
@@ -91,8 +91,8 @@ func (w SyncReviewRequestsWorkflow) GetName() string {
 
 type ListMyPRsWorkflow struct {
 	Name            string
-	Repos           []string
 	Owner           string
+	Repos           []string
 	OrgFileName     string
 	SectionTitle    string
 	PRState         string
