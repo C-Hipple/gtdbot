@@ -89,7 +89,6 @@ func (prb PRToOrgBridge) String() string {
 	return prb.Title()
 }
 
-<<<<<<< HEAD
 func getReviewerName(reviewer *github.User) string {
 	return *reviewer.Login
 }
@@ -132,46 +131,6 @@ func cleanBody(body *string) string {
 	return cleaned
 }
 
-||||||| d87b3ff
-=======
-func getReviewerName(reviewer *github.User) string {
-	return *reviewer.Login
-}
-
-func getTeamName(reviewer *github.Team) string {
-	return *reviewer.Name
-}
-
-func escapeBody(body *string) string {
-	// Body comes in a single string with newlines and can have things that break orgmode like *
-	lines := strings.Split(*body, "\n")
-	if len(lines) == 0 {
-		return ""
-	}
-	output_lines := make([]string, len(lines))
-	for i, line := range lines {
-		if strings.HasPrefix(line, "*") {
-			output_lines[i] = strings.Replace(line, "*", "-", 1)
-		} else {
-			output_lines[i] = line
-		}
-	}
-	return strings.Join(output_lines, "\n")
-}
-
-func cleanBody(body *string) string {
-	// Define the regular expression pattern to match everything between <!-- and -->
-	//	re := regexp.MustCompile(`<!--.*?-->`)
-	// TODO more empty line cleaning
-	re := regexp.MustCompile(`(?s)<!--.*?-->`)
-
-	// Replace all matches with an empty string
-	cleaned := re.ReplaceAllString(*body, "")
-
-	return cleaned
-}
-
->>>>>>> c61eea3382f4c5b6b093bf5ed571717a806362e8
 // func (prb PRToOrgBridge) GetReleased() string {
 //	repo_name := *prb.PR.Base.Repo.Name
 //	if repo_name == "chaturbate" {
