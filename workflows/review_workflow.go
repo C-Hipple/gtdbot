@@ -4,7 +4,6 @@ import (
 	"fmt"
 	"gtdbot/git_tools"
 	"gtdbot/org"
-	"sync"
 )
 
 type SingleRepoSyncReviewRequestsWorkflow struct {
@@ -23,15 +22,14 @@ func (w SingleRepoSyncReviewRequestsWorkflow) GetName() string {
 	return w.Name
 }
 
-func (w SingleRepoSyncReviewRequestsWorkflow) Run(c chan FileChanges, wg *sync.WaitGroup) {
-	defer wg.Done()
-
+func (w SingleRepoSyncReviewRequestsWorkflow) Run(c chan FileChanges) {
 	prs := git_tools.GetPRs(
 		git_tools.GetGithubClient(),
 		"open",
 		w.Owner,
 		w.Repo,
 	)
+
 	prs = git_tools.ApplyPRFilters(prs, w.Filters)
 	doc := org.GetBaseOrgDocument(w.OrgFileName)
 	section, err := doc.GetSection(w.SectionTitle)
@@ -59,12 +57,9 @@ type SyncReviewRequestsWorkflow struct {
 	SectionTitle string
 }
 
-func (w SyncReviewRequestsWorkflow) Run(c chan FileChanges, wg *sync.WaitGroup) {
-	defer wg.Done()
-
+func (w SyncReviewRequestsWorkflow) Run(c chan FileChanges) {
 	client := git_tools.GetGithubClient()
 	prs := git_tools.GetManyRepoPRs(client, "open", w.Owner, w.Repos)
-	// prs := git_tools.GetPRs(
 	//	git_tools.GetGithubClient(),
 	//	"open",
 	//	w.Owner,
@@ -104,8 +99,7 @@ func (w ListMyPRsWorkflow) GetName() string {
 	return w.Name
 }
 
-func (w ListMyPRsWorkflow) Run(c chan FileChanges, wg *sync.WaitGroup) {
-	defer wg.Done()
+func (w ListMyPRsWorkflow) Run(c chan FileChanges) {
 	client := git_tools.GetGithubClient()
 	prs := git_tools.GetManyRepoPRs(client, w.PRState, w.Owner, w.Repos)
 

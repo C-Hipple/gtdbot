@@ -27,7 +27,7 @@ func GetPRs(client *github.Client, state string, owner string, repo string) []*g
 
 	// TODO: Consider if I really want deep lookups.
 	// Setting to 0 limits to 1 API call.
-	max_additional_calls := 0
+	max_additional_calls := 4
 	i := 0
 
 	for {
@@ -145,7 +145,7 @@ func MakeTeamFilters(teams []string) func([]*github.PullRequest) []*github.PullR
 }
 
 func FilterMyTeamRequested(prs []*github.PullRequest) []*github.PullRequest {
-	teams := []string{"growth-pod-review", "purchase-pod-review", "growth-and-purchase-pod", "coreteam-review", "chat-pod-review-backend", "creator-team"}
+	teams := []string{"growth-pod-review", "purchase-pod-review", "growth-and-purchase-pod", "coreteam-review", "chat-pod-review-backend", "creator-team", "affiliate-program-experts"}
 	filtered := []*github.PullRequest{}
 	for _, pr := range prs {
 		for _, team := range pr.RequestedTeams {
@@ -174,7 +174,6 @@ func FilterMyReviewRequested(prs []*github.PullRequest) []*github.PullRequest {
 func GetGithubClient() *github.Client {
 	ctx := context.Background()
 	token := os.Getenv("GTDBOT_GITHUB_TOKEN")
-	// fmt.Println("Token: ", token)
 	if token == "" {
 		fmt.Println("Error! No Github Token!")
 		//os.Exit(1)
