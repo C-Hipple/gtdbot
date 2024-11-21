@@ -110,7 +110,6 @@ ge
 	fmt.Println("Done ")
 }
 
-
 func Test_ParseSections(t *testing.T) {
 	raw := `* TODO Team Reviews [0/2]
 ** TODO dev: PR 1 :chaturbate:
@@ -169,7 +168,6 @@ ge
 	if len(sections) != 2 {
 		t.Fatalf("Wrong length of sections ! %v", len(sections))
 	}
-
 
 	section_team_review := sections[0]
 	section_my_review := sections[1]

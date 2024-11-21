@@ -2,18 +2,16 @@ package workflows
 
 import (
 	"fmt"
+	"github.com/google/go-github/v48/github"
 	"gtdbot/org"
 	"gtdbot/utils"
 	"regexp"
 	"strings"
-	"sync"
-
-	"github.com/google/go-github/v48/github"
 )
 
 type Workflow interface {
 	GetName() string
-	Run(chan FileChanges, *sync.WaitGroup)
+	Run(chan FileChanges)
 }
 
 type FileChanges struct {

@@ -62,11 +62,16 @@ func NewManagerService(workflows []Workflow, release git_tools.DeployedVersion, 
 func (ms ManagerService) RunOnce() {
 	var wg sync.WaitGroup
 	for _, workflow := range ms.Workflows {
-		fmt.Println("Starting Workflow: ", workflow.GetName())
 		wg.Add(1)
-		go workflow.Run(ms.workflow_chan, &wg)
+		go func() {
+			defer wg.Done()
+			fmt.Println("Starting Workflow: ", workflow.GetName())
+			workflow.Run(ms.workflow_chan)
+			fmt.Println("Finishing Workflow: ", workflow.GetName())
+		}()
 	}
 	wg.Wait()
+	println("Completed RunOnce Waitgroup")
 }
 
 func (ms ManagerService) Run() {
