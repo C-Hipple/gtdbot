@@ -27,7 +27,10 @@ func GetBaseOrgDocument(file_name string) OrgDocument {
 }
 
 func GetOrgDocument(file_name string, serializer OrgSerializer) OrgDocument {
-	sections, err := ParseSectionsFromFile(file_name, serializer)
+	file := GetOrgFile(file_name)
+	all_lines, _ := utils.LinesFromReader(file)
+	file.Close()
+	sections, err := ParseSectionsFromLines(all_lines, serializer)
 	if err != nil {
 		fmt.Println("Error parsing sections from file: ", err)
 		os.Exit(1)
@@ -38,7 +41,12 @@ func GetOrgDocument(file_name string, serializer OrgSerializer) OrgDocument {
 
 func (o OrgDocument) Refresh() {
 	serializer := BaseOrgSerializer{}
-	sections, err := ParseSectionsFromFile(o.Filename, serializer)
+
+	file := GetOrgFile(o.Filename)
+	all_lines, _ := utils.LinesFromReader(file)
+	file.Close()
+
+	sections, err := ParseSectionsFromLines(all_lines, serializer)
 	if err != nil {
 		fmt.Println("Error parsing sections from file: ", err)
 		os.Exit(1)
@@ -160,16 +168,12 @@ func (pd ParseDebugger) Println(line ...any) {
 	}
 }
 
-func ParseSectionsFromFile(file_name string, serializer OrgSerializer) ([]Section, error) {
-	file := GetOrgFile(file_name)
-	all_lines, _ := utils.LinesFromReader(file)
-	file.Close()
-
+func ParseSectionsFromLines(all_lines []string, serializer OrgSerializer) ([]Section, error) {
 	var sections []Section
 	var header string
 	start_line := 0
 	in_section := false
-	print_debugger := ParseDebugger{active: false}
+	print_debugger := ParseDebugger{active: true}
 
 	var items []OrgTODO
 	var item_lines []string
@@ -223,7 +227,7 @@ func ParseSectionsFromFile(file_name string, serializer OrgSerializer) ([]Sectio
 			continue
 		}
 
-		if in_section && strings.HasPrefix(line, "**") {
+		if in_section && strings.HasPrefix(line, "**") && !strings.Contains(line, "BODY") {
 			if building_item {
 				building_item = false
 				item, serialize_err := serializer.Serialize(item_lines)
@@ -242,6 +246,15 @@ func ParseSectionsFromFile(file_name string, serializer OrgSerializer) ([]Sectio
 			building_item = true
 			continue
 		}
+	}
+
+	if building_item {
+		// At the end of the file, if we're still building something we need to get the last item and include it
+		item, serialize_err := serializer.Serialize(item_lines)
+		if serialize_err != nil {
+			panic("Error serializing item: " + serialize_err.Error())
+		}
+		items = append(items, item)
 	}
 	// if we're at the end of the file, we need to add the last section
 	if in_section {
@@ -310,6 +323,15 @@ func findOrgTags(line string) []string {
 
 }
 
+func findOrgStatus(line string) string {
+	for _, status := range GetOrgStatuses() {
+		if strings.Contains(line, status) {
+			return status
+		}
+	}
+	return ""
+}
+
 func PrintOrgFile(file *os.File) {
 	res, _ := ioutil.ReadAll(file)
 	fmt.Println(string(res))
@@ -339,15 +361,6 @@ func (bos BaseOrgSerializer) Serialize(lines []string) (OrgTODO, error) {
 	status := findOrgStatus(lines[0])
 	tags := findOrgTags(lines[0])
 	return OrgItem{header: lines[0], status: status, details: lines[1:], tags: tags}, nil
-}
-
-func findOrgStatus(line string) string {
-	for _, status := range GetOrgStatuses() {
-		if strings.Contains(line, status) {
-			return status
-		}
-	}
-	return ""
 }
 
 type MergeInfoOrgSerializer struct {
