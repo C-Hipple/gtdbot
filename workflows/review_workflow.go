@@ -78,7 +78,6 @@ func (w SyncReviewRequestsWorkflow) Run(c chan FileChanges) {
 			c <- output
 		}
 	}
-	fmt.Println("Finishing Workflow: ", w.GetName())
 }
 
 func (w SyncReviewRequestsWorkflow) GetName() string {
@@ -127,5 +126,4 @@ func (w ListMyPRsWorkflow) Run(c chan FileChanges) {
 		}
 
 	}
-	fmt.Println("Finishing Workflow: ", w.GetName())
 }
