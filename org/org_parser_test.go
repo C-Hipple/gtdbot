@@ -186,18 +186,18 @@ short body
 
 	// Test item start lines
 	if section_team_review.Items[0].StartLine() != 1 {
-		t.Fatalf("Wrong start line of first item in first section %v", section_team_review.Items[0].StartLine() )
+		t.Fatalf("Wrong start line of first item in first section %v", section_team_review.Items[0].StartLine())
 	}
 
 	if section_team_review.Items[1].StartLine() != 12 {
-		t.Fatalf("Wrong start line of second item in first section %v", section_team_review.Items[1].StartLine() )
+		t.Fatalf("Wrong start line of second item in first section %v", section_team_review.Items[1].StartLine())
 	}
 
 	if section_my_review.Items[0].StartLine() != 26 {
-		t.Fatalf("Wrong start line of first item in second section %v", section_my_review.Items[0].StartLine() )
+		t.Fatalf("Wrong start line of first item in second section %v", section_my_review.Items[0].StartLine())
 	}
 
 	if section_my_review.Items[1].StartLine() != 35 {
-		t.Fatalf("Wrong start line of second item in second section %v", section_my_review.Items[1].StartLine() )
+		t.Fatalf("Wrong start line of second item in second section %v", section_my_review.Items[1].StartLine())
 	}
 }
