@@ -26,6 +26,7 @@ func makeItem(i string) org.OrgTODO {
 		[]string{"detail 1" + i, "detail 2" + i, "detail 3" + i},
 		"TODO",
 		[]string{"tag1", "tag2"},
+		0,
 	)
 }
 

@@ -27,7 +27,14 @@ type PRToOrgBridge struct {
 }
 
 func (prb PRToOrgBridge) ID() string {
-	return fmt.Sprintf("%d", *prb.PR.Number)
+	return fmt.Sprintf("%d",  *prb.PR.Number)
+}
+
+func (prb PRToOrgBridge) StartLine() int {
+	// This implementation of the interface is for when we pull things from the API and want to compare
+	// Therefore the StartLine should't be checked
+	panic("Called StartLine for PRToOrgBridge which shouldn't be done.")
+	// return -1
 }
 
 func (prb PRToOrgBridge) Title() string {
