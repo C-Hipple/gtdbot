@@ -27,7 +27,7 @@ type PRToOrgBridge struct {
 }
 
 func (prb PRToOrgBridge) ID() string {
-	return fmt.Sprintf("%d",  *prb.PR.Number)
+	return fmt.Sprintf("%d", *prb.PR.Number)
 }
 
 func (prb PRToOrgBridge) StartLine() int {
