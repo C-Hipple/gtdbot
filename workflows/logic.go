@@ -7,11 +7,12 @@ import (
 	"gtdbot/utils"
 	"regexp"
 	"strings"
+	"sync"
 )
 
 type Workflow interface {
 	GetName() string
-	Run(chan FileChanges)
+	Run(chan FileChanges, *sync.WaitGroup)
 }
 
 type FileChanges struct {

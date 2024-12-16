@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"gtdbot/git_tools"
 	"gtdbot/org"
+	"sync"
 )
 
 type SingleRepoSyncReviewRequestsWorkflow struct {
@@ -22,7 +23,7 @@ func (w SingleRepoSyncReviewRequestsWorkflow) GetName() string {
 	return w.Name
 }
 
-func (w SingleRepoSyncReviewRequestsWorkflow) Run(c chan FileChanges) {
+func (w SingleRepoSyncReviewRequestsWorkflow) Run(c chan FileChanges, file_change_wg *sync.WaitGroup) {
 	prs := git_tools.GetPRs(
 		git_tools.GetGithubClient(),
 		"open",
@@ -40,6 +41,7 @@ func (w SingleRepoSyncReviewRequestsWorkflow) Run(c chan FileChanges) {
 	for _, pr := range prs {
 		output := SyncTODOToSection(doc, pr, section)
 		if output.ChangeType != "No Change" {
+			file_change_wg.Add(1)
 			c <- output
 		}
 	}
@@ -57,7 +59,7 @@ type SyncReviewRequestsWorkflow struct {
 	SectionTitle string
 }
 
-func (w SyncReviewRequestsWorkflow) Run(c chan FileChanges) {
+func (w SyncReviewRequestsWorkflow) Run(c chan FileChanges, file_change_wg *sync.WaitGroup) {
 	client := git_tools.GetGithubClient()
 	prs := git_tools.GetManyRepoPRs(client, "open", w.Owner, w.Repos)
 	//	git_tools.GetGithubClient(),
@@ -75,6 +77,7 @@ func (w SyncReviewRequestsWorkflow) Run(c chan FileChanges) {
 	for _, pr := range prs {
 		output := SyncTODOToSection(doc, pr, section)
 		if output.ChangeType != "No Change" {
+			file_change_wg.Add(1)
 			c <- output
 		}
 	}
@@ -98,7 +101,7 @@ func (w ListMyPRsWorkflow) GetName() string {
 	return w.Name
 }
 
-func (w ListMyPRsWorkflow) Run(c chan FileChanges) {
+func (w ListMyPRsWorkflow) Run(c chan FileChanges, file_change_wg *sync.WaitGroup) {
 	client := git_tools.GetGithubClient()
 	prs := git_tools.GetManyRepoPRs(client, w.PRState, w.Owner, w.Repos)
 
@@ -116,12 +119,13 @@ func (w ListMyPRsWorkflow) Run(c chan FileChanges) {
 			repo_name := *pr.Base.Repo.Name
 			if repo_name == "repo" {
 				released := git_tools.CheckCommitReleased(client, w.ReleasedVersion.SHA, *pr.MergeCommitSHA)
-				fmt.Printf("Released PR: %s %t", *pr.Title, released)
+				fmt.Printf("Released PR: %s %t\n", *pr.Title, released)
 				//output.Item.Details() = append(output.Lines, "Released: "+strconv.FormatBool(released))
 				//output.Lines[0] = strings.Replace(output.Lines[0], "merged", "released", 1)
 			}
 		}
 		if output.ChangeType != "No Change" {
+			file_change_wg.Add(1)
 			c <- output
 		}
 

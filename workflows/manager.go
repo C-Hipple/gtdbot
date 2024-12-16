@@ -18,7 +18,6 @@ type ManagerService struct {
 
 func ListenChanges(channel chan FileChanges, wg *sync.WaitGroup) {
 	for file_change := range channel {
-		wg.Add(1)
 		if file_change.ChangeType != "No Change" {
 			doc := org.GetBaseOrgDocument(file_change.Filename)
 			change_lines := doc.Serializer.Deserialize(file_change.Item, file_change.Section.IndentLevel)
@@ -34,7 +33,7 @@ func ListenChanges(channel chan FileChanges, wg *sync.WaitGroup) {
 				doc.UpdateItemInSection(file_change.Section.Name, &file_change.Item)
 			}
 		}
-		wg.Done()
+		wg.Done() // The add is done when we enqueue the FileChange in the channel
 	}
 }
 
@@ -59,14 +58,14 @@ func NewManagerService(workflows []Workflow, release git_tools.DeployedVersion, 
 	}
 }
 
-func (ms ManagerService) RunOnce() {
+func (ms ManagerService) RunOnce(file_change_wg *sync.WaitGroup) {
 	var wg sync.WaitGroup
 	for _, workflow := range ms.Workflows {
 		wg.Add(1)
 		go func() {
 			defer wg.Done()
 			fmt.Println("Starting Workflow: ", workflow.GetName())
-			workflow.Run(ms.workflow_chan)
+			workflow.Run(ms.workflow_chan, file_change_wg)
 			fmt.Println("Finishing Workflow: ", workflow.GetName())
 		}()
 	}
@@ -81,11 +80,11 @@ func (ms ManagerService) Run() {
 	go ListenChanges(ms.workflow_chan, &listener_wg)
 	if ms.oneoff {
 		fmt.Println("Running Once")
-		ms.RunOnce()
+		ms.RunOnce(&listener_wg)
 	} else {
 		for {
 			fmt.Println("Cycle")
-			ms.RunOnce()
+			ms.RunOnce(&listener_wg)
 			time.Sleep(ms.sleep_time)
 		}
 	}
