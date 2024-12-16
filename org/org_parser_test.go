@@ -7,6 +7,66 @@ import (
 	"testing"
 )
 
+func rawLines() []string {
+	raw := `* TODO Team Reviews [0/2]
+** TODO dev: PR 1 :repo-name:
+15479
+https://github.com/org-name/repo-name/pull/15479
+Title: dev: PR-1
+Author: C-Hipple
+*** BODY
+abc
+
+def
+
+ge
+** TODO feature: PR 2 :repo-name:
+15480
+https://github.com/org-name/repo-name/pull/15480
+Title: feature: PR-2
+Author: C-Hipple
+*** BODY
+abc2
+
+def2
+
+ge2
+open line end
+
+* TODO My Review Requests [0/2]
+** TODO dev: PR 3 :repo-name:
+15479
+https://github.com/org-name/repo-name/pull/15479
+Title: dev: PR-3
+Author: C-Hipple
+*** BODY
+abc
+
+def
+** TODO feature: PR 4 :repo-name:
+15480
+https://github.com/org-name/repo-name/pull/15480
+Title: feature: PR-4
+Author: C-Hipple
+*** BODY
+short body
+`
+	return strings.Split(raw, "\n")
+}
+
+func makeTestOrgDoc(all_lines []string) OrgDocument {
+	// Helper which skips reading the file and let's inject the lines
+	serializer := BaseOrgSerializer{}
+	sections, err := ParseSectionsFromLines(all_lines, serializer)
+	if err != nil {
+		fmt.Println("Error parsing sections from file: ", err)
+	}
+	fmt.Println(sections)
+	fmt.Println(len(sections))
+	return OrgDocument{Filename: "test_file_name.org", Sections: sections, Serializer: serializer}
+
+}
+
 func Test_findOrgTags(t *testing.T) {
 	line := "* TODO Example name  :tag1:tag2:"
 	tags := findOrgTags(line)
@@ -37,9 +97,9 @@ func Test_findOrgStatus(t *testing.T) {
 }
 
 func Test_Serialize(t *testing.T) {
-	raw := `** TODO dev: Serialize PrivateShow Objects into Dataclass		:chaturbate:
+	raw := `** TODO dev: Serialize PrivateShow Objects into Dataclass		:repo-name:
 15479
-https://github.com/multimediallc/chaturbate/pull/15479
+https://github.com/org-name/repo-name/pull/15479
 Title: dev: Serialize PrivateShow Objects into Dataclass
 Author: C-Hipple
 *** BODY
@@ -49,22 +109,21 @@ def
 
 ge
 `
-
 	parser := BaseOrgSerializer{}
 	item, err := parser.Serialize(strings.Split(raw, "\n"), 0)
 	if err != nil {
 		t.Fatalf("Failed to parse: %v", err)
 	}
 	expected := OrgItem{
-		header: "** TODO dev: Serialize PrivateShow Objects into Dataclass		:chaturbate:",
+		header: "** TODO dev: Serialize PrivateShow Objects into Dataclass		:repo-name:",
 		status: "TODO",
 		details: []string{
 			"15479",
-			"https://github.com/multimediallc/chaturbate/pull/15479",
+			"https://github.com/org-name/repo-name/pull/15479",
 			"Title: dev: Serialize PrivateShow Objects into Dataclass",
 			"Author: C-Hipple",
 		},
-		tags: []string{"chaturbate"},
+		tags: []string{"repo-name"},
 	}
 	if item.GetStatus() != expected.GetStatus() {
 		t.Fatalf("Mismatched status %v-%v", item.GetStatus(), expected.GetStatus())
@@ -84,12 +143,16 @@ ge
 	if len(item.Details()) != 11 {
 		t.Fatalf("Wrong length of details! %v", len(item.Details()))
 	}
+
+	if item.LinesCount() != 12 {
+		t.Fatalf("Wrong size of LinesCount! %v", item.LinesCount())
+	}
 }
 
 func Test_LineNumbers(t *testing.T) {
-	raw := `** TODO dev: Serialize PrivateShow Objects into Dataclass		:chaturbate:
+	raw := `** TODO dev: Serialize PrivateShow Objects into Dataclass		:repo-name:
 15479
-https://github.com/multimediallc/chaturbate/pull/15479
+https://github.com/org-name/repo-name/pull/15479
 Title: dev: Serialize PrivateShow Objects into Dataclass
 Author: C-Hipple
 *** BODY
@@ -99,63 +162,19 @@ def
 
 ge
 `
-	// doc :=
 	parser := BaseOrgSerializer{}
 	item, err := parser.Serialize(strings.Split(raw, "\n"), 0)
 	if err != nil {
 		t.Fatalf("Error on Serialized: %s", err)
 	}
+	fmt.Println("ID: ", item.ID())
 	fmt.Println("Details: ")
 	fmt.Println(item.Details())
 	fmt.Println("Done ")
 }
 
 func Test_ParseSections(t *testing.T) {
-	raw := `* TODO Team Reviews [0/2]
-** TODO dev: PR 1 :chaturbate:
-15479
-https://github.com/multimediallc/chaturbate/pull/15479
-Title: dev: PR-1
-Author: C-Hipple
-*** BODY
-abc
-
-def
-
-ge
-** TODO feature: PR 2 :chaturbate:
-15480
-https://github.com/multimediallc/chaturbate/pull/15480
-Title: feature: PR-2
-Author: C-Hipple
-*** BODY
-abc2
-
-def2
-
-ge2
-open line end
-
-* TODO My Review Requests [0/2]
-** TODO dev: PR 3 :chaturbate:
-15479
-https://github.com/multimediallc/chaturbate/pull/15479
-Title: dev: PR-3
-Author: C-Hipple
-*** BODY
-abc
-
-def
-** TODO feature: PR 4 :chaturbate:
-15480
-https://github.com/multimediallc/chaturbate/pull/15480
-Title: feature: PR-4
-Author: C-Hipple
-*** BODY
-short body
-`
-	// fmt.Println(raw)
-	raw_lines := strings.Split(raw, "\n")
+	raw_lines := rawLines()
 	sections, err := ParseSectionsFromLines(raw_lines, BaseOrgSerializer{})
 	if err != nil {
 		t.Fatalf("Error parsing sections %v", err)
@@ -167,6 +186,14 @@ short body
 
 	section_team_review := sections[0]
 	section_my_review := sections[1]
+
+	if section_my_review.Name != "My Review Requests" {
+		t.Fatalf("Wrong Parsed Name of my Review Section '%s'", section_my_review.Name)
+	}
+
+	if section_team_review.Name != "Team Reviews" {
+		t.Fatalf("Wrong Parsed Name of team Review Section '%s'", section_team_review.Name)
+	}
 
 	if len(section_my_review.Items) != 2 {
 		t.Fatalf("Wrong length of my review items! %v", len(section_my_review.Items))
@@ -200,4 +227,28 @@ short body
 	if section_my_review.Items[1].StartLine() != 35 {
 		t.Fatalf("Wrong start line of second item in second section %v", section_my_review.Items[1].StartLine())
 	}
+}
+
+func Test_UpdateItemInSection(t *testing.T) {
+	serializer := BaseOrgSerializer{}
+	new_item_lines := `** TODO feature: PR 2 :repo-name:
+15480
+https://github.com/org-name/repo-name/pull/15480
+Title: feature: PR-2
+Author: C-Hipple
+*** BODY
+abc2
+`
+	t.Skip("Skipping test since I haven't separated UpdateItemInSection from writing to file immediately")
+	new_item, err := serializer.Serialize(strings.Split(new_item_lines, "\n"), 0)
+	fmt.Println("ID", new_item.ID())
+	if err != nil {
+		t.Fatal("Failed to serialze new item in UpdateItemSection")
+	}
+	doc := makeTestOrgDoc(rawLines())
+	err = doc.UpdateItemInSection("Team Reviews", &new_item)
+	if err != nil {
+		t.Fatalf("Error on updating item in section: %v", err)
+	}
+
 }

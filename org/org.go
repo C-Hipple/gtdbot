@@ -14,6 +14,7 @@ type OrgTODO interface {
 	CheckDone() bool
 	ID() string
 	StartLine() int
+	LinesCount() int
 }
 
 func InterfaceCheck(a OrgTODO) bool {

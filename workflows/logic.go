@@ -38,6 +38,13 @@ func (prb PRToOrgBridge) StartLine() int {
 	// return -1
 }
 
+func (prb PRToOrgBridge) LinesCount() int {
+	// This implementation of the interface is for when we pull things from the API and want to compare
+	// Therefore the LinesCount should't be checked
+	panic("Called LinesCount for PRToOrgBridge which shouldn't be done.")
+	// return -1
+}
+
 func (prb PRToOrgBridge) Title() string {
 	return *prb.PR.Title
 }
