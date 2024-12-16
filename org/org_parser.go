@@ -86,8 +86,7 @@ func (o OrgDocument) UpdateItemInSection(section_name string, new_item *OrgTODO)
 		return errors.New("Item not in section; Cannot update!")
 	}
 
-	lines_count := len(existing_item.Details())
-	utils.RemoveLinesInFile(o.GetFile(), start_line, lines_count)
+	utils.RemoveLinesInFile(o.GetFile(), start_line, existing_item.LinesCount())
 
 	new_lines := o.Serializer.Deserialize(*new_item, section.IndentLevel)
 	utils.InsertLinesInFile(o.GetFile(), new_lines, start_line)
@@ -277,20 +276,22 @@ func ParseSectionsFromLines(all_lines []string, serializer OrgSerializer) ([]Sec
 }
 
 type OrgItem struct {
-	header     string
-	details    []string
-	status     string
-	tags       []string
-	start_line int
+	header      string
+	details     []string
+	status      string
+	tags        []string
+	start_line  int
+	lines_count int
 }
 
-func NewOrgItem(header string, details []string, status string, tags []string, start_line int) OrgItem {
+func NewOrgItem(header string, details []string, status string, tags []string, start_line int, lines_count int) OrgItem {
 	return OrgItem{
 		header,
 		details,
 		status,
 		tags,
 		start_line,
+		lines_count,
 	}
 }
 
@@ -313,6 +314,10 @@ func (oi OrgItem) Summary() string {
 
 func (oi OrgItem) StartLine() int {
 	return oi.start_line
+}
+
+func (oi OrgItem) LinesCount() int {
+	return oi.lines_count
 }
 
 func (oi OrgItem) ID() string {
@@ -370,7 +375,7 @@ func (bos BaseOrgSerializer) Serialize(lines []string, start_line int) (OrgTODO,
 	}
 	status := findOrgStatus(lines[0])
 	tags := findOrgTags(lines[0])
-	return OrgItem{header: lines[0], status: status, details: lines[1:], tags: tags, start_line: start_line}, nil
+	return OrgItem{header: lines[0], status: status, details: lines[1:], tags: tags, start_line: start_line, lines_count: len(lines)}, nil
 }
 
 type MergeInfoOrgSerializer struct {
