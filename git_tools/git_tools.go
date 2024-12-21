@@ -61,6 +61,18 @@ func GetManyRepoPRs(client *github.Client, state string, owner string, repos []s
 	return prs
 }
 
+func GetSpecificPRs(client *github.Client, owner string, repo string, pr_numbers []int) []*github.PullRequest {
+	var prs []*github.PullRequest
+	for _, number := range pr_numbers {
+		pr, _, err := client.PullRequests.Get(context.Background(), owner, repo, number)
+		if err != nil {
+			fmt.Printf("Error Getting PR: %s/%s/%v: %v\n", owner, repo, number, err)
+		}
+		prs = append(prs, pr)
+	}
+	return prs
+}
+
 func ApplyPRFilters(prs []*github.PullRequest, filters []PRFilter) []*github.PullRequest {
 	for _, filter := range filters {
 		prs = filter(prs)
