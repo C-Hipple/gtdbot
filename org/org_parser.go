@@ -54,13 +54,34 @@ func (o OrgDocument) Refresh() {
 	o.Sections = sections
 }
 
+func (o OrgDocument) AddSection(section_name string) (Section, error) {
+	// Adds a new section always at the end
+	formatted := fmt.Sprintf("** TODO %s [0/0]", section_name)
+	at_line, err := utils.InsertLinesInFile(o.GetFile(), []string{formatted}, -1)
+	if err != nil {
+		return Section{}, err
+	}
+	section := Section{
+		Name: section_name,
+		StartLine: at_line,
+		IndentLevel: 2,
+		Items: []OrgTODO{},
+	}
+	o.Sections = append(o.Sections, section)
+	return section, nil
+}
+
 func (o OrgDocument) GetSection(section_name string) (Section, error) {
 	for _, section := range o.Sections {
 		if section.Name == section_name {
 			return section, nil
 		}
 	}
-	return Section{}, errors.New("Section not found")
+	section, err := o.AddSection(section_name)
+	if err != nil {
+		return Section{}, errors.New("Section not found")
+	}
+	return section, nil
 }
 
 func (o OrgDocument) AddItemInSection(section_name string, new_item *OrgTODO) error {
