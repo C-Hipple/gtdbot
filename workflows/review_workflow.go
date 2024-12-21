@@ -131,3 +131,43 @@ func (w ListMyPRsWorkflow) Run(c chan FileChanges, file_change_wg *sync.WaitGrou
 
 	}
 }
+
+type ProjectListWorkflow struct {
+	Name            string
+	Owner           string
+	Repo            string
+	OrgFileName     string
+	SectionTitle    string
+	ProjectPRs      []int
+	ReleasedVersion git_tools.DeployedVersion
+}
+
+func (w ProjectListWorkflow) GetName() string {
+	return w.Name
+}
+
+func (w ProjectListWorkflow) Run(c chan FileChanges, file_change_wg *sync.WaitGroup) {
+	client := git_tools.GetGithubClient()
+	doc := org.GetOrgDocument(w.OrgFileName, org.MergeInfoOrgSerializer{})
+	section, err := doc.GetSection(w.SectionTitle)
+	if err != nil {
+		fmt.Printf("Error getting section %s in workflow %s\n", w.SectionTitle, w.Name)
+	}
+	prs := git_tools.GetSpecificPRs(client, w.Owner, w.Repo, w.ProjectPRs)
+	for _, pr := range prs {
+		output := SyncTODOToSection(doc, pr, section)
+		// TODO This is moving to the serializer
+		if pr.MergedAt != nil && output.ChangeType != "No Change" {
+			repo_name := *pr.Base.Repo.Name
+			if repo_name == "repo" {
+				released := git_tools.CheckCommitReleased(client, w.ReleasedVersion.SHA, *pr.MergeCommitSHA)
+				fmt.Printf("Released PR: %s %t\n", *pr.Title, released)
+			}
+		}
+		if output.ChangeType != "No Change" {
+			file_change_wg.Add(1)
+			c <- output
+		}
+
+	}
+}

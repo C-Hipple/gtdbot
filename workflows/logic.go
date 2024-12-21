@@ -207,7 +207,6 @@ func getComments(owner string, repo string, number int) []string {
 //	}
 // }
 
-// this is the official github package, not our lib, confusing!!
 func SyncTODOToSection(doc org.OrgDocument, pr *github.PullRequest, section org.Section) FileChanges {
 	pr_as_org := PRToOrgBridge{pr}
 	at_line, _ := org.CheckTODOInSection(pr_as_org, section)
