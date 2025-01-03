@@ -52,12 +52,21 @@ func replaceLines(existing_lines []string, new_lines []string, at_line_number in
 	return out_lines
 }
 
-func InsertLinesInFile(file *os.File, new_lines []string, at_line_number int) error {
-	//new line is at the at_line_number, not after, pushes everything below it.
+func InsertLinesInFile(file *os.File, new_lines []string, at_line_number int) (int, error) {
+	// If at_line_number is -1, do it at the end
+	// new line is at the at_line_number, not after, pushes everything below it.
+	// Returns at_line_number back to user so we know if we added it at the end.
 	lines, _ := LinesFromReader(file)
+	if at_line_number == -1 {
+		at_line_number = len(lines)
+	}
 	file_content := insertLines(lines, new_lines, at_line_number)
 	path, _ := filepath.Abs(file.Name())
-	return os.WriteFile(path, []byte(file_content), 0644)
+	err := os.WriteFile(path, []byte(file_content), 0644)
+	if err != nil {
+		return 0, err
+	}
+	return at_line_number, nil
 }
 
 func insertLines(existing_lines []string, new_lines []string, at_line_number int) string {
