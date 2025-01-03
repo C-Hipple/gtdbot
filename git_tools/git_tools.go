@@ -187,7 +187,7 @@ func GetGithubClient() *github.Client {
 	ctx := context.Background()
 	token := os.Getenv("GTDBOT_GITHUB_TOKEN")
 	if token == "" {
-		fmt.Println("Error! No Github Token!")
+		// fmt.Println("Error! No Github Token!")
 		//os.Exit(1)
 		// dont' commit me
 		token = "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"

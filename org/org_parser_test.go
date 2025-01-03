@@ -54,6 +54,79 @@ short body
 	return strings.Split(raw, "\n")
 }
 
+func RealRawLines() []string {
+	// This is a set of lines pulled from an actual sync run
+	raw := `* TODO Team Reviews [0/3]
+** TODO dev: Handle             :lsp-example:
+1
+https://github.com/C-Hipple/lsp-example/pull/1
+Title: dev: Handle
+Author: C-Hipple
+Branch: C-Hipple:dev/example-pr
+Requested Reviewers:
+Requested Teams:
+*** BODY
+ ### Section 1
+
+This PR is for testing code-review PR body parsing. 
+
+### Section 2
+
+Adds some silly changes in mlutple go files
+** TODO tseting elgot vs lsp-mode		:diff-lsp.el:
+1
+https://github.com/C-Hipple/diff-lsp.el/pull/1
+Title: tseting elgot vs lsp-mode
+Author: C-Hipple
+Branch: C-Hipple:testing-clients
+Requested Reviewers:
+Requested Teams:
+*** BODY
+
+** TODO This really bothered me		:diff-lsp:
+1
+https://github.com/C-Hipple/diff-lsp/pull/1
+Title: This really bothered me
+Author: test-user-afk
+Branch: test-user-afk:patch-1
+Requested Reviewers:
+Requested Teams:
+*** BODY
+ - Please don't include this print statement
+* TODO My Review Requests [0/0]
+* TODO Other Repos [0/0]
+* TODO My Pull Requests [0/2]
+** TODO dev: Handle             :lsp-example:
+1
+https://github.com/C-Hipple/lsp-example/pull/1
+Title: dev: Handle
+Author: C-Hipple
+Branch: C-Hipple:dev/example-pr
+Requested Reviewers:
+Requested Teams:
+*** BODY
+ ### Section 1
+
+This PR is for testing code-review PR body parsing.
+
+### Section 2
+
+Adds some silly changes in mlutple go files
+** TODO tseting elgot vs lsp-mode		:diff-lsp.el:
+1
+https://github.com/C-Hipple/diff-lsp.el/pull/1
+Title: tseting elgot vs lsp-mode
+Author: C-Hipple
+Branch: C-Hipple:testing-clients
+Requested Reviewers:
+Requested Teams:
+*** BODY
+* TODO My Closed Pull Requests [0/0]
+* TODO Other [0/0]
+`
+	return strings.Split(raw, "\n")
+}
+
 func makeTestOrgDoc(all_lines []string) OrgDocument {
 	// Helper which skips reading the file and let's inject the lines
 	serializer := BaseOrgSerializer{}
@@ -173,7 +246,7 @@ ge
 	fmt.Println("Done ")
 }
 
-func Test_ParseSections(t *testing.T) {
+func Test_ParseExampleSections(t *testing.T) {
 	raw_lines := rawLines()
 	sections, err := ParseSectionsFromLines(raw_lines, BaseOrgSerializer{})
 	if err != nil {
@@ -221,7 +294,7 @@ func Test_ParseSections(t *testing.T) {
 	}
 
 	if section_my_review.Items[0].StartLine() != 26 {
-		t.Fatalf("Wrong start line of first item in second section %v", section_my_review.Items[0].StartLine())
+		t.Fatalf("Wrong start line of first item in second section: %v, expected %v", section_my_review.Items[0].StartLine(), 26)
 	}
 
 	if section_my_review.Items[1].StartLine() != 35 {
@@ -251,4 +324,60 @@ abc2
 		t.Fatalf("Error on updating item in section: %v", err)
 	}
 
+}
+
+func Test_ParseSectionsRealTExt(t *testing.T) {
+	raw_lines := RealRawLines()
+	sections, err := ParseSectionsFromLines(raw_lines, BaseOrgSerializer{})
+	if err != nil {
+		t.Fatalf("Error parsing sections %v", err)
+	}
+
+	if len(sections) != 6 {
+		t.Fatalf("Wrong length of sections ! %v", len(sections))
+	}
+
+	section_team_review := sections[0]
+	section_my_prs := sections[3]
+
+	if section_my_prs.Name != "My Pull Requests" {
+		t.Fatalf("Wrong Parsed Name of my Review Section '%s'", section_my_prs.Name)
+	}
+
+	if section_team_review.Name != "Team Reviews" {
+		t.Fatalf("Wrong Parsed Name of team Review Section '%s'", section_team_review.Name)
+	}
+
+	if len(section_my_prs.Items) != 2 {
+		t.Fatalf("Wrong length of my prs items! %v", len(section_my_prs.Items))
+	}
+
+	if len(section_team_review.Items) != 3 {
+		t.Fatalf("Wrong length of team review items! %v", len(section_team_review.Items))
+	}
+
+	if section_team_review.StartLine != 0 {
+		t.Fatalf("Wrong start line of team reviews section %v", section_team_review.StartLine)
+	}
+
+	if section_my_prs.StartLine != 39 {
+		t.Fatalf("Wrong start line of my prs section %v", section_my_prs.StartLine)
+	}
+
+	// Test item start lines
+	if section_team_review.Items[0].StartLine() != 1 {
+		t.Fatalf("Wrong start line of first item in first section %v", section_team_review.Items[0].StartLine())
+	}
+
+	if section_team_review.Items[1].StartLine() != 17 {
+		t.Fatalf("Wrong start line of second item in first section %v", section_team_review.Items[1].StartLine())
+	}
+
+	if section_my_prs.Items[0].StartLine() != 40 {
+		t.Fatalf("Wrong start line of first item in second section %v", section_my_prs.Items[0].StartLine())
+	}
+
+	if section_my_prs.Items[1].StartLine() != 56 {
+		t.Fatalf("Wrong start line of second item in second section %v", section_my_prs.Items[1].StartLine())
+	}
 }
