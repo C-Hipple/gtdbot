@@ -27,6 +27,7 @@ type RawWorkflow struct {
 	OrgFileName  string
 	SectionTitle string
 	PRState      string
+	ProjectPRs   []int
 }
 
 func LoadConfig() Config {
@@ -64,6 +65,9 @@ func MatchWorkflows(workflow_maps []RawWorkflow, repos *[]string) []workflows.Wo
 		if raw_workflow.WorkflowType == "ListMyPRsWorkflow" {
 			workflows = append(workflows, BuildListMyPRsWorkflow(&raw_workflow, repos))
 		}
+		if raw_workflow.WorkflowType == "ProjectListWorkflow" {
+			workflows = append(workflows, BuildProjectListWorkflow(&raw_workflow))
+		}
 	}
 	return workflows
 }
@@ -100,6 +104,18 @@ func BuildListMyPRsWorkflow(raw *RawWorkflow, repos *[]string) workflows.Workflo
 		PRState:      raw.PRState,
 		OrgFileName:  raw.OrgFileName,
 		SectionTitle: raw.SectionTitle,
+	}
+	return wf
+}
+
+func BuildProjectListWorkflow(raw *RawWorkflow) workflows.Workflow {
+	wf := workflows.ProjectListWorkflow{
+		Name:         raw.Name,
+		Owner:        raw.Owner,
+		Repo:         raw.Repo,
+		OrgFileName:  raw.OrgFileName,
+		SectionTitle: raw.SectionTitle,
+		ProjectPRs:   raw.ProjectPRs,
 	}
 	return wf
 }

@@ -107,3 +107,21 @@ func Test_RemoveLines(t *testing.T) {
 		t.Fatal("Removed lines when shouldn't ahve")
 	}
 }
+
+func Test_InsertLinesAtEnd(t *testing.T) {
+	existing_lines := []string{
+		"* TODO PR #1 <title> :draft:",
+		"*** Body",
+		"END",
+	}
+	raw_output := insertLines(existing_lines, []string{"added line"}, -1)
+	output := strings.Split(raw_output, "\n")
+	last_true_element := output[len(output) -2 ] // We end the file with a newline so -1 is empty.
+	if last_true_element != "END" {
+		t.Fatalf("Adding Line at the end failed.  Expected to end with END: %s", last_true_element)
+	}
+	empty_last_element := output[len(output) -1 ] // We end the file with a newline so -1 is empty.
+	if empty_last_element != "" {
+		t.Fatalf("Adding Line at the end failed.  Expected to end with END: %s", empty_last_element)
+	}
+}

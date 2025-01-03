@@ -23,15 +23,14 @@ func (w SingleRepoSyncReviewRequestsWorkflow) GetName() string {
 	return w.Name
 }
 
-func (w SingleRepoSyncReviewRequestsWorkflow) Run(c chan FileChanges, wg *sync.WaitGroup) {
-	defer wg.Done()
-
+func (w SingleRepoSyncReviewRequestsWorkflow) Run(c chan FileChanges, file_change_wg *sync.WaitGroup) {
 	prs := git_tools.GetPRs(
 		git_tools.GetGithubClient(),
 		"open",
 		w.Owner,
 		w.Repo,
 	)
+
 	prs = git_tools.ApplyPRFilters(prs, w.Filters)
 	doc := org.GetBaseOrgDocument(w.OrgFileName)
 	section, err := doc.GetSection(w.SectionTitle)
@@ -42,6 +41,7 @@ func (w SingleRepoSyncReviewRequestsWorkflow) Run(c chan FileChanges, wg *sync.W
 	for _, pr := range prs {
 		output := SyncTODOToSection(doc, pr, section)
 		if output.ChangeType != "No Change" {
+			file_change_wg.Add(1)
 			c <- output
 		}
 	}
@@ -59,12 +59,9 @@ type SyncReviewRequestsWorkflow struct {
 	SectionTitle string
 }
 
-func (w SyncReviewRequestsWorkflow) Run(c chan FileChanges, wg *sync.WaitGroup) {
-	defer wg.Done()
-
+func (w SyncReviewRequestsWorkflow) Run(c chan FileChanges, file_change_wg *sync.WaitGroup) {
 	client := git_tools.GetGithubClient()
 	prs := git_tools.GetManyRepoPRs(client, "open", w.Owner, w.Repos)
-	// prs := git_tools.GetPRs(
 	//	git_tools.GetGithubClient(),
 	//	"open",
 	//	w.Owner,
@@ -80,6 +77,7 @@ func (w SyncReviewRequestsWorkflow) Run(c chan FileChanges, wg *sync.WaitGroup) 
 	for _, pr := range prs {
 		output := SyncTODOToSection(doc, pr, section)
 		if output.ChangeType != "No Change" {
+			file_change_wg.Add(1)
 			c <- output
 		}
 	}
@@ -103,8 +101,7 @@ func (w ListMyPRsWorkflow) GetName() string {
 	return w.Name
 }
 
-func (w ListMyPRsWorkflow) Run(c chan FileChanges, wg *sync.WaitGroup) {
-	defer wg.Done()
+func (w ListMyPRsWorkflow) Run(c chan FileChanges, file_change_wg *sync.WaitGroup) {
 	client := git_tools.GetGithubClient()
 	prs := git_tools.GetManyRepoPRs(client, w.PRState, w.Owner, w.Repos)
 
@@ -122,12 +119,53 @@ func (w ListMyPRsWorkflow) Run(c chan FileChanges, wg *sync.WaitGroup) {
 			repo_name := *pr.Base.Repo.Name
 			if repo_name == "chaturbate" {
 				released := git_tools.CheckCommitReleased(client, w.ReleasedVersion.SHA, *pr.MergeCommitSHA)
-				fmt.Printf("Released PR: %s %t", *pr.Title, released)
+				fmt.Printf("Released PR: %s %t\n", *pr.Title, released)
 				//output.Item.Details() = append(output.Lines, "Released: "+strconv.FormatBool(released))
 				//output.Lines[0] = strings.Replace(output.Lines[0], "merged", "released", 1)
 			}
 		}
 		if output.ChangeType != "No Change" {
+			file_change_wg.Add(1)
+			c <- output
+		}
+
+	}
+}
+
+type ProjectListWorkflow struct {
+	Name            string
+	Owner           string
+	Repo            string
+	OrgFileName     string
+	SectionTitle    string
+	ProjectPRs      []int
+	ReleasedVersion git_tools.DeployedVersion
+}
+
+func (w ProjectListWorkflow) GetName() string {
+	return w.Name
+}
+
+func (w ProjectListWorkflow) Run(c chan FileChanges, file_change_wg *sync.WaitGroup) {
+	client := git_tools.GetGithubClient()
+	doc := org.GetOrgDocument(w.OrgFileName, org.MergeInfoOrgSerializer{})
+	section, err := doc.GetSection(w.SectionTitle)
+	if err != nil {
+		fmt.Printf("Error getting section %s in workflow %s\n", w.SectionTitle, w.Name)
+	}
+	prs := git_tools.GetSpecificPRs(client, w.Owner, w.Repo, w.ProjectPRs)
+	for _, pr := range prs {
+		output := SyncTODOToSection(doc, pr, section)
+		// TODO This is moving to the serializer
+		if pr.MergedAt != nil && output.ChangeType != "No Change" {
+			repo_name := *pr.Base.Repo.Name
+			if repo_name == "chaturbate" {
+				released := git_tools.CheckCommitReleased(client, w.ReleasedVersion.SHA, *pr.MergeCommitSHA)
+				fmt.Printf("Released PR: %s %t\n", *pr.Title, released)
+			}
+		}
+		if output.ChangeType != "No Change" {
+			file_change_wg.Add(1)
 			c <- output
 		}
 

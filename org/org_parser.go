@@ -5,7 +5,7 @@ import (
 	"errors"
 	"fmt"
 	"gtdbot/utils"
-	"io/ioutil"
+	"io"
 	"os"
 	"strconv"
 	"strings"
@@ -27,7 +27,10 @@ func GetBaseOrgDocument(file_name string) OrgDocument {
 }
 
 func GetOrgDocument(file_name string, serializer OrgSerializer) OrgDocument {
-	sections, err := ParseSectionsFromFile(file_name, serializer)
+	file := GetOrgFile(file_name)
+	all_lines, _ := utils.LinesFromReader(file)
+	file.Close()
+	sections, err := ParseSectionsFromLines(all_lines, serializer)
 	if err != nil {
 		fmt.Println("Error parsing sections from file: ", err)
 		os.Exit(1)
@@ -38,12 +41,34 @@ func GetOrgDocument(file_name string, serializer OrgSerializer) OrgDocument {
 
 func (o OrgDocument) Refresh() {
 	serializer := BaseOrgSerializer{}
-	sections, err := ParseSectionsFromFile(o.Filename, serializer)
+
+	file := GetOrgFile(o.Filename)
+	all_lines, _ := utils.LinesFromReader(file)
+	file.Close()
+
+	sections, err := ParseSectionsFromLines(all_lines, serializer)
 	if err != nil {
 		fmt.Println("Error parsing sections from file: ", err)
 		os.Exit(1)
 	}
 	o.Sections = sections
+}
+
+func (o OrgDocument) AddSection(section_name string) (Section, error) {
+	// Adds a new section always at the end
+	formatted := fmt.Sprintf("** TODO %s [0/0]", section_name)
+	at_line, err := utils.InsertLinesInFile(o.GetFile(), []string{formatted}, -1)
+	if err != nil {
+		return Section{}, err
+	}
+	section := Section{
+		Name: section_name,
+		StartLine: at_line,
+		IndentLevel: 2,
+		Items: []OrgTODO{},
+	}
+	o.Sections = append(o.Sections, section)
+	return section, nil
 }
 
 func (o OrgDocument) GetSection(section_name string) (Section, error) {
@@ -52,7 +77,11 @@ func (o OrgDocument) GetSection(section_name string) (Section, error) {
 			return section, nil
 		}
 	}
-	return Section{}, errors.New("Section not found")
+	section, err := o.AddSection(section_name)
+	if err != nil {
+		return Section{}, errors.New("Section not found")
+	}
+	return section, nil
 }
 
 func (o OrgDocument) AddItemInSection(section_name string, new_item *OrgTODO) error {
@@ -78,8 +107,7 @@ func (o OrgDocument) UpdateItemInSection(section_name string, new_item *OrgTODO)
 		return errors.New("Item not in section; Cannot update!")
 	}
 
-	lines_count := len(existing_item.Details())
-	utils.RemoveLinesInFile(o.GetFile(), start_line, lines_count)
+	utils.RemoveLinesInFile(o.GetFile(), start_line, existing_item.LinesCount())
 
 	new_lines := o.Serializer.Deserialize(*new_item, section.IndentLevel)
 	utils.InsertLinesInFile(o.GetFile(), new_lines, start_line)
@@ -160,14 +188,11 @@ func (pd ParseDebugger) Println(line ...any) {
 	}
 }
 
-func ParseSectionsFromFile(file_name string, serializer OrgSerializer) ([]Section, error) {
-	file := GetOrgFile(file_name)
-	all_lines, _ := utils.LinesFromReader(file)
-	file.Close()
-
+func ParseSectionsFromLines(all_lines []string, serializer OrgSerializer) ([]Section, error) {
 	var sections []Section
 	var header string
-	start_line := 0
+	section_start_line := 0
+	item_start_line := 0
 	in_section := false
 	print_debugger := ParseDebugger{active: false}
 
@@ -190,16 +215,16 @@ func ParseSectionsFromFile(file_name string, serializer OrgSerializer) ([]Sectio
 			// Check if we're into the next section at the same indent level as the header
 			if building_item {
 				building_item = false
-				item, serialize_err := serializer.Serialize(item_lines)
+				item, serialize_err := serializer.Serialize(item_lines, item_start_line)
 				if serialize_err != nil {
 					panic("Error serializing item: " + serialize_err.Error())
 				}
 				items = append(items, item)
-				print_debugger.Println("Adding item: ", item.Summary(), item.Details())
+				print_debugger.Println("Adding item inside: ", item.Summary(), item.Details(), i, item_start_line)
 			}
 			sections = append(sections, Section{
 				Name:      CleanHeader(header),
-				StartLine: start_line,
+				StartLine: section_start_line,
 				//IndentLevel: strings.Count(header, "*") + 1,
 				IndentLevel: 2,
 				Items:       items,
@@ -210,11 +235,12 @@ func ParseSectionsFromFile(file_name string, serializer OrgSerializer) ([]Sectio
 			header = ""
 			in_section = false
 			building_item = false
+			// item_start_line = i
 		}
 
 		if CheckForHeader("TODO", line, "*") || CheckForHeader("DONE", line, "*") {
 			in_section = true
-			start_line = i
+			section_start_line = i
 			header = CleanHeader(line)
 			print_debugger.Println("Found Section Header: ", header)
 			items = []OrgTODO{}
@@ -223,10 +249,11 @@ func ParseSectionsFromFile(file_name string, serializer OrgSerializer) ([]Sectio
 			continue
 		}
 
-		if in_section && strings.HasPrefix(line, "**") {
+		if in_section && strings.HasPrefix(line, "**") && !strings.Contains(line, "BODY") {
 			if building_item {
 				building_item = false
-				item, serialize_err := serializer.Serialize(item_lines)
+				// gross on the section_start_line + 1, this is for the first item being added
+				item, serialize_err := serializer.Serialize(item_lines, section_start_line+1)
 				if serialize_err != nil {
 					panic("Error serializing item: " + serialize_err.Error())
 				}
@@ -237,41 +264,55 @@ func ParseSectionsFromFile(file_name string, serializer OrgSerializer) ([]Sectio
 				// item_lines = []string{line}
 				// building_item = true
 			}
-			print_debugger.Println("Starting to build item: ", line)
+			print_debugger.Println("Starting to build item: ", line, "; at i: ", i)
 			item_lines = []string{line}
 			building_item = true
+			item_start_line = int(i)
 			continue
 		}
+	}
+
+	if building_item {
+		// At the end of the file, if we're still building something we need to get the last item and include it
+		item, serialize_err := serializer.Serialize(item_lines, item_start_line)
+		if serialize_err != nil {
+			panic("Error serializing item: " + serialize_err.Error())
+		}
+		items = append(items, item)
 	}
 	// if we're at the end of the file, we need to add the last section
 	if in_section {
 		sections = append(sections, Section{
 			Name:        CleanHeader(header),
-			StartLine:   start_line,
+			StartLine:   section_start_line,
 			IndentLevel: strings.Count(header, "*") + 1,
 			Items:       items,
 		})
 	}
 
-	// if start_line == 0 {
+	// if section_start_line == 0 {
 	//	return sections, errors.New("Did not find parsed section.")
 	// }
 	return sections, nil
 }
 
 type OrgItem struct {
-	header  string
-	details []string
-	status  string
-	tags    []string
+	header      string
+	details     []string
+	status      string
+	tags        []string
+	start_line  int
+	lines_count int
 }
 
-func NewOrgItem(header string, details []string, status string, tags []string) OrgItem {
+func NewOrgItem(header string, details []string, status string, tags []string, start_line int, lines_count int) OrgItem {
 	return OrgItem{
 		header,
 		details,
 		status,
 		tags,
+		start_line,
+		lines_count,
 	}
 }
 
@@ -292,6 +333,14 @@ func (oi OrgItem) Summary() string {
 	return oi.header
 }
 
+func (oi OrgItem) StartLine() int {
+	return oi.start_line
+}
+
+func (oi OrgItem) LinesCount() int {
+	return oi.lines_count
+}
+
 func (oi OrgItem) ID() string {
 	return oi.Details()[0]
 }
@@ -310,14 +359,23 @@ func findOrgTags(line string) []string {
 
 }
 
+func findOrgStatus(line string) string {
+	for _, status := range GetOrgStatuses() {
+		if strings.Contains(line, status) {
+			return status
+		}
+	}
+	return ""
+}
+
 func PrintOrgFile(file *os.File) {
-	res, _ := ioutil.ReadAll(file)
+	res, _ := io.ReadAll(file)
 	fmt.Println(string(res))
 }
 
 type OrgSerializer interface {
 	Deserialize(item OrgTODO, indent_level int) []string
-	Serialize(lines []string) (OrgTODO, error)
+	Serialize(lines []string, start_line int) (OrgTODO, error)
 }
 
 type BaseOrgSerializer struct{}
@@ -331,23 +389,14 @@ func (bos BaseOrgSerializer) Deserialize(item OrgTODO, indent_level int) []strin
 	return result
 }
 
-func (bos BaseOrgSerializer) Serialize(lines []string) (OrgTODO, error) {
+func (bos BaseOrgSerializer) Serialize(lines []string, start_line int) (OrgTODO, error) {
 	// each one has the format ** TODO URL Title.  Check stars to allow for auxillary text between items
 	if len(lines) == 0 {
 		return OrgItem{}, errors.New("No Lines passed for serialization")
 	}
 	status := findOrgStatus(lines[0])
 	tags := findOrgTags(lines[0])
-	return OrgItem{header: lines[0], status: status, details: lines[1:], tags: tags}, nil
-}
-
-func findOrgStatus(line string) string {
-	for _, status := range GetOrgStatuses() {
-		if strings.Contains(line, status) {
-			return status
-		}
-	}
-	return ""
+	return OrgItem{header: lines[0], status: status, details: lines[1:], tags: tags, start_line: start_line, lines_count: len(lines)}, nil
 }
 
 type MergeInfoOrgSerializer struct {
@@ -360,12 +409,12 @@ func (ser MergeInfoOrgSerializer) Deserialize(item OrgTODO, indent_level int) []
 	return result
 }
 
-func (bos MergeInfoOrgSerializer) Serialize(lines []string) (OrgTODO, error) {
+func (bos MergeInfoOrgSerializer) Serialize(lines []string, start_line int) (OrgTODO, error) {
 	// each one has the format ** TODO URL Title.  Check stars to allow for auxillary text between items
 	if len(lines) == 0 {
 		return OrgItem{}, errors.New("No Lines passed for serialization")
 	}
 	status := findOrgStatus(lines[0])
 	tags := findOrgTags(lines[0])
-	return OrgItem{header: lines[0], status: status, details: lines[1:], tags: tags}, nil
+	return OrgItem{header: lines[0], status: status, details: lines[1:], tags: tags, start_line: start_line}, nil
 }

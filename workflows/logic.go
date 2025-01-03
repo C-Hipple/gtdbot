@@ -1,7 +1,9 @@
 package workflows
 
 import (
+	"context"
 	"fmt"
+	"gtdbot/git_tools"
 	"gtdbot/org"
 	"gtdbot/utils"
 	"regexp"
@@ -30,6 +32,20 @@ type PRToOrgBridge struct {
 
 func (prb PRToOrgBridge) ID() string {
 	return fmt.Sprintf("%d", *prb.PR.Number)
+}
+
+func (prb PRToOrgBridge) StartLine() int {
+	// This implementation of the interface is for when we pull things from the API and want to compare
+	// Therefore the StartLine should't be checked
+	panic("Called StartLine for PRToOrgBridge which shouldn't be done.")
+	// return -1
+}
+
+func (prb PRToOrgBridge) LinesCount() int {
+	// This implementation of the interface is for when we pull things from the API and want to compare
+	// Therefore the LinesCount should't be checked
+	panic("Called LinesCount for PRToOrgBridge which shouldn't be done.")
+	// return -1
 }
 
 func (prb PRToOrgBridge) Title() string {
@@ -75,13 +91,22 @@ func (prb PRToOrgBridge) Details() []string {
 	}
 
 	details = append(details, author_string+"\n")
+
 	details = append(details, fmt.Sprintf("Branch: %s\n", *prb.PR.Head.Label))
 	details = append(details, fmt.Sprintf("Requested Reviewers: %s\n",
 		strings.Join(utils.Map(prb.PR.RequestedReviewers, getReviewerName), ", ")))
 	details = append(details, fmt.Sprintf("Requested Teams: %s\n",
 		strings.Join(utils.Map(prb.PR.RequestedTeams, getTeamName), ", ")))
+	// TODO: Consider putting these in subsection?
+	details = append(details, fmt.Sprintf("Merged at: %s\n", *prb.PR.MergedAt))
+	details = append(details, fmt.Sprintf("Merge Commit SHA: %s\n", *prb.PR.MergeCommitSHA))
 	escaped_body := escapeBody(prb.PR.Body)
-	details = append(details, "*** BODY\n %s\n", cleanBody(&escaped_body))
+	details = append(details, fmt.Sprintf("*** BODY\n %s\n", cleanBody(&escaped_body)))
+	comments := getComments(*prb.PR.Head.Repo.Owner.Login, *prb.PR.Head.Repo.Name, *prb.PR.Number)
+	if len(comments) != 0 {
+		details = append(details, fmt.Sprintf("*** Comments [%v]\n %s\n", len(comments), cleanLines(&comments)))
+	}
+	// TODO review comments, see if they're included or not included when we do the above one.
 	return details
 }
 
@@ -108,8 +133,12 @@ func escapeBody(body *string) string {
 	if len(lines) == 0 {
 		return ""
 	}
-	output_lines := make([]string, len(lines))
-	for i, line := range lines {
+	return cleanLines(&lines)
+}
+
+func cleanLines(lines *[]string) string {
+	output_lines := make([]string, len(*lines))
+	for i, line := range *lines {
 		if strings.HasPrefix(line, "*") {
 			output_lines[i] = strings.Replace(line, "*", "-", 1)
 		} else {
@@ -131,6 +160,42 @@ func cleanBody(body *string) string {
 	return cleaned
 }
 
+func getComments(owner string, repo string, number int) []string {
+	client := git_tools.GetGithubClient()
+	opts := github.PullRequestListCommentsOptions{}
+	comments, _, err := client.PullRequests.ListComments(context.Background(), owner, repo, number, &opts)
+	if err != nil {
+		fmt.Printf("Error getting Comments for PR %v in repo %s: %v", number, repo, err)
+		return []string{}
+	}
+	str_comments := []string{}
+	for _, comment := range comments {
+		str_comments = append(str_comments, *comment.Body)
+	}
+	return str_comments
+}
+
+// func getReviewComments(owner string, repo string, number int) []string {
+//	client := git_tools.GetGithubClient()
+
+//	opts := github.ListOptions{}
+//	reviews, _, err := client.PullRequests.ListReviews(context.Background(), owner , repo, number, &opts)
+//	// review_comments := [];
+
+//	for _, review := range reviews {
+//		review_comments, _, err := client.PullRequests.ListReviewComments(context.Background(), owner, repo, int(*review.ID), &opts)
+//	}
+//	if err != nil {
+//		fmt.Printf("Error getting Comments for PR %v in repo %s: %v", number, repo, err)
+//		return []string{}
+//	}
+//	str_comments := []string{}
+//	for _, comment := range comments {
+//		str_comments = append(str_comments, *comment.Body)
+//	}
+//	return str_comments
+// }
+
 // func (prb PRToOrgBridge) GetReleased() string {
 //	repo_name := *prb.PR.Base.Repo.Name
 //	if repo_name == "chaturbate" {
@@ -142,7 +207,6 @@ func cleanBody(body *string) string {
 //	}
 // }
 
-// this is the official github package, not our lib, confusing!!
 func SyncTODOToSection(doc org.OrgDocument, pr *github.PullRequest, section org.Section) FileChanges {
 	pr_as_org := PRToOrgBridge{pr}
 	at_line, _ := org.CheckTODOInSection(pr_as_org, section)
