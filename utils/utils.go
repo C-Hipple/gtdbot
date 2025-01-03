@@ -23,6 +23,7 @@ func ReplaceLinesInFile(file *os.File, new_lines []string, at_line_number int) e
 
 func FixNewLineEndings(lines []string) []string {
 	// I'm sloppy about what does or does not have a \n at the end
+	// and thsi function paves over that
 	out_lines := []string{}
 	for _, line := range lines {
 		if strings.Contains(line, "\n") {
