@@ -62,10 +62,10 @@ func (o OrgDocument) AddSection(section_name string) (Section, error) {
 		return Section{}, err
 	}
 	section := Section{
-		Name: section_name,
-		StartLine: at_line,
+		Name:        section_name,
+		StartLine:   at_line,
 		IndentLevel: 2,
-		Items: []OrgTODO{},
+		Items:       []OrgTODO{},
 	}
 	o.Sections = append(o.Sections, section)
 	return section, nil
@@ -120,6 +120,7 @@ func (o OrgDocument) PrintAll() {
 		fmt.Println(section.Header())
 		for _, item := range section.Items {
 			fmt.Println(item.FullLine(section.IndentLevel + 1))
+			fmt.Println(item.StartLine(), item.LinesCount())
 		}
 	}
 }
@@ -194,20 +195,26 @@ func ParseSectionsFromLines(all_lines []string, serializer OrgSerializer) ([]Sec
 	section_start_line := 0
 	item_start_line := 0
 	in_section := false
-	print_debugger := ParseDebugger{active: false}
+	print_debugger := ParseDebugger{active: true}
 
 	var items []OrgTODO
 	var item_lines []string
 	building_item := false
 
 	for i, line := range all_lines {
-		print_debugger.Println("line:", line)
+		print_debugger.Println("line:", i, line)
 		if !strings.HasPrefix(line, "*") {
 			if building_item {
 				item_lines = append(item_lines, line)
-				print_debugger.Println("Building item: ", line)
+				// print_debugger.Println("Building item: ", line)
 				continue
 			}
+			if i == len(all_lines)-1 && line == "" {
+				// Allow empty line at the end of file?
+				print_debugger.Println("Found empty last line of file.")
+				continue
+			}
+			print_debugger.Println(fmt.Sprintf("panic state: Building Item: %v, in_section: %v, item_start_line: %v, header: %s,", building_item, in_section, item_start_line, header))
 			panic("Rogue line: " + line)
 		}
 
@@ -229,6 +236,7 @@ func ParseSectionsFromLines(all_lines []string, serializer OrgSerializer) ([]Sec
 				IndentLevel: 2,
 				Items:       items,
 			})
+			print_debugger.Println("Adding section: ", sections[len(sections)-1].Name)
 
 			// cleanup, get ready for next section
 			items = []OrgTODO{}
@@ -253,16 +261,16 @@ func ParseSectionsFromLines(all_lines []string, serializer OrgSerializer) ([]Sec
 			if building_item {
 				building_item = false
 				// gross on the section_start_line + 1, this is for the first item being added
-				item, serialize_err := serializer.Serialize(item_lines, section_start_line+1)
+				// item, serialize_err := serializer.Serialize(item_lines, section_start_line+1)
+				item, serialize_err := serializer.Serialize(item_lines, item_start_line)
 				if serialize_err != nil {
 					panic("Error serializing item: " + serialize_err.Error())
 				}
 				items = append(items, item)
-				print_debugger.Println("Adding item: ", item.Summary(), item.Details())
-
-				// print_debugger.Println("Starting to build item: ", line)
-				// item_lines = []string{line}
-				// building_item = true
+				print_debugger.Println(
+					fmt.Sprintf(
+						"Adding item: %s, starting at %v", item.Summary(), item_start_line),
+				)
 			}
 			print_debugger.Println("Starting to build item: ", line, "; at i: ", i)
 			item_lines = []string{line}

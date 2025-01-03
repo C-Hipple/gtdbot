@@ -97,15 +97,20 @@ func (prb PRToOrgBridge) Details() []string {
 		strings.Join(utils.Map(prb.PR.RequestedReviewers, getReviewerName), ", ")))
 	details = append(details, fmt.Sprintf("Requested Teams: %s\n",
 		strings.Join(utils.Map(prb.PR.RequestedTeams, getTeamName), ", ")))
+
 	// TODO: Consider putting these in subsection?
-	details = append(details, fmt.Sprintf("Merged at: %s\n", *prb.PR.MergedAt))
-	details = append(details, fmt.Sprintf("Merge Commit SHA: %s\n", *prb.PR.MergeCommitSHA))
+	if prb.PR.MergedAt != nil {
+		details = append(details, fmt.Sprintf("Merged at: %s\n", *prb.PR.MergedAt))
+		details = append(details, fmt.Sprintf("Merge Commit SHA: %s\n", *prb.PR.MergeCommitSHA))
+	} else {
+		fmt.Println("PR is not merged.")
+	}
 	escaped_body := escapeBody(prb.PR.Body)
 	details = append(details, fmt.Sprintf("*** BODY\n %s\n", cleanBody(&escaped_body)))
-	comments := getComments(*prb.PR.Head.Repo.Owner.Login, *prb.PR.Head.Repo.Name, *prb.PR.Number)
-	if len(comments) != 0 {
-		details = append(details, fmt.Sprintf("*** Comments [%v]\n %s\n", len(comments), cleanLines(&comments)))
-	}
+	// comments := getComments(*prb.PR.Head.Repo.Owner.Login, *prb.PR.Head.Repo.Name, *prb.PR.Number)
+	// if len(comments) != 0 {
+	//	details = append(details, fmt.Sprintf("*** Comments [%v]\n %s\n", len(comments), cleanLines(&comments)))
+	// }
 	// TODO review comments, see if they're included or not included when we do the above one.
 	return details
 }
