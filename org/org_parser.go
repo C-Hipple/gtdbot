@@ -195,7 +195,7 @@ func ParseSectionsFromLines(all_lines []string, serializer OrgSerializer) ([]Sec
 	section_start_line := 0
 	item_start_line := 0
 	in_section := false
-	print_debugger := ParseDebugger{active: true}
+	print_debugger := ParseDebugger{active: false}
 
 	var items []OrgTODO
 	var item_lines []string

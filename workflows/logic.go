@@ -103,7 +103,7 @@ func (prb PRToOrgBridge) Details() []string {
 		details = append(details, fmt.Sprintf("Merged at: %s\n", *prb.PR.MergedAt))
 		details = append(details, fmt.Sprintf("Merge Commit SHA: %s\n", *prb.PR.MergeCommitSHA))
 	} else {
-		fmt.Println("PR is not merged.")
+		// fmt.Println("PR is not merged.")
 	}
 	escaped_body := escapeBody(prb.PR.Body)
 	details = append(details, fmt.Sprintf("*** BODY\n %s\n", cleanBody(&escaped_body)))
@@ -112,6 +112,7 @@ func (prb PRToOrgBridge) Details() []string {
 	//	details = append(details, fmt.Sprintf("*** Comments [%v]\n %s\n", len(comments), cleanLines(&comments)))
 	// }
 	// TODO review comments, see if they're included or not included when we do the above one.
+	details = append(details, "END")
 	return details
 }
 
@@ -141,15 +142,36 @@ func escapeBody(body *string) string {
 	return cleanLines(&lines)
 }
 
+func cleanEmptyEndingLines(lines *[]string) []string {
+	// Removes the empty lines at the end of the details so org collapses prettier
+	i := len(*lines) - 1
+	for i >= 0 && ((*lines)[i] == "\n" || (*lines)[i] == "") {
+		i--
+	}
+	return (*lines)[:i+1]
+}
+
 func cleanLines(lines *[]string) string {
-	output_lines := make([]string, len(*lines))
-	for i, line := range *lines {
+	flat_lines := []string{}
+	for _, line := range *lines {
+		if strings.Contains(line, "\n") {
+			split_lines := strings.Split(line, "\n")
+			flat_lines = append(flat_lines, split_lines...)
+		} else {
+			flat_lines = append(flat_lines, line)
+		}
+	}
+
+	shorted_lines := cleanEmptyEndingLines(&flat_lines)
+	output_lines := make([]string, len(shorted_lines))
+	for i, line := range shorted_lines {
 		if strings.HasPrefix(line, "*") {
 			output_lines[i] = strings.Replace(line, "*", "-", 1)
 		} else {
 			output_lines[i] = line
 		}
 	}
+
 	return strings.Join(output_lines, "\n")
 }
 

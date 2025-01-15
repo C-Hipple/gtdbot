@@ -157,7 +157,7 @@ func MakeTeamFilters(teams []string) func([]*github.PullRequest) []*github.PullR
 }
 
 func FilterMyTeamRequested(prs []*github.PullRequest) []*github.PullRequest {
-	teams := []string{"growth-pod-review", "purchase-pod-review", "growth-and-purchase-pod", "coreteam-review", "chat-pod-review-backend", "creator-team", "affiliate-program-experts"}
+	teams := []string{"growth-pod-review", "purchase-pod-review", "growth-and-purchase-pod", "coreteam-review", "chat-pod-review-backend", "creator-team", "affiliate-program-experts", "email-experts"}
 	filtered := []*github.PullRequest{}
 	for _, pr := range prs {
 		for _, team := range pr.RequestedTeams {
@@ -187,10 +187,8 @@ func GetGithubClient() *github.Client {
 	ctx := context.Background()
 	token := os.Getenv("GTDBOT_GITHUB_TOKEN")
 	if token == "" {
-		// fmt.Println("Error! No Github Token!")
-		//os.Exit(1)
-		// dont' commit me
-		token = "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"
+		fmt.Println("Error! No Github Token!")
+		os.Exit(1)
 	}
 
 	ts := oauth2.StaticTokenSource(
@@ -271,10 +269,10 @@ func GetDeployedVersion() (DeployedVersion, error) {
 	//"v24.5.10.0.post4 (sha: 80c7ed3aab56c4549acc895c292bb3b256b2789c)"
 
 	// THis regex matches 3 things for some reason, so we just index properly
-	extractor_regex, _ := regexp.Compile("(v24\\.[\\w+\\.]+)\\s\\(sha:\\s(\\w+)")
+	extractor_regex, _ := regexp.Compile("(v\\d+\\.[\\w+\\.]+)\\s\\(sha:\\s(\\w+)")
 	match := extractor_regex.FindStringSubmatch(string(body))
 	if len(match) < 3 {
-		return DeployedVersion{}, errors.New("Invalid version match")
+		return DeployedVersion{}, errors.New(fmt.Sprintf("Invalid version match from string: %s", string(body)))
 	}
 	return DeployedVersion{
 		Tag: match[1],
