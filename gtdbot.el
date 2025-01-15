@@ -2,7 +2,7 @@
 (defun run-gtdbot-oneoff ()
   "Runs gtdbot with the oneoff flag to update reviews.org"
   (interactive)
-  (shell-command "gtdbot --oneoff" "*gtdbot*"))
+  (async-shell-command "gtdbot --oneoff" "*gtdbot*"))
 
 (define-key evil-normal-state-map (kbd ", r l") 'run-gtdbot-oneoff) ;; l for list?
 
