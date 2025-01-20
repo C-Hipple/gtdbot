@@ -82,10 +82,12 @@ func (ms ManagerService) Run() {
 		fmt.Println("Running Once")
 		ms.RunOnce(&listener_wg)
 	} else {
+		cycle_count := 0
 		for {
-			fmt.Println("Cycle")
+			fmt.Println("Cycle: ", cycle_count)
 			ms.RunOnce(&listener_wg)
 			time.Sleep(ms.sleep_time)
+			cycle_count++
 		}
 	}
 	listener_wg.Done()

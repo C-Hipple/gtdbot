@@ -106,13 +106,13 @@ func (prb PRToOrgBridge) Details() []string {
 		// fmt.Println("PR is not merged.")
 	}
 	escaped_body := escapeBody(prb.PR.Body)
-	details = append(details, fmt.Sprintf("*** BODY\n %s\n", cleanBody(&escaped_body)))
+	details = append(details, fmt.Sprintf("*** BODY\n %s\n", cleanBody(&escaped_body))) // TODO: Do we need this end newline?
 	// comments := getComments(*prb.PR.Head.Repo.Owner.Login, *prb.PR.Head.Repo.Name, *prb.PR.Number)
 	// if len(comments) != 0 {
 	//	details = append(details, fmt.Sprintf("*** Comments [%v]\n %s\n", len(comments), cleanLines(&comments)))
 	// }
 	// TODO review comments, see if they're included or not included when we do the above one.
-	details = append(details, "END")
+	// details = append(details, "END")
 	return details
 }
 
