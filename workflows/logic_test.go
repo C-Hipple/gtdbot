@@ -1,7 +1,6 @@
 package workflows
 
 import (
-	"fmt"
 	"gtdbot/org"
 	"strings"
 	"testing"
@@ -64,7 +63,7 @@ func Test_CleanEmptyEndingLines(t *testing.T) {
 		t.Fatalf("Incorrect first item, should've been a, got %s", clean_lines[0])
 	}
 
-	if clean_lines[len(clean_lines) - 1] != "d" {
+	if clean_lines[len(clean_lines)-1] != "d" {
 		t.Fatalf("Incorrect first item, should've been a, got %s", clean_lines[0])
 	}
 }
