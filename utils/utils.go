@@ -38,18 +38,21 @@ func FixNewLineEndings(lines []string) []string {
 func replaceLines(existing_lines []string, new_lines []string, at_line_number int) []string {
 	var out_lines []string
 	j := 0
+	fmt.Println("New lines: ", new_lines)
 	for i, line := range existing_lines {
 		if i < at_line_number {
 			out_lines = append(out_lines, line)
 		}
-		if i >= at_line_number && i < at_line_number+len(new_lines) {
+		if i >= at_line_number && i <= at_line_number+len(new_lines) {
 			out_lines = append(out_lines, new_lines[j])
 			j += 1
 		}
-		if i >= at_line_number+len(new_lines) {
+		if i > at_line_number+len(new_lines) {
 			out_lines = append(out_lines, line)
 		}
 	}
+	fmt.Println(out_lines)
+	panic("just once")
 	return out_lines
 }
 
