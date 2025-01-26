@@ -112,7 +112,7 @@ func (prb PRToOrgBridge) Details() []string {
 	//	details = append(details, fmt.Sprintf("*** Comments [%v]\n %s\n", len(comments), cleanLines(&comments)))
 	// }
 	// TODO review comments, see if they're included or not included when we do the above one.
-	// details = append(details, "END")
+	details = append(details, "END")
 	return details
 }
 
