@@ -131,6 +131,16 @@ func FilterNotMyPRs(prs []*github.PullRequest) []*github.PullRequest {
 	return FilterPRsExcludeAuthor(prs, "C-Hipple")
 }
 
+func FilterIsDraft(prs []*github.PullRequest) []*github.PullRequest {
+	filtered := []*github.PullRequest{}
+	for _, pr := range prs {
+		if *pr.Draft {
+			filtered = append(filtered, pr)
+		}
+	}
+	return filtered
+}
+
 func FilterNotDraft(prs []*github.PullRequest) []*github.PullRequest {
 	filtered := []*github.PullRequest{}
 	for _, pr := range prs {
@@ -266,10 +276,10 @@ func GetDeployedVersion() (DeployedVersion, error) {
 	if err != nil {
 		return DeployedVersion{}, err
 	}
-	//"v24.5.10.0.post4 (sha: 80c7ed3aab56c4549acc895c292bb3b256b2789c)"
 
-	// THis regex matches 3 things for some reason, so we just index properly
-	extractor_regex, _ := regexp.Compile("(v\\d+\\.[\\w+\\.]+)\\s\\(sha:\\s(\\w+)")
+	//"v24.5.10.0.post4 (sha: 80c7ed3aab56c4549acc895c292bb3b256b2789c)"
+	// This regex matches 3 things for some reason, so we just index properly
+	extractor_regex, _ := regexp.Compile("(v\\d+\\.[\\w+\\.]+)(?:-rc\\d)?\\s\\(sha:\\s(\\w+)")
 	match := extractor_regex.FindStringSubmatch(string(body))
 	if len(match) < 3 {
 		return DeployedVersion{}, errors.New(fmt.Sprintf("Invalid version match from string: %s", string(body)))
