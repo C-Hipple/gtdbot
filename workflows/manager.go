@@ -58,16 +58,27 @@ func NewManagerService(workflows []Workflow, release git_tools.DeployedVersion, 
 	}
 }
 
+
+func (ms ManagerService) runWorkflow(workflow Workflow, workflow_chan chan FileChanges, file_change_wg *sync.WaitGroup) {
+	// Helper which times the workflow run command.
+	fmt.Println("Starting Workflow: ", workflow.GetName())
+	start := time.Now()
+	result, err := workflow.Run(workflow_chan, file_change_wg)
+	duration := time.Since(start)
+	if err != nil {
+		fmt.Println("Errored in Workflow: ", workflow.GetName(), " After: ", duration)
+	}
+	fmt.Println("Finishing Workflow: ", workflow.GetName(), " Took: ", duration, ":", result.Report())
+}
+
 func (ms ManagerService) RunOnce(file_change_wg *sync.WaitGroup) {
 	var wg sync.WaitGroup
 	for _, workflow := range ms.Workflows {
 		wg.Add(1)
-		go func() {
+		go func(workflow Workflow) {
 			defer wg.Done()
-			fmt.Println("Starting Workflow: ", workflow.GetName())
-			workflow.Run(ms.workflow_chan, file_change_wg)
-			fmt.Println("Finishing Workflow: ", workflow.GetName())
-		}()
+			ms.runWorkflow(workflow, ms.workflow_chan, file_change_wg)
+		}(workflow)
 	}
 	wg.Wait()
 	println("Completed RunOnce Waitgroup")
