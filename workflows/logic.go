@@ -15,7 +15,7 @@ import (
 
 type Workflow interface {
 	GetName() string
-	Run(chan FileChanges, *sync.WaitGroup)
+	Run(chan FileChanges, *sync.WaitGroup) (RunResult, error)
 }
 
 type FileChanges struct {
