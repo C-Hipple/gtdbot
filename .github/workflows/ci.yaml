@@ -18,14 +18,14 @@ jobs:
       - name: Test with Go
         run: go test ./... -json > TestResults-results.json
       - name: Upload Go test results
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
           name: Go-results
           path: TestResults-results.json
       - name: Vet with Go
         run: go vet -json > VetResults-results.json
       - name: Upload Go vet results
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
           name: Go-results
           path: VetResults-results.json
