@@ -39,37 +39,27 @@ func replaceLines(existing_lines []string, new_lines []string, at_line_number in
 	var out_lines []string
 	j := 0
 	shorten_end := len(new_lines) < existing_lines_count
-	fmt.Println("Existing lines: ", existing_lines)
-	fmt.Println(len(existing_lines))
-	fmt.Println("New lines: ", new_lines)
-	fmt.Println("Shorten end: ", shorten_end)
 
 	for i, line := range existing_lines {
 		if i < at_line_number {
-			fmt.Println("Using oldline ", line)
 			out_lines = append(out_lines, line)
 			continue
 		}
 		if i >= at_line_number && i < at_line_number+len(new_lines) {
-			fmt.Println("Updating Line: " + new_lines[j])
 			out_lines = append(out_lines, new_lines[j])
 			j += 1
 			continue
 		}
-		if shorten_end && i <= 1 + at_line_number + existing_lines_count - len(new_lines){
+		if shorten_end && i <= 1+at_line_number+existing_lines_count-len(new_lines) {
 			// The +1 is since we want to know if we're after the newlines.
 			// This checks if we are replacing 5 lines with 3, we should remove those last 2.
-			fmt.Println("Shortening off: " + line)
 			continue
 		}
 		if i >= at_line_number+len(new_lines) {
-			fmt.Println("extra lines at end: " + line)
 			out_lines = append(out_lines, line)
 			continue
 		}
 	}
-	fmt.Println(out_lines)
-	fmt.Println(len(out_lines))
 	return out_lines
 }
 

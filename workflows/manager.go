@@ -58,7 +58,6 @@ func NewManagerService(workflows []Workflow, release git_tools.DeployedVersion, 
 	}
 }
 
-
 func (ms ManagerService) runWorkflow(workflow Workflow, workflow_chan chan FileChanges, file_change_wg *sync.WaitGroup) {
 	// Helper which times the workflow run command.
 	fmt.Println("Starting Workflow: ", workflow.GetName())
