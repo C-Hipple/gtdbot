@@ -20,14 +20,14 @@ jobs:
       - name: Upload Go test results
         uses: actions/upload-artifact@v4
         with:
-          name: Go-results
+          name: Go-test-results
           path: TestResults-results.json
       - name: Vet with Go
         run: go vet -json > VetResults-results.json
       - name: Upload Go vet results
         uses: actions/upload-artifact@v4
         with:
-          name: Go-results
+          name: Go-vet-results
           path: VetResults-results.json
       - name: Format Check
         run: if [ "$(gofmt -s -l . | wc -l)" -gt 0 ]; then exit 1; fi
