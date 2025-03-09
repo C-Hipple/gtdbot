@@ -107,10 +107,9 @@ func (o OrgDocument) UpdateItemInSection(section_name string, new_item *OrgTODO)
 		return errors.New("Item not in section; Cannot update!")
 	}
 
-	utils.RemoveLinesInFile(o.GetFile(), start_line, existing_item.LinesCount())
-
 	new_lines := o.Serializer.Deserialize(*new_item, section.IndentLevel)
-	utils.InsertLinesInFile(o.GetFile(), new_lines, start_line)
+	utils.ReplaceLinesInFile(o.GetFile(), new_lines, start_line, existing_item.LinesCount())
+	// utils.InsertLinesInFile(o.GetFile(), new_lines, start_line)
 	return nil
 }
 

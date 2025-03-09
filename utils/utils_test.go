@@ -14,7 +14,7 @@ func Test_ReplaceLines(t *testing.T) {
 		"misc_info",
 		"\n"}
 	new_lines := []string{"** TODO PR #1", "updated_url"}
-	updated := replaceLines(existing_lines, new_lines, 1)
+	updated := replaceLines(existing_lines, new_lines, 1, len(new_lines))
 	target := []string{"* TODO Code Review",
 		"** TODO PR #1",
 		"updated_url",
@@ -39,7 +39,7 @@ func Test_ReplaceLinesInMiddle(t *testing.T) {
 		"misc_info",
 		"\n"}
 	new_lines := []string{"updated_url", "updated_author"}
-	updated := replaceLines(existing_lines, new_lines, 2)
+	updated := replaceLines(existing_lines, new_lines, 2, len(new_lines))
 
 	target := []string{"* TODO Code Review",
 		"** TODO PR #1",
@@ -47,6 +47,37 @@ func Test_ReplaceLinesInMiddle(t *testing.T) {
 		"updated_author",
 		"misc_info",
 		"\n"}
+	for _, ele := range Zip(updated, target) {
+		fmt.Println(ele.First, ele.Second)
+		if ele.First != ele.Second {
+			fmt.Printf("len target: %d, len actual: %d", len(target), len(updated))
+			t.Fatalf("Updated lines do not match.  Target: \n%v Actual \n%v", target, updated)
+		}
+
+	}
+}
+
+func Test_ReplaceLinesInOldLinesLonger(t *testing.T) {
+	// We're replacing the url, author, author2, author3 lines with just updated_url, updated_author
+	existing_lines := []string{"* TODO Code Review",
+		"** TODO PR #1",
+		"the_url",
+		"author",
+		"author2",
+		"author3",
+		"misc_info",
+		"END"}
+
+	new_lines := []string{"updated_url", "updated_author"}
+	updated := replaceLines(existing_lines, new_lines, 2, 4)
+
+	target := []string{"* TODO Code Review",
+		"** TODO PR #1",
+		"updated_url",
+		"updated_author",
+		"misc_info",
+		"END"}
+
 	for _, ele := range Zip(updated, target) {
 		fmt.Println(ele.First, ele.Second)
 		if ele.First != ele.Second {
