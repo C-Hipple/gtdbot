@@ -65,7 +65,7 @@ func (ms ManagerService) runWorkflow(workflow Workflow, workflow_chan chan FileC
 	result, err := workflow.Run(workflow_chan, file_change_wg)
 	duration := time.Since(start)
 	if err != nil {
-		fmt.Println("Errored in Workflow: ", workflow.GetName(), " After: ", duration)
+		fmt.Println("Errored in Workflow: ", workflow.GetName(), " After: ", duration, ": ", err)
 	}
 	fmt.Println("Finishing Workflow: ", workflow.GetName(), " Took: ", duration, ":", result.Report())
 }

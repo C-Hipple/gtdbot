@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"gtdbot/git_tools"
 	"gtdbot/org"
+	"gtdbot/jira"
 	"sync"
 )
 
@@ -112,7 +113,7 @@ type ListMyPRsWorkflow struct {
 	Name            string
 	Owner           string
 	Repos           []string
-	Filters []git_tools.PRFilter
+	Filters         []git_tools.PRFilter
 	OrgFileName     string
 	SectionTitle    string
 	PRState         string
@@ -163,8 +164,9 @@ type ProjectListWorkflow struct {
 	Owner           string
 	Repo            string
 	OrgFileName     string
+	Filters         []git_tools.PRFilter
 	SectionTitle    string
-	ProjectPRs      []int
+	JiraEpic        string
 	ReleasedVersion git_tools.DeployedVersion
 }
 
@@ -179,7 +181,13 @@ func (w ProjectListWorkflow) Run(c chan FileChanges, file_change_wg *sync.WaitGr
 	if err != nil {
 		return RunResult{}, errors.New("Section Not Found")
 	}
-	prs := git_tools.GetSpecificPRs(client, w.Owner, w.Repo, w.ProjectPRs)
+	if w.JiraEpic == "" {
+		// I used to let just define []int for PR #s in config, could easily bring that back
+		return RunResult{}, errors.New("ProjectList requires Jira Epic")
+	}
+	projectPRs := jira.GetProjectPRKeys(w.JiraEpic)
+
+	prs := git_tools.GetSpecificPRs(client, w.Owner, w.Repo, projectPRs)
 	result := RunResult{}
 	for _, pr := range prs {
 		output := SyncTODOToSection(doc, pr, section)
