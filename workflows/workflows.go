@@ -112,6 +112,7 @@ type ListMyPRsWorkflow struct {
 	Name            string
 	Owner           string
 	Repos           []string
+	Filters []git_tools.PRFilter
 	OrgFileName     string
 	SectionTitle    string
 	PRState         string
@@ -126,6 +127,7 @@ func (w ListMyPRsWorkflow) Run(c chan FileChanges, file_change_wg *sync.WaitGrou
 	client := git_tools.GetGithubClient()
 	prs := git_tools.GetManyRepoPRs(client, w.PRState, w.Owner, w.Repos)
 
+	prs = git_tools.ApplyPRFilters(prs, w.Filters)
 	doc := org.GetOrgDocument(w.OrgFileName, org.MergeInfoOrgSerializer{})
 	section, err := doc.GetSection(w.SectionTitle)
 	if err != nil {

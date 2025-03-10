@@ -101,6 +101,7 @@ func BuildListMyPRsWorkflow(raw *RawWorkflow, repos *[]string) workflows.Workflo
 		Name:         raw.Name,
 		Owner:        raw.Owner,
 		Repos:        *repos,
+		Filters:      BuildFiltersList(raw.Filters),
 		PRState:      raw.PRState,
 		OrgFileName:  raw.OrgFileName,
 		SectionTitle: raw.SectionTitle,
@@ -123,6 +124,7 @@ func BuildProjectListWorkflow(raw *RawWorkflow) workflows.Workflow {
 var filter_func_map = map[string]func(prs []*github.PullRequest) []*github.PullRequest{
 	"FilterMyReviewRequested": git_tools.FilterMyReviewRequested,
 	"FilterNotDraft":          git_tools.FilterNotDraft,
+	"FilterIsDraft":           git_tools.FilterIsDraft,
 	"FilterMyTeamRequested":   git_tools.FilterMyTeamRequested,
 	"FilterNotMyPRs":          git_tools.FilterNotMyPRs,
 }
