@@ -42,7 +42,7 @@ func getAuth() (string, string) {
 	return jiraEmail, token
 }
 
-func GetProjectPRKeys(epicKey string) []int {
+func GetProjectPRKeys(epicKey string, repo_name string) []int {
 	/// Get all of teh cards under a JIRA epic
 
 	fmt.Printf("Searching for project shas for project: `%s`\n", epicKey)
@@ -60,7 +60,6 @@ func GetProjectPRKeys(epicKey string) []int {
 	}
 	req.URL.RawQuery = params.Encode()
 
-	fmt.Printf("Jira Creds: %s %s\n", jiraEmail, token)
 	req.SetBasicAuth(jiraEmail, token)
 	req.Header.Set("Accept", "application/json")
 
@@ -87,10 +86,14 @@ func GetProjectPRKeys(epicKey string) []int {
 		return []int{}
 	}
 
-	return processIssues(data)
+	return processIssues(data, repo_name)
+
 }
 
-func processIssues(data JiraSearchResponse) []int {
+func processIssues(data JiraSearchResponse, target_repo string) []int {
+	// this function right now only works for a single repo.
+	// Returns a list of the PR numbers.
+
 	var (
 		PRNumbers []int
 		mu        sync.Mutex
@@ -121,7 +124,13 @@ func processIssues(data JiraSearchResponse) []int {
 				return
 			}
 
+			// fmt.Println("checking the url: " + pr.URL)
 			prNumber := strings.Split(pr.URL, "/")
+			repo := prNumber[len(prNumber)-3]
+			if repo != target_repo {
+				errChan <- fmt.Errorf("Issue PR is for a separate repo: %s", repo)
+				return
+			}
 			prNum := prNumber[len(prNumber)-1]
 			num, err := strconv.Atoi(prNum)
 			if err != nil {

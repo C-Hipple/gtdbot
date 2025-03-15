@@ -185,7 +185,7 @@ func (w ProjectListWorkflow) Run(c chan FileChanges, file_change_wg *sync.WaitGr
 		// I used to let just define []int for PR #s in config, could easily bring that back
 		return RunResult{}, errors.New("ProjectList requires Jira Epic")
 	}
-	projectPRs := jira.GetProjectPRKeys(w.JiraEpic)
+	projectPRs := jira.GetProjectPRKeys(w.JiraEpic, w.Repo)
 
 	prs := git_tools.GetSpecificPRs(client, w.Owner, w.Repo, projectPRs)
 	result := RunResult{}
@@ -193,11 +193,11 @@ func (w ProjectListWorkflow) Run(c chan FileChanges, file_change_wg *sync.WaitGr
 		output := SyncTODOToSection(doc, pr, section)
 		// TODO This is moving to the serializer
 		if pr.MergedAt != nil && output.ChangeType != "No Change" {
-			repo_name := *pr.Base.Repo.Name
-			if repo_name == "chaturbate" {
-				released := git_tools.CheckCommitReleased(client, w.ReleasedVersion.SHA, *pr.MergeCommitSHA)
-				fmt.Printf("Released PR: %s %t\n", *pr.Title, released)
-			}
+			// repo_name := *pr.Base.Repo.Name
+			// if repo_name == "chaturbate" {
+			//	released := git_tools.CheckCommitReleased(client, w.ReleasedVersion.SHA, *pr.MergeCommitSHA)
+			//	fmt.Printf("Released PR: %s %t\n", *pr.Title, released)
+			// }
 		}
 		result.Process(&output, c, file_change_wg)
 	}
