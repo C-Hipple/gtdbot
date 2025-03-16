@@ -101,7 +101,11 @@ func (prb PRToOrgBridge) Details() []string {
 	// TODO: Consider putting these in subsection?
 	if prb.PR.MergedAt != nil {
 		details = append(details, fmt.Sprintf("Merged at: %s\n", *prb.PR.MergedAt))
-		details = append(details, fmt.Sprintf("Merge Commit SHA: %s\n", *prb.PR.MergeCommitSHA))
+		if prb.PR.MergeCommitSHA != nil {
+			details = append(details, fmt.Sprintf("Merge Commit SHA: %s\n", *prb.PR.MergeCommitSHA))
+		} else {
+			details = append(details, "Merged with Empty Merge Commit SHA?")
+		}
 	} else {
 		// fmt.Println("PR is not merged.")
 	}

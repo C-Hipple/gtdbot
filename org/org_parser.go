@@ -87,7 +87,8 @@ func (o OrgDocument) GetSection(section_name string) (Section, error) {
 func (o OrgDocument) AddItemInSection(section_name string, new_item *OrgTODO) error {
 	section, err := o.GetSection(section_name)
 	if err != nil {
-		return err
+		panic(err)
+		// return err
 	}
 	section.Items = append(section.Items, *new_item)
 	new_lines := o.Serializer.Deserialize(*new_item, section.IndentLevel)
