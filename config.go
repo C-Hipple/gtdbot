@@ -23,11 +23,11 @@ type RawWorkflow struct {
 	Owner        string
 	Repo         string
 	Repos        []string
+	JiraEpic     string
 	Filters      []string
 	OrgFileName  string
 	SectionTitle string
 	PRState      string
-	ProjectPRs   []int
 }
 
 func LoadConfig() Config {
@@ -114,9 +114,10 @@ func BuildProjectListWorkflow(raw *RawWorkflow) workflows.Workflow {
 		Name:         raw.Name,
 		Owner:        raw.Owner,
 		Repo:         raw.Repo,
+		JiraEpic:     raw.JiraEpic,
+		Filters:      BuildFiltersList(raw.Filters),
 		OrgFileName:  raw.OrgFileName,
 		SectionTitle: raw.SectionTitle,
-		ProjectPRs:   raw.ProjectPRs,
 	}
 	return wf
 }
