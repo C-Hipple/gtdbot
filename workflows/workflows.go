@@ -4,8 +4,8 @@ import (
 	"errors"
 	"fmt"
 	"gtdbot/git_tools"
-	"gtdbot/org"
 	"gtdbot/jira"
+	"gtdbot/org"
 	"sync"
 )
 
