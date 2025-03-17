@@ -118,9 +118,10 @@ func (o OrgDocument) PrintAll() {
 	fmt.Println("Printing all sections from Document: ", o.Filename)
 	for _, section := range o.Sections {
 		fmt.Println(section.Header())
+		fmt.Println(section.StartLine)
 		for _, item := range section.Items {
 			fmt.Println(item.FullLine(section.IndentLevel + 1))
-			fmt.Println(item.StartLine(), item.LinesCount())
+			fmt.Println(item.StartLine(), item.LinesCount(), item.StartLine() + item.LinesCount())
 		}
 	}
 }
@@ -195,13 +196,14 @@ func ParseSectionsFromLines(all_lines []string, serializer OrgSerializer) ([]Sec
 	section_start_line := 0
 	item_start_line := 0
 	in_section := false
-	print_debugger := ParseDebugger{active: false}
+	print_debugger := ParseDebugger{active: true}
 
 	var items []OrgTODO
 	var item_lines []string
 	building_item := false
 
 	for i, line := range all_lines {
+		i = i+1 // remove 0 index of file
 		print_debugger.Println("line:", i, line)
 		if !strings.HasPrefix(line, "*") {
 			if building_item {
@@ -404,7 +406,9 @@ func (bos BaseOrgSerializer) Serialize(lines []string, start_line int) (OrgTODO,
 	}
 	status := findOrgStatus(lines[0])
 	tags := findOrgTags(lines[0])
-	return OrgItem{header: lines[0], status: status, details: lines[1:], tags: tags, start_line: start_line, lines_count: len(lines)}, nil
+	fmt.Println("Serializing " + lines[0])
+	fmt.Printf("Serializing lines_count: %d\n", len(lines))
+	return OrgItem{header: lines[0], status: status, details: lines[1:], tags: tags, start_line: start_line, lines_count: len(lines)+1}, nil // not sure why +1 yet
 }
 
 type MergeInfoOrgSerializer struct {
