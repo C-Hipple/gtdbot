@@ -224,10 +224,6 @@ func ParseSectionsFromLines(all_lines []string, serializer OrgSerializer) ([]Sec
 			// Check if we're into the next section at the same indent level as the header
 			if building_item {
 				building_item = false
-				fmt.Println("INSIDE")
-				for j, pline := range item_lines {
-					fmt.Println(j, pline)
-				}
 				item, serialize_err := serializer.Serialize(item_lines, item_start_line)
 				if serialize_err != nil {
 					panic("Error serializing item: " + serialize_err.Error())
@@ -407,8 +403,6 @@ func (bos BaseOrgSerializer) Serialize(lines []string, start_line int) (OrgTODO,
 	}
 	status := findOrgStatus(lines[0])
 	tags := findOrgTags(lines[0])
-	fmt.Println("Serializing " + lines[0])
-	fmt.Printf("Serializing lines_count: %d\n", len(lines))
 	return OrgItem{header: lines[0], status: status, details: lines[1:], tags: tags, start_line: start_line, lines_count: len(lines)}, nil
 }
 
