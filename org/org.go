@@ -68,11 +68,6 @@ func CheckTODOInSection(todo OrgTODO, section Section) (int, OrgTODO) {
 		if line_item.Summary() == todo.Summary() {
 			return at_line, line_item
 		}
-		for _, detail := range line_item.Details() {
-			if strings.Contains(detail, todo.ID()) {
-				return at_line, line_item
-			}
-		}
 		at_line += len(serializer.Deserialize(line_item, section.IndentLevel))
 	}
 	return -1, nil

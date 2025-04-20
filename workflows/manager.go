@@ -29,7 +29,8 @@ func ListenChanges(channel chan FileChanges, wg *sync.WaitGroup) {
 				}
 				fmt.Print(change_lines[2])
 				doc.AddItemInSection(file_change.Section.Name, &file_change.Item)
-			} else if file_change.ChangeType == "Replace" {
+			} else if file_change.ChangeType == "Update" {
+				fmt.Print("Updating item in section: ", change_lines[3])
 				doc.UpdateItemInSection(file_change.Section.Name, &file_change.Item)
 			}
 		}

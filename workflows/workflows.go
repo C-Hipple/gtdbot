@@ -17,7 +17,7 @@ type RunResult struct {
 
 func (rr *RunResult) Process(output *FileChanges, c chan FileChanges, wg *sync.WaitGroup) {
 	if output.ChangeType != "No Change" {
-		if output.ChangeType == "Replace" {
+		if output.ChangeType == "Update" {
 			rr.Updated += 1
 		} else if output.ChangeType == "Addition" {
 			rr.Added += 1

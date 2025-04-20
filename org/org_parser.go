@@ -92,7 +92,7 @@ func (o OrgDocument) AddItemInSection(section_name string, new_item *OrgTODO) er
 	}
 	section.Items = append(section.Items, *new_item)
 	new_lines := o.Serializer.Deserialize(*new_item, section.IndentLevel)
-	utils.InsertLinesInFile(o.GetFile(), new_lines, section.StartLine+1)
+	utils.InsertLinesInFile(o.GetFile(), new_lines, section.StartLine)
 	return nil
 }
 
@@ -109,7 +109,7 @@ func (o OrgDocument) UpdateItemInSection(section_name string, new_item *OrgTODO)
 	}
 
 	new_lines := o.Serializer.Deserialize(*new_item, section.IndentLevel)
-	utils.ReplaceLinesInFile(o.GetFile(), new_lines, start_line, existing_item.LinesCount())
+	utils.ReplaceLinesInFile(o.GetFile(), new_lines, start_line-1, existing_item.LinesCount()) // we do -1 since the util is 0 index
 	// utils.InsertLinesInFile(o.GetFile(), new_lines, start_line)
 	return nil
 }
@@ -121,7 +121,7 @@ func (o OrgDocument) PrintAll() {
 		fmt.Println(section.StartLine)
 		for _, item := range section.Items {
 			fmt.Println(item.FullLine(section.IndentLevel + 1))
-			fmt.Println(item.StartLine(), item.LinesCount(), item.StartLine() + item.LinesCount())
+			fmt.Println(item.StartLine(), item.LinesCount(), item.StartLine()+item.LinesCount())
 		}
 	}
 }
@@ -196,16 +196,16 @@ func ParseSectionsFromLines(all_lines []string, serializer OrgSerializer) ([]Sec
 	section_start_line := 0
 	item_start_line := 0
 	in_section := false
-	print_debugger := ParseDebugger{active: true}
+	print_debugger := ParseDebugger{active: false}
 
 	var items []OrgTODO
 	var item_lines []string
 	building_item := false
 
 	for i, line := range all_lines {
-		i = i+1 // remove 0 index of file
+		i = i + 1 // remove 0 index of file
 		print_debugger.Println("line:", i, line)
-		if !strings.HasPrefix(line, "*") {
+		if !strings.HasPrefix(line, "*") || strings.Contains(line, "*** BODY") {
 			if building_item {
 				item_lines = append(item_lines, line)
 				// print_debugger.Println("Building item: ", line)
@@ -216,7 +216,7 @@ func ParseSectionsFromLines(all_lines []string, serializer OrgSerializer) ([]Sec
 				print_debugger.Println("Found empty last line of file.")
 				continue
 			}
-			print_debugger.Println(fmt.Sprintf("panic state: Building Item: %v, in_section: %v, item_start_line: %v, header: %s,", building_item, in_section, item_start_line, header))
+			print_debugger.Println(fmt.Sprintf("panic state: Building Item: %v, in_section: %v, item_start_line: %v, header: %s;", building_item, in_section, item_start_line, header))
 			panic("Rogue line: " + line)
 		}
 
@@ -224,12 +224,16 @@ func ParseSectionsFromLines(all_lines []string, serializer OrgSerializer) ([]Sec
 			// Check if we're into the next section at the same indent level as the header
 			if building_item {
 				building_item = false
+				fmt.Println("INSIDE")
+				for j, pline := range item_lines {
+					fmt.Println(j, pline)
+				}
 				item, serialize_err := serializer.Serialize(item_lines, item_start_line)
 				if serialize_err != nil {
 					panic("Error serializing item: " + serialize_err.Error())
 				}
 				items = append(items, item)
-				print_debugger.Println("Adding item inside: ", item.Summary(), item.Details(), i, item_start_line)
+				print_debugger.Println("Adding item inside: ", item.Summary(), item.Details(), "i:", i, "start_line:", item_start_line, "len:", item.LinesCount())
 			}
 			sections = append(sections, Section{
 				Name:      CleanHeader(header),
@@ -269,10 +273,7 @@ func ParseSectionsFromLines(all_lines []string, serializer OrgSerializer) ([]Sec
 					panic("Error serializing item: " + serialize_err.Error())
 				}
 				items = append(items, item)
-				print_debugger.Println(
-					fmt.Sprintf(
-						"Adding item: %s, starting at %v", item.Summary(), item_start_line),
-				)
+				print_debugger.Println("Adding item: ", item.Summary(), item.Details(), "i:", i, "start_line:", item_start_line, "len:", len(item.Details()))
 			}
 			print_debugger.Println("Starting to build item: ", line, "; at i: ", i)
 			item_lines = []string{line}
@@ -408,11 +409,10 @@ func (bos BaseOrgSerializer) Serialize(lines []string, start_line int) (OrgTODO,
 	tags := findOrgTags(lines[0])
 	fmt.Println("Serializing " + lines[0])
 	fmt.Printf("Serializing lines_count: %d\n", len(lines))
-	return OrgItem{header: lines[0], status: status, details: lines[1:], tags: tags, start_line: start_line, lines_count: len(lines)+1}, nil // not sure why +1 yet
+	return OrgItem{header: lines[0], status: status, details: lines[1:], tags: tags, start_line: start_line, lines_count: len(lines)}, nil
 }
 
-type MergeInfoOrgSerializer struct {
-}
+type MergeInfoOrgSerializer struct{}
 
 func (ser MergeInfoOrgSerializer) Deserialize(item OrgTODO, indent_level int) []string {
 	var result []string
@@ -428,5 +428,6 @@ func (bos MergeInfoOrgSerializer) Serialize(lines []string, start_line int) (Org
 	}
 	status := findOrgStatus(lines[0])
 	tags := findOrgTags(lines[0])
-	return OrgItem{header: lines[0], status: status, details: lines[1:], tags: tags, start_line: start_line}, nil
+
+	return OrgItem{header: lines[0], status: status, details: lines[1:], tags: tags, start_line: start_line, lines_count: len(lines)}, nil
 }

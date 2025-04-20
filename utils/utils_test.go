@@ -27,7 +27,6 @@ func Test_ReplaceLines(t *testing.T) {
 			fmt.Printf("len target: %d, len actual: %d", len(target), len(updated))
 			t.Fatalf("Updated lines do not match.  Target: \n%v Actual \n%v", target, updated)
 		}
-
 	}
 }
 
