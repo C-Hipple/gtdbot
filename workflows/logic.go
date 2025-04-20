@@ -244,7 +244,7 @@ func SyncTODOToSection(doc org.OrgDocument, pr *github.PullRequest, section org.
 	if at_line != -1 {
 		// TODO : Determine if actual changes?
 		return FileChanges{
-			ChangeType: "Replace",
+			ChangeType: "Update",
 			Filename:   doc.Filename,
 			Item:       pr_as_org,
 			Section:    section,

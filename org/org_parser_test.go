@@ -68,7 +68,7 @@ Requested Teams:
 *** BODY
  ### Section 1
 
-This PR is for testing code-review PR body parsing. 
+This PR is for testing code-review PR body parsing.
 
 ### Section 2
 
@@ -122,8 +122,7 @@ Requested Reviewers:
 Requested Teams:
 *** BODY
 * TODO My Closed Pull Requests [0/0]
-* TODO Other [0/0]
-`
+* TODO Other [0/0]`
 	return strings.Split(raw, "\n")
 }
 
@@ -276,28 +275,28 @@ func Test_ParseExampleSections(t *testing.T) {
 		t.Fatalf("Wrong length of team review items! %v", len(section_team_review.Items))
 	}
 
-	if section_team_review.StartLine != 0 {
+	if section_team_review.StartLine != 1 {
 		t.Fatalf("Wrong start line of first section %v", section_team_review.StartLine)
 	}
 
-	if section_my_review.StartLine != 25 {
+	if section_my_review.StartLine != 26 {
 		t.Fatalf("Wrong start line of second section %v", section_my_review.StartLine)
 	}
 
 	// Test item start lines
-	if section_team_review.Items[0].StartLine() != 1 {
+	if section_team_review.Items[0].StartLine() != 2 {
 		t.Fatalf("Wrong start line of first item in first section %v", section_team_review.Items[0].StartLine())
 	}
 
-	if section_team_review.Items[1].StartLine() != 12 {
+	if section_team_review.Items[1].StartLine() != 13 {
 		t.Fatalf("Wrong start line of second item in first section %v", section_team_review.Items[1].StartLine())
 	}
 
-	if section_my_review.Items[0].StartLine() != 26 {
-		t.Fatalf("Wrong start line of first item in second section: %v, expected %v", section_my_review.Items[0].StartLine(), 26)
+	if section_my_review.Items[0].StartLine() != 27 {
+		t.Fatalf("Wrong start line of first item in second section: %v, expected %v", section_my_review.Items[0].StartLine(), 27)
 	}
 
-	if section_my_review.Items[1].StartLine() != 35 {
+	if section_my_review.Items[1].StartLine() != 36 {
 		t.Fatalf("Wrong start line of second item in second section %v", section_my_review.Items[1].StartLine())
 	}
 }
@@ -326,7 +325,7 @@ abc2
 
 }
 
-func Test_ParseSectionsRealTExt(t *testing.T) {
+func Test_ParseSectionsRealText(t *testing.T) {
 	raw_lines := RealRawLines()
 	sections, err := ParseSectionsFromLines(raw_lines, BaseOrgSerializer{})
 	if err != nil {
@@ -356,28 +355,32 @@ func Test_ParseSectionsRealTExt(t *testing.T) {
 		t.Fatalf("Wrong length of team review items! %v", len(section_team_review.Items))
 	}
 
-	if section_team_review.StartLine != 0 {
+	if section_team_review.StartLine != 1 {
 		t.Fatalf("Wrong start line of team reviews section %v", section_team_review.StartLine)
 	}
 
-	if section_my_prs.StartLine != 39 {
+	if section_my_prs.StartLine != 40 {
 		t.Fatalf("Wrong start line of my prs section %v", section_my_prs.StartLine)
 	}
 
 	// Test item start lines
-	if section_team_review.Items[0].StartLine() != 1 {
+	if section_team_review.Items[0].StartLine() != 2 {
 		t.Fatalf("Wrong start line of first item in first section %v", section_team_review.Items[0].StartLine())
 	}
 
-	if section_team_review.Items[1].StartLine() != 17 {
+	if section_team_review.Items[1].StartLine() != 18 {
 		t.Fatalf("Wrong start line of second item in first section %v", section_team_review.Items[1].StartLine())
 	}
 
-	if section_my_prs.Items[0].StartLine() != 40 {
+	if section_team_review.Items[2].StartLine() != 28 {
+		t.Fatalf("Wrong start line of second item in first section %v", section_team_review.Items[1].StartLine())
+	}
+
+	if section_my_prs.Items[0].StartLine() != 41 {
 		t.Fatalf("Wrong start line of first item in second section %v", section_my_prs.Items[0].StartLine())
 	}
 
-	if section_my_prs.Items[1].StartLine() != 56 {
+	if section_my_prs.Items[1].StartLine() != 57 {
 		t.Fatalf("Wrong start line of second item in second section %v", section_my_prs.Items[1].StartLine())
 	}
 }
