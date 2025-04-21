@@ -47,6 +47,14 @@ func (w SingleRepoSyncReviewRequestsWorkflow) GetName() string {
 	return w.Name
 }
 
+func (w SingleRepoSyncReviewRequestsWorkflow) GetOrgFilename() string {
+	return w.OrgFileName
+}
+
+func (w SingleRepoSyncReviewRequestsWorkflow) GetOrgSectionName() string {
+	return w.SectionTitle
+}
+
 func (w SingleRepoSyncReviewRequestsWorkflow) Run(c chan FileChanges, file_change_wg *sync.WaitGroup) (RunResult, error) {
 	prs := git_tools.GetPRs(
 		git_tools.GetGithubClient(),
@@ -104,6 +112,14 @@ func (w SyncReviewRequestsWorkflow) GetName() string {
 	return w.Name
 }
 
+func (w SyncReviewRequestsWorkflow) GetOrgFilename() string {
+	return w.OrgFileName
+}
+
+func (w SyncReviewRequestsWorkflow) GetOrgSectionName() string {
+	return w.SectionTitle
+}
+
 type ListMyPRsWorkflow struct {
 	Name            string
 	Owner           string
@@ -117,6 +133,14 @@ type ListMyPRsWorkflow struct {
 
 func (w ListMyPRsWorkflow) GetName() string {
 	return w.Name
+}
+
+func (w ListMyPRsWorkflow) GetOrgFilename() string {
+	return w.OrgFileName
+}
+
+func (w ListMyPRsWorkflow) GetOrgSectionName() string {
+	return w.SectionTitle
 }
 
 func (w ListMyPRsWorkflow) Run(c chan FileChanges, file_change_wg *sync.WaitGroup) (RunResult, error) {
@@ -167,6 +191,14 @@ type ProjectListWorkflow struct {
 
 func (w ProjectListWorkflow) GetName() string {
 	return w.Name
+}
+
+func (w ProjectListWorkflow) GetOrgFilename() string {
+	return w.OrgFileName
+}
+
+func (w ProjectListWorkflow) GetOrgSectionName() string {
+	return w.SectionTitle
 }
 
 func (w ProjectListWorkflow) Run(c chan FileChanges, file_change_wg *sync.WaitGroup) (RunResult, error) {

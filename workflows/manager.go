@@ -105,3 +105,12 @@ func (ms ManagerService) Run() {
 	listener_wg.Wait()
 	fmt.Println("Exiting Service")
 }
+
+func (ms *ManagerService) Initialize() {
+	// Ensure all required sections exist.
+	// Does this sync since GetSection has creation side effect
+	for _, wf := range ms.Workflows {
+		doc := org.GetBaseOrgDocument(wf.GetOrgFilename())
+		doc.GetSection(wf.GetOrgSectionName())
+	}
+}
