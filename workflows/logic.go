@@ -118,7 +118,7 @@ func (prb PRToOrgBridge) Details() []string {
 	//	details = append(details, fmt.Sprintf("*** Comments [%v]\n %s\n", len(comments), cleanLines(&comments)))
 	// }
 	// TODO review comments, see if they're included or not included when we do the above one.
-	details = append(details, "END")
+	// details = append(details, "END")
 	return details
 }
 
@@ -151,7 +151,7 @@ func escapeBody(body *string) string {
 func cleanEmptyEndingLines(lines *[]string) []string {
 	// Removes the empty lines at the end of the details so org collapses prettier
 	i := len(*lines) - 1
-	for i >= 0 && ((*lines)[i] == "\n" || (*lines)[i] == "") {
+	for i >= 0 && strings.TrimSpace((*lines)[i]) == "" {
 		i--
 	}
 	return (*lines)[:i+1]
