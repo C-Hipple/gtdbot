@@ -32,5 +32,6 @@ func main() {
 	}
 	config := LoadConfig()
 	ms := get_manager(*one_off, &config)
+	ms.Initialize()
 	ms.Run()
 }
