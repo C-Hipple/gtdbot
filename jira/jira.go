@@ -145,9 +145,9 @@ func processIssues(data JiraSearchResponse, target_repo string) []int {
 	close(resultsChan)
 
 	// Collect errors
-	for err := range errChan {
-		fmt.Println(err)
-	}
+	// for err := range errChan {
+	//	fmt.Println(err)
+	// }
 
 	// Collect merge SHAs
 	for PRNumber := range resultsChan {
