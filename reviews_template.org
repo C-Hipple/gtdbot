@@ -1,5 +1,3 @@
-* TODO Open PRs [0/0]
-* TODO Closed PRs [0/0]
 * TODO Team Reviews [0/0]
 * TODO My Review Requests [0/0]
 * TODO Other Repos [0/0]
