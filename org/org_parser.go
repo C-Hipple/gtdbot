@@ -205,10 +205,11 @@ func ParseSectionsFromLines(all_lines []string, serializer OrgSerializer) ([]Sec
 	for i, line := range all_lines {
 		i = i + 1 // remove 0 index of file
 		print_debugger.Println("line:", i, line)
-		if !strings.HasPrefix(line, "*") || strings.Contains(line, "*** BODY") {
+		// TODO need a better way of handling this
+		if !strings.HasPrefix(line, "*") || strings.Contains(line, "*** BODY") || strings.Contains(line, "*** C") || strings.Contains(line, "****") {
 			if building_item {
 				item_lines = append(item_lines, line)
-				// print_debugger.Println("Building item: ", line)
+				print_debugger.Println("Building item: ", line)
 				continue
 			}
 			if i == len(all_lines)-1 && line == "" {

@@ -9,6 +9,7 @@ import (
 	"regexp"
 	"strings"
 	"sync"
+	"time"
 
 	"github.com/google/go-github/v48/github"
 )
@@ -113,10 +114,11 @@ func (prb PRToOrgBridge) Details() []string {
 	}
 	escaped_body := escapeBody(prb.PR.Body)
 	details = append(details, fmt.Sprintf("*** BODY\n %s\n", cleanBody(&escaped_body))) // TODO: Do we need this end newline?
-	// comments := getComments(*prb.PR.Head.Repo.Owner.Login, *prb.PR.Head.Repo.Name, *prb.PR.Number)
-	// if len(comments) != 0 {
-	//	details = append(details, fmt.Sprintf("*** Comments [%v]\n %s\n", len(comments), cleanLines(&comments)))
-	// }
+	comments_count, comments := getComments(*prb.PR.Base.Repo.Owner.Login, *prb.PR.Head.Repo.Name, *prb.PR.Number)
+	if len(comments) != 0 {
+		details = append(details, fmt.Sprintf("*** Comments [%v]\n", comments_count))
+		details = append(details, comments...)
+	}
 	// TODO review comments, see if they're included or not included when we do the above one.
 	// details = append(details, "END")
 	return details
@@ -193,19 +195,27 @@ func cleanBody(body *string) string {
 	return cleaned
 }
 
-func getComments(owner string, repo string, number int) []string {
+func getComments(owner string, repo string, number int) (int, []string) {
 	client := git_tools.GetGithubClient()
 	opts := github.PullRequestListCommentsOptions{}
 	comments, _, err := client.PullRequests.ListComments(context.Background(), owner, repo, number, &opts)
 	if err != nil {
 		fmt.Printf("Error getting Comments for PR %v in repo %s: %v", number, repo, err)
-		return []string{}
+		return 0, []string{}
 	}
 	str_comments := []string{}
 	for _, comment := range comments {
-		str_comments = append(str_comments, *comment.Body)
+		if strings.Contains(*comment.User.Login, "advanced") {
+			// I don't care about the lint warning stuff
+			continue
+		}
+		clean_body := cleanBody(comment.Body)
+		str_comments = append(str_comments, "**** "+comment.CreatedAt.Format(time.DateTime)+" "+*comment.User.Login)
+		str_comments = append(str_comments, *comment.DiffHunk)
+		str_comments = append(str_comments, "\n-----------------------\n")
+		str_comments = append(str_comments, clean_body)
 	}
-	return str_comments
+	return len(comments), str_comments
 }
 
 // func getReviewComments(owner string, repo string, number int) []string {
