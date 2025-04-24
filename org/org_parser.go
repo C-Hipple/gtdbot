@@ -56,7 +56,8 @@ func (o OrgDocument) Refresh() {
 
 func (o OrgDocument) AddSection(section_name string) (Section, error) {
 	// Adds a new section always at the end
-	formatted := fmt.Sprintf("** TODO %s [0/0]", section_name)
+	fmt.Println("Adding section to file: ", section_name)
+	formatted := fmt.Sprintf("* TODO %s [0/0]", section_name)
 	at_line, err := utils.InsertLinesInFile(o.GetFile(), []string{formatted}, -1)
 	if err != nil {
 		return Section{}, err
@@ -293,7 +294,7 @@ func ParseSectionsFromLines(all_lines []string, serializer OrgSerializer) ([]Sec
 		sections = append(sections, Section{
 			Name:        CleanHeader(header),
 			StartLine:   section_start_line,
-			IndentLevel: strings.Count(header, "*") + 1,
+			IndentLevel: 2,
 			Items:       items,
 		})
 	}

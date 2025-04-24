@@ -147,11 +147,16 @@ func Test_InsertLinesAtEnd(t *testing.T) {
 	raw_output := insertLines(existing_lines, []string{"added line"}, -1)
 	output := strings.Split(raw_output, "\n")
 	last_true_element := output[len(output)-2] // We end the file with a newline so -1 is empty.
-	if last_true_element != "END" {
-		t.Fatalf("Adding Line at the end failed.  Expected to end with END: %s", last_true_element)
+	if last_true_element != "added line" {
+		t.Fatalf("Adding Line at the end failed.  Expected to end with added line: %s", last_true_element)
 	}
 	empty_last_element := output[len(output)-1] // We end the file with a newline so -1 is empty.
 	if empty_last_element != "" {
 		t.Fatalf("Adding Line at the end failed.  Expected to end with END: %s", empty_last_element)
+	}
+
+	previous_last_element := output[len(output)-3] // We end the file with a newline so -1 is empty.
+	if previous_last_element != "END" {
+		t.Fatalf("Adding Line at the end failed.  Expected END before the newly added line")
 	}
 }

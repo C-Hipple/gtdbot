@@ -71,9 +71,9 @@ func InsertLinesInFile(file *os.File, new_lines []string, at_line_number int) (i
 	// new line is at the at_line_number, not after, pushes everything below it.
 	// Returns at_line_number back to user so we know if we added it at the end.
 	lines, _ := LinesFromReader(file)
-	if at_line_number == -1 {
-		at_line_number = len(lines)
-	}
+	// if at_line_number == -1 {
+	//	at_line_number = len(lines) - 1
+	// }
 	file_content := insertLines(lines, new_lines, at_line_number)
 	path, _ := filepath.Abs(file.Name())
 	err := os.WriteFile(path, []byte(file_content), 0644)
@@ -83,8 +83,37 @@ func InsertLinesInFile(file *os.File, new_lines []string, at_line_number int) (i
 	return at_line_number, nil
 }
 
+// insertLines within the existin lines at point.  use -1 to append to end.
 func insertLines(existing_lines []string, new_lines []string, at_line_number int) string {
+	// fmt.Println("insert lines@ ", at_line_number)
+	// for i, out := range existing_lines {
+	//	fmt.Println(i, out)
+	// }
+
+	// for i, out := range new_lines {
+	//	fmt.Println(i, strings.TrimSpace(out))
+	// }
 	// Helper! for unit tests so we don't need to make a file
+	if at_line_number == -1 || at_line_number == len(existing_lines) {
+		var file_content string
+		if len(existing_lines) > 0 {
+			file_content = strings.Join(existing_lines, "\n")
+			if !strings.HasSuffix(file_content, "\n") {
+				file_content += "\n"
+			}
+		} else {
+			file_content = ""
+		}
+		for _, new_line := range new_lines {
+			new_line = strings.TrimSpace(new_line)
+			if !strings.HasSuffix(new_line, "\n") {
+				new_line += "\n"
+			}
+			file_content += new_line
+		}
+		return file_content
+	}
+
 	file_content := ""
 	for i, line := range existing_lines {
 		if i == at_line_number {
