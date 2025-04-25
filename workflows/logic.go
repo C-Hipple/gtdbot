@@ -119,8 +119,11 @@ func (prb PRToOrgBridge) Details() []string {
 		details = append(details, fmt.Sprintf("*** Comments [%v]\n", comments_count))
 		details = append(details, comments...)
 	}
-	// TODO review comments, see if they're included or not included when we do the above one.
-	// details = append(details, "END")
+	ciStatus := getCIStatus(*prb.PR.Base.Repo.Owner.Login, *prb.PR.Head.Repo.Name, *prb.PR.Number)
+	if len(ciStatus) > 0 {
+		details = append(details, "*** CI Status\n")
+		details = append(details, ciStatus...)
+	}
 	return details
 }
 
@@ -218,27 +221,6 @@ func getComments(owner string, repo string, number int) (int, []string) {
 	return len(comments), str_comments
 }
 
-// func getReviewComments(owner string, repo string, number int) []string {
-//	client := git_tools.GetGithubClient()
-
-//	opts := github.ListOptions{}
-//	reviews, _, err := client.PullRequests.ListReviews(context.Background(), owner , repo, number, &opts)
-//	// review_comments := [];
-
-//	for _, review := range reviews {
-//		review_comments, _, err := client.PullRequests.ListReviewComments(context.Background(), owner, repo, int(*review.ID), &opts)
-//	}
-//	if err != nil {
-//		fmt.Printf("Error getting Comments for PR %v in repo %s: %v", number, repo, err)
-//		return []string{}
-//	}
-//	str_comments := []string{}
-//	for _, comment := range comments {
-//		str_comments = append(str_comments, *comment.Body)
-//	}
-//	return str_comments
-// }
-
 // func (prb PRToOrgBridge) GetReleased() string {
 //	repo_name := *prb.PR.Base.Repo.Name
 //	if repo_name == "chaturbate" {
@@ -249,7 +231,6 @@ func getComments(owner string, repo string, number int) (int, []string) {
 //		fmt.Println("Skipping check released due to repo.  PR is for repo: ", repo_name)
 //	}
 // }
-
 func SyncTODOToSection(doc org.OrgDocument, pr *github.PullRequest, section org.Section) FileChanges {
 	pr_as_org := PRToOrgBridge{pr}
 	at_line, _ := org.CheckTODOInSection(pr_as_org, section)
@@ -268,4 +249,20 @@ func SyncTODOToSection(doc org.OrgDocument, pr *github.PullRequest, section org.
 		Item:       pr_as_org,
 		Section:    section,
 	}
+}
+
+func getCIStatus(owner string, repo string, number int) []string {
+	client := git_tools.GetGithubClient()
+	combined, _, err := client.Repositories.GetCombinedStatus(context.Background(), owner, repo, fmt.Sprintf("refs/pull/%d/head", number), nil)
+	if err != nil {
+		fmt.Printf("Error getting combined status: %v", err)
+		return nil // or return an error, depending on desired behavior
+	}
+
+	var statuses []string
+	for _, status := range combined.Statuses {
+		statuses = append(statuses, *status.Context+":"+*status.State)
+	}
+
+	return statuses
 }
