@@ -283,10 +283,33 @@ func getCIStatus(owner string, repo string, branch string) []string {
 
 	var statuses []string
 	for _, run := range runs.WorkflowRuns {
-		item := fmt.Sprintf("[%v] [%s] %s", *run.Status, *run.Conclusion, *run.Name)
+
+		status := "<nil>"
+		if run.Status != nil {
+			status = *run.Status
+		}
+		conclusion := "<nil>"
+		if run.Conclusion != nil {
+			conclusion = *run.Conclusion
+		}
+		name := "<nil>"
+		if run.Name != nil {
+			name = *run.Name
+		}
+
+		item := fmt.Sprintf("[%v] [%s] %s", status, conclusion, name)
 
 		fmt.Println("item: ", item)
 		statuses = append(statuses, item)
 	}
 	return statuses
+}
+
+
+func processWorkflowRuns(runs []*github.WorkflowRun) []*github.WorkflowRun {
+	latest_per_name := map[string]*github.WorkflowRun
+	for _, run := range runs {
+
+	}
+
 }
