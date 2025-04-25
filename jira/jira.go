@@ -32,8 +32,8 @@ type Issue struct {
 	ID string `json:"id"`
 }
 
-func getDevURL(issueID string) string {
-	return fmt.Sprintf("https://owner.atlassian.net/rest/dev-status/1.0/issue/details?issueId=%s&applicationType=github&dataType=pullrequest", issueID)
+func getDevURL(domain string, issueID string) string {
+	return fmt.Sprintf("%s/rest/dev-status/1.0/issue/details?issueId=%s&applicationType=github&dataType=pullrequest", domain, issueID)
 }
 
 func getAuth() (string, string) {
@@ -42,11 +42,11 @@ func getAuth() (string, string) {
 	return jiraEmail, token
 }
 
-func GetProjectPRKeys(epicKey string, repo_name string) []int {
+func GetProjectPRKeys(domain string, epicKey string, repo_name string) []int {
 	/// Get all of teh cards under a JIRA epic
 
 	fmt.Printf("Searching for project shas for project: `%s`\n", epicKey)
-	searchURL := "https://owner.atlassian.net/rest/api/3/search"
+	searchURL := fmt.Sprintf("%srest/api/3/search", domain)
 
 	jiraEmail, token := getAuth()
 
@@ -86,11 +86,11 @@ func GetProjectPRKeys(epicKey string, repo_name string) []int {
 		return []int{}
 	}
 
-	return processIssues(data, repo_name)
+	return processIssues(domain, data, repo_name)
 
 }
 
-func processIssues(data JiraSearchResponse, target_repo string) []int {
+func processIssues(domain string, data JiraSearchResponse, target_repo string) []int {
 	// this function right now only works for a single repo.
 	// Returns a list of the PR numbers.
 
@@ -108,7 +108,7 @@ func processIssues(data JiraSearchResponse, target_repo string) []int {
 		go func(issue Issue) {
 			defer wg.Done()
 
-			pr, err := getPRLinkForIssue(issue.ID)
+			pr, err := getPRLinkForIssue(domain, issue.ID)
 			if pr == nil {
 				errChan <- fmt.Errorf("pr is nil %s", issue.ID)
 				return
@@ -159,10 +159,10 @@ func processIssues(data JiraSearchResponse, target_repo string) []int {
 	return PRNumbers
 }
 
-func getPRLinkForIssue(issueID string) (*JiraPullRequestIdentifier, error) {
+func getPRLinkForIssue(domain string, issueID string) (*JiraPullRequestIdentifier, error) {
 	/// Get first the PRs (Jira calls them dev-status) for an issue
 	jiraEmail, token := getAuth()
-	devURL := getDevURL(issueID)
+	devURL := getDevURL(domain, issueID)
 
 	req, err := http.NewRequest("GET", devURL, nil)
 	if err != nil {

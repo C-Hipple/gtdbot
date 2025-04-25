@@ -34,8 +34,9 @@ func LoadConfig() Config {
 	// Load TOML config
 
 	var intermediate_config struct {
-		Repos     []string
-		Workflows []RawWorkflow
+		Repos      []string
+		JiraDomain string
+		Workflows  []RawWorkflow
 	}
 	home_dir, err := os.UserHomeDir()
 	the_bytes, err := os.ReadFile(filepath.Join(home_dir, ".config/gtdbot.toml"))
@@ -49,11 +50,11 @@ func LoadConfig() Config {
 
 	return Config{
 		Repos:     intermediate_config.Repos,
-		Workflows: MatchWorkflows(intermediate_config.Workflows, &intermediate_config.Repos),
+		Workflows: MatchWorkflows(intermediate_config.Workflows, &intermediate_config.Repos, intermediate_config.JiraDomain),
 	}
 }
 
-func MatchWorkflows(workflow_maps []RawWorkflow, repos *[]string) []workflows.Workflow {
+func MatchWorkflows(workflow_maps []RawWorkflow, repos *[]string, jiraDomain string) []workflows.Workflow {
 	workflows := []workflows.Workflow{}
 	for _, raw_workflow := range workflow_maps {
 		if raw_workflow.WorkflowType == "SyncReviewRequestsWorkflow" {
@@ -66,7 +67,7 @@ func MatchWorkflows(workflow_maps []RawWorkflow, repos *[]string) []workflows.Wo
 			workflows = append(workflows, BuildListMyPRsWorkflow(&raw_workflow, repos))
 		}
 		if raw_workflow.WorkflowType == "ProjectListWorkflow" {
-			workflows = append(workflows, BuildProjectListWorkflow(&raw_workflow))
+			workflows = append(workflows, BuildProjectListWorkflow(&raw_workflow, jiraDomain))
 		}
 	}
 	return workflows
@@ -109,11 +110,12 @@ func BuildListMyPRsWorkflow(raw *RawWorkflow, repos *[]string) workflows.Workflo
 	return wf
 }
 
-func BuildProjectListWorkflow(raw *RawWorkflow) workflows.Workflow {
+func BuildProjectListWorkflow(raw *RawWorkflow, jiraDomain string) workflows.Workflow {
 	wf := workflows.ProjectListWorkflow{
 		Name:         raw.Name,
 		Owner:        raw.Owner,
 		Repo:         raw.Repo,
+		JiraDomain:   jiraDomain,
 		JiraEpic:     raw.JiraEpic,
 		Filters:      BuildFiltersList(raw.Filters),
 		OrgFileName:  raw.OrgFileName,
