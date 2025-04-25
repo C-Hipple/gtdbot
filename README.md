@@ -103,7 +103,7 @@ export JIRA_AIP_EMAIL="your email with your jira account"
 ```
 
 ```toml
-Jira_domain="https://your-company.atlassain.net"
+JiraDomain="https://your-company.atlassain.net"
 
 [[Workflows]]
 WorkflowType = "SyncReviewRequestsWorkflow"

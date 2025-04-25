@@ -185,6 +185,7 @@ type ProjectListWorkflow struct {
 	OrgFileName     string
 	Filters         []git_tools.PRFilter
 	SectionTitle    string
+	JiraDomain      string
 	JiraEpic        string
 	ReleasedVersion git_tools.DeployedVersion
 }
@@ -212,7 +213,7 @@ func (w ProjectListWorkflow) Run(c chan FileChanges, file_change_wg *sync.WaitGr
 		// I used to let just define []int for PR #s in config, could easily bring that back
 		return RunResult{}, errors.New("ProjectList requires Jira Epic")
 	}
-	projectPRs := jira.GetProjectPRKeys(w.JiraEpic, w.Repo)
+	projectPRs := jira.GetProjectPRKeys(w.JiraDomain, w.JiraEpic, w.Repo)
 
 	prs := git_tools.GetSpecificPRs(client, w.Owner, w.Repo, projectPRs)
 	result := RunResult{}
