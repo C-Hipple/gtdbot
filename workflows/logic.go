@@ -110,7 +110,12 @@ func (prb PRToOrgBridge) Details() []string {
 			details = append(details, "Merged with Empty Merge Commit SHA?")
 		}
 	} else {
-		// fmt.Println("PR is not merged.")
+
+		ciStatus := getCIStatus(*prb.PR.Base.Repo.Owner.Login, *prb.PR.Head.Repo.Name, *prb.PR.Head.Label)
+		if len(ciStatus) > 0 {
+			details = append(details, "*** CI Status\n")
+			details = append(details, ciStatus...)
+		}
 	}
 	escaped_body := escapeBody(prb.PR.Body)
 	details = append(details, fmt.Sprintf("*** BODY\n %s\n", cleanBody(&escaped_body))) // TODO: Do we need this end newline?
@@ -119,16 +124,7 @@ func (prb PRToOrgBridge) Details() []string {
 		details = append(details, fmt.Sprintf("*** Comments [%v]\n", comments_count))
 		details = append(details, comments...)
 	}
-	ciStatus := getCIStatus(*prb.PR.Base.Repo.Owner.Login, *prb.PR.Head.Repo.Name, *prb.PR.Number)
-	if len(ciStatus) > 0 {
-		details = append(details, "*** CI Status\n")
-		details = append(details, ciStatus...)
-	}
 	return details
-}
-
-func (prb PRToOrgBridge) String() string {
-	return prb.Title()
 }
 
 func getReviewerName(reviewer *github.User) string {
@@ -227,10 +223,10 @@ func getComments(owner string, repo string, number int) (int, []string) {
 //		released := git_tools.CheckCommitReleased(client, w.ReleasedVersion.SHA, *pr.MergeCommitSHA)
 //		fmt.Println("Released: ", released)
 
-//	} else {
-//		fmt.Println("Skipping check released due to repo.  PR is for repo: ", repo_name)
+//		} else {
+//			fmt.Println("Skipping check released due to repo.  PR is for repo: ", repo_name)
+//		}
 //	}
-// }
 func SyncTODOToSection(doc org.OrgDocument, pr *github.PullRequest, section org.Section) FileChanges {
 	pr_as_org := PRToOrgBridge{pr}
 	at_line, _ := org.CheckTODOInSection(pr_as_org, section)
@@ -251,18 +247,46 @@ func SyncTODOToSection(doc org.OrgDocument, pr *github.PullRequest, section org.
 	}
 }
 
-func getCIStatus(owner string, repo string, number int) []string {
+func listWorkflowRunOptions(branch string) github.ListWorkflowRunsOptions {
+	opts := github.ListWorkflowRunsOptions{}
+	if branch != "" {
+		opts.Branch = branch
+	}
+	return opts
+}
+
+func getCIStatus(owner string, repo string, branch string) []string {
 	client := git_tools.GetGithubClient()
-	combined, _, err := client.Repositories.GetCombinedStatus(context.Background(), owner, repo, fmt.Sprintf("refs/pull/%d/head", number), nil)
+	branch = strings.Split(branch, ":")[1]
+
+	// combined, _, err := client.Repositories.GetCombinedStatus(context.Background(), owner, repo, ref, nil)
+	// if err != nil {
+	//	fmt.Printf("Error getting combined status: %v\n", err)
+	//	return []string{}
+	// }
+	// fmt.Println(resp.Body)
+
+	// var statuses []string
+	// for _, status := range combined.Statuses {
+	//	statuses = append(statuses, *status.Context+":"+*status.State)
+	// }
+	opts := listWorkflowRunOptions(branch)
+	fmt.Println("getting ci: branch: ", opts.Branch)
+
+	runs, _, err := client.Actions.ListRepositoryWorkflowRuns(context.Background(), owner, repo, &opts)
+	// runs2, _, err := client.Actions.ListRepositoryWorkflowRuns(context.Background(), owner, repo, &opts)
+
 	if err != nil {
-		fmt.Printf("Error getting combined status: %v", err)
-		return nil // or return an error, depending on desired behavior
+		fmt.Printf("Error getting combined status: %v\n", err)
+		return []string{}
 	}
 
 	var statuses []string
-	for _, status := range combined.Statuses {
-		statuses = append(statuses, *status.Context+":"+*status.State)
-	}
+	for _, run := range runs.WorkflowRuns {
+		item := fmt.Sprintf("[%v] [%s] %s", *run.Status, *run.Conclusion, *run.Name)
 
+		fmt.Println("item: ", item)
+		statuses = append(statuses, item)
+	}
 	return statuses
 }
