@@ -8,8 +8,10 @@ Build from source, it's go, just do it.
 Binaries not provided.
 
 
+
 ```bash
 export GTDBOT_GITHUB_TOKEN="Github Token"
+
 
 go build
 go run
@@ -76,4 +78,39 @@ Name = "List Closed PRs"
 Owner = "C-Hipple"
 OrgFileName = "reviews.org"
 SectionTitle = "Closed PRs"
+```
+
+## Filters
+
+Each workflow can the available filters:
+
+*   `FilterMyReviewRequested`
+*   `FilterNotDraft`
+*   `FilterIsDraft`
+*   `FilterMyTeamRequested`
+*   `FilterNotMyPRs`
+
+
+## JIRA Integration
+
+The `ProjectListWorkflow` pulls information from Jira to build a realtime list of all PRs which are linked to children cards of the Jira epic given in the config.
+
+Each workflow is tied to a single github repository, if you want multiple repos per project, create two workflows and have them use the same SectionTitle.
+
+```bash
+export JIRA_API_TOKEN="Jira API Token"
+export JIRA_AIP_EMAIL="your email with your jira account"
+```
+
+```toml
+Jira_domain="https://your-company.atlassain.net"
+
+[[Workflows]]
+WorkflowType = "SyncReviewRequestsWorkflow"
+Name = "List Open PRs"
+JiraEpic = "BOARD-123" # the epic key
+Owner = "C-Hipple"
+Repo = "diff-lsp"
+OrgFileName = "reviews.org"
+SectionTitle = "Diff LSP Upgrade Project"
 ```
