@@ -288,16 +288,19 @@ func getCIStatus(owner string, repo string, branch string) []string {
 		if run.Status != nil {
 			status = *run.Status
 		}
-		conclusion := "<nil>"
+		conclusion := " "
 		if run.Conclusion != nil {
-			conclusion = *run.Conclusion
+			if *run.Conclusion == "success" {
+				conclusion = "x"
+			}
 		}
+
 		name := "<nil>"
 		if run.Name != nil {
 			name = *run.Name
 		}
 
-		item := fmt.Sprintf("[%v] [%s] %s", status, conclusion, name)
+		item := fmt.Sprintf("[%s] [%s] %s", conclusion, status, name)
 
 		fmt.Println("item: ", item)
 		statuses = append(statuses, item)
