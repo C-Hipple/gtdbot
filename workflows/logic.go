@@ -282,7 +282,7 @@ func getCIStatus(owner string, repo string, branch string) []string {
 	}
 
 	var statuses []string
-	for _, run := range runs.WorkflowRuns {
+	for _, run := range processWorkflowRuns(runs.WorkflowRuns) {
 
 		status := "<nil>"
 		if run.Status != nil {
@@ -305,11 +305,29 @@ func getCIStatus(owner string, repo string, branch string) []string {
 	return statuses
 }
 
-
 func processWorkflowRuns(runs []*github.WorkflowRun) []*github.WorkflowRun {
-	latest_per_name := map[string]*github.WorkflowRun
+	latest_per_name := make(map[string]*github.WorkflowRun) // Initialize the map
 	for _, run := range runs {
-
+		if run == nil {
+			continue
+		}
+		if run.Name == nil {
+			continue
+		}
+		// fmt.Println("name: ", *run.Name, run)
+		lastest_by_name := latest_per_name[*run.Name]
+		if lastest_by_name == nil {
+			latest_per_name[*run.Name] = run
+			continue
+		}
+		if (*run.CreatedAt).After(lastest_by_name.CreatedAt.Time) {
+			latest_per_name[*run.Name] = run
+		}
 	}
 
+	var output []*github.WorkflowRun
+	for _, run := range latest_per_name {
+		output = append(output, run)
+	}
+	return output
 }
