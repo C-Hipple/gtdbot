@@ -284,23 +284,24 @@ func getCIStatus(owner string, repo string, branch string) []string {
 	var statuses []string
 	for _, run := range processWorkflowRuns(runs.WorkflowRuns) {
 
-		status := "<nil>"
+		status := "<nil>" // completed, in_progress
 		if run.Status != nil {
-			status = *run.Status
+			status = "[" + *run.Status + "]"
 		}
 		conclusion := " "
 		if run.Conclusion != nil {
 			if *run.Conclusion == "success" {
-				conclusion = "x"
+				conclusion = "✅"
+				status = "" // We know the status if it was a success
 			}
 		}
 
-		name := "<nil>"
+		name := "Unknown Workflow Name"
 		if run.Name != nil {
 			name = *run.Name
 		}
 
-		item := fmt.Sprintf("[%s] [%s] %s", conclusion, status, name)
+		item := fmt.Sprintf("[%s] %s %s", conclusion, status, name)
 
 		fmt.Println("item: ", item)
 		statuses = append(statuses, item)
