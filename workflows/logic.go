@@ -110,7 +110,12 @@ func (prb PRToOrgBridge) Details() []string {
 			details = append(details, "Merged with Empty Merge Commit SHA?")
 		}
 	} else {
-		// fmt.Println("PR is not merged.")
+
+		ciStatus := getCIStatus(*prb.PR.Base.Repo.Owner.Login, *prb.PR.Head.Repo.Name, *prb.PR.Head.Label)
+		if len(ciStatus) > 0 {
+			details = append(details, "*** CI Status\n")
+			details = append(details, ciStatus...)
+		}
 	}
 	escaped_body := escapeBody(prb.PR.Body)
 	details = append(details, fmt.Sprintf("*** BODY\n %s\n", cleanBody(&escaped_body))) // TODO: Do we need this end newline?
@@ -119,13 +124,7 @@ func (prb PRToOrgBridge) Details() []string {
 		details = append(details, fmt.Sprintf("*** Comments [%v]\n", comments_count))
 		details = append(details, comments...)
 	}
-	// TODO review comments, see if they're included or not included when we do the above one.
-	// details = append(details, "END")
 	return details
-}
-
-func (prb PRToOrgBridge) String() string {
-	return prb.Title()
 }
 
 func getReviewerName(reviewer *github.User) string {
@@ -218,38 +217,16 @@ func getComments(owner string, repo string, number int) (int, []string) {
 	return len(comments), str_comments
 }
 
-// func getReviewComments(owner string, repo string, number int) []string {
-//	client := git_tools.GetGithubClient()
-
-//	opts := github.ListOptions{}
-//	reviews, _, err := client.PullRequests.ListReviews(context.Background(), owner , repo, number, &opts)
-//	// review_comments := [];
-
-//	for _, review := range reviews {
-//		review_comments, _, err := client.PullRequests.ListReviewComments(context.Background(), owner, repo, int(*review.ID), &opts)
-//	}
-//	if err != nil {
-//		fmt.Printf("Error getting Comments for PR %v in repo %s: %v", number, repo, err)
-//		return []string{}
-//	}
-//	str_comments := []string{}
-//	for _, comment := range comments {
-//		str_comments = append(str_comments, *comment.Body)
-//	}
-//	return str_comments
-// }
-
 // func (prb PRToOrgBridge) GetReleased() string {
 //	repo_name := *prb.PR.Base.Repo.Name
 //	if repo_name == "repo" {
 //		released := git_tools.CheckCommitReleased(client, w.ReleasedVersion.SHA, *pr.MergeCommitSHA)
 //		fmt.Println("Released: ", released)
 
-//	} else {
-//		fmt.Println("Skipping check released due to repo.  PR is for repo: ", repo_name)
+//		} else {
+//			fmt.Println("Skipping check released due to repo.  PR is for repo: ", repo_name)
+//		}
 //	}
-// }
-
 func SyncTODOToSection(doc org.OrgDocument, pr *github.PullRequest, section org.Section) FileChanges {
 	pr_as_org := PRToOrgBridge{pr}
 	at_line, _ := org.CheckTODOInSection(pr_as_org, section)
@@ -268,4 +245,93 @@ func SyncTODOToSection(doc org.OrgDocument, pr *github.PullRequest, section org.
 		Item:       pr_as_org,
 		Section:    section,
 	}
+}
+
+func listWorkflowRunOptions(branch string) github.ListWorkflowRunsOptions {
+	opts := github.ListWorkflowRunsOptions{}
+	if branch != "" {
+		opts.Branch = branch
+	}
+	return opts
+}
+
+func getCIStatus(owner string, repo string, branch string) []string {
+	client := git_tools.GetGithubClient()
+	branch = strings.Split(branch, ":")[1]
+
+	// combined, _, err := client.Repositories.GetCombinedStatus(context.Background(), owner, repo, ref, nil)
+	// if err != nil {
+	//	fmt.Printf("Error getting combined status: %v\n", err)
+	//	return []string{}
+	// }
+	// fmt.Println(resp.Body)
+
+	// var statuses []string
+	// for _, status := range combined.Statuses {
+	//	statuses = append(statuses, *status.Context+":"+*status.State)
+	// }
+	opts := listWorkflowRunOptions(branch)
+	fmt.Println("getting ci: branch: ", opts.Branch)
+
+	runs, _, err := client.Actions.ListRepositoryWorkflowRuns(context.Background(), owner, repo, &opts)
+	// runs2, _, err := client.Actions.ListRepositoryWorkflowRuns(context.Background(), owner, repo, &opts)
+
+	if err != nil {
+		fmt.Printf("Error getting combined status: %v\n", err)
+		return []string{}
+	}
+
+	var statuses []string
+	for _, run := range processWorkflowRuns(runs.WorkflowRuns) {
+
+		status := "<nil>" // completed, in_progress
+		if run.Status != nil {
+			status = "[" + *run.Status + "]"
+		}
+		conclusion := " "
+		if run.Conclusion != nil {
+			if *run.Conclusion == "success" {
+				conclusion = "✅"
+				status = "" // We know the status if it was a success
+			}
+		}
+
+		name := "Unknown Workflow Name"
+		if run.Name != nil {
+			name = *run.Name
+		}
+
+		item := fmt.Sprintf("[%s] %s %s", conclusion, status, name)
+
+		fmt.Println("item: ", item)
+		statuses = append(statuses, item)
+	}
+	return statuses
+}
+
+func processWorkflowRuns(runs []*github.WorkflowRun) []*github.WorkflowRun {
+	latest_per_name := make(map[string]*github.WorkflowRun) // Initialize the map
+	for _, run := range runs {
+		if run == nil {
+			continue
+		}
+		if run.Name == nil {
+			continue
+		}
+		// fmt.Println("name: ", *run.Name, run)
+		lastest_by_name := latest_per_name[*run.Name]
+		if lastest_by_name == nil {
+			latest_per_name[*run.Name] = run
+			continue
+		}
+		if (*run.CreatedAt).After(lastest_by_name.CreatedAt.Time) {
+			latest_per_name[*run.Name] = run
+		}
+	}
+
+	var output []*github.WorkflowRun
+	for _, run := range latest_per_name {
+		output = append(output, run)
+	}
+	return output
 }
