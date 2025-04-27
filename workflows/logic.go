@@ -348,7 +348,7 @@ func getCIStatus(owner string, repo string, branch string) []string {
 			if *run.Conclusion == "success" {
 				conclusion = "✅"
 				status = "" // We know the status if it was a success
-			} else if *run.Conclusion == "false" {
+			} else if *run.Conclusion == "failure" {
 				conclusion = "❌"
 			}
 		}
