@@ -106,7 +106,7 @@ author
 	}
 }
 
-func Test_RemoveLines(t *testing.T) {
+func Test_DeleteLines(t *testing.T) {
 	existing_lines := []string{
 		"* TODO PR #1 <title> :draft:",
 		"sub-header",

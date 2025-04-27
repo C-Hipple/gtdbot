@@ -38,6 +38,11 @@ func (prb PRToOrgBridge) ID() string {
 	return fmt.Sprintf("%d", *prb.PR.Number)
 }
 
+func (prb PRToOrgBridge) Repo() string {
+	return prb.PR.Head.Repo.GetName()
+
+}
+
 func (prb PRToOrgBridge) StartLine() int {
 	// This implementation of the interface is for when we pull things from the API and want to compare
 	// Therefore the StartLine should't be checked
@@ -230,33 +235,48 @@ func getComments(owner string, repo string, number int) (int, []string) {
 //		}
 //	}
 
-func ProcessPRs(prs []*github.PullRequest, changes_channel chan FileChanges, doc *org.OrgDocument, section *org.Section, change_wg *sync.WaitGroup) RunResult {
+func ProcessPRs(prs []*github.PullRequest, changes_channel chan FileChanges, doc *org.OrgDocument, section *org.Section, change_wg *sync.WaitGroup, delete_unfound bool) RunResult {
 	result := RunResult{}
-	seen_prs := []string{} // format string of repo-id
+
+	// the index for both slices should match
+	seen_prs := []*github.PullRequest{}
+	pr_strings := []string{}
+	changes := []FileChanges{}
+
 	for _, pr := range prs {
-		seen_prs = append(seen_prs, fmt.Sprintf("%s-%s", *pr.Base.Repo.Name, pr.GetID))
+		pr_strings = append(pr_strings, fmt.Sprintf("%s-%v", *pr.Base.Repo.Name, pr.GetID()))
+		seen_prs = append(seen_prs, pr)
 		fmt.Printf("Checking My PR: %s\n", *pr.Title)
-		output := SyncTODOToSection(*doc, pr, *section)
-		result.Process(&output, changes_channel, change_wg)
+		changes = append(changes, SyncTODOToSection(*doc, pr, *section))
 	}
 
-	// prune items that are not seen
-	for _, item := range section.Items {
-		if slices.Contains(
-			seen_prs,
-			fmt.Sprintf("%s-%s", item.Repo(), item.ID()),
-		) {
-			continue
-		} else {
-			fmt.Println("No longer need to review: ", fmt.Sprintf("%s-%s", item.Repo(), item.ID()))
-			fileChange := FileChanges{
-				ChangeType: "Delete",
-				Filename: doc.Filename,
-				Item: PRToOrgBridge{pr},
-				Section: *section,
+	if delete_unfound {
+		// prune items that are not seen.  Use the PR string as the comparator
+		for _, item := range section.Items {
+			check_string := fmt.Sprintf("%s-%s", item.Repo(), item.ID())
+			if slices.Contains(pr_strings, check_string) {
+				continue
+			} else {
+				idx := slices.Index(pr_strings, check_string)
+				if idx == -1 {
+					fmt.Println("Tried to delete PR which was not found!: ", check_string)
+					continue
+				}
+				fmt.Println("No longer need to review: ", check_string)
+				fileChange := FileChanges{
+					ChangeType: "Delete",
+					Filename:   doc.Filename,
+					Item:       PRToOrgBridge{PR: prs[idx]},
+					Section:    *section,
+				}
+				changes = append(changes, fileChange)
 			}
 
 		}
+	}
+
+	for _, output := range changes {
+		result.Process(&output, changes_channel, change_wg)
 	}
 
 	return result
@@ -328,6 +348,8 @@ func getCIStatus(owner string, repo string, branch string) []string {
 			if *run.Conclusion == "success" {
 				conclusion = "✅"
 				status = "" // We know the status if it was a success
+			} else if *run.Conclusion == "false" {
+				conclusion = "❌"
 			}
 		}
 

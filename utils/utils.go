@@ -130,7 +130,7 @@ func insertLines(existing_lines []string, new_lines []string, at_line_number int
 	return file_content
 }
 
-func RemoveLinesInFile(file *os.File, at_line_number int, remove_count int) error {
+func DeleteLinesInFile(file *os.File, at_line_number int, remove_count int) error {
 	lines, _ := LinesFromReader(file)
 	path, _ := filepath.Abs(file.Name())
 	updated_lines := strings.Join(FixNewLineEndings(removeLines(lines, at_line_number, remove_count)), "")
