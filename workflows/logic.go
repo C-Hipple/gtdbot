@@ -7,6 +7,7 @@ import (
 	"gtdbot/org"
 	"gtdbot/utils"
 	"regexp"
+	"slices"
 	"strings"
 	"sync"
 	"time"
@@ -35,6 +36,11 @@ type PRToOrgBridge struct {
 
 func (prb PRToOrgBridge) ID() string {
 	return fmt.Sprintf("%d", *prb.PR.Number)
+}
+
+func (prb PRToOrgBridge) Repo() string {
+	return prb.PR.Head.Repo.GetName()
+
 }
 
 func (prb PRToOrgBridge) StartLine() int {
@@ -84,6 +90,7 @@ func (prb PRToOrgBridge) GetStatus() string {
 func (prb PRToOrgBridge) Details() []string {
 	details := []string{}
 	details = append(details, fmt.Sprintf("%d\n", prb.PR.GetNumber()))
+	details = append(details, "Repo: "+*prb.PR.Head.Repo.Name)
 	details = append(details, fmt.Sprintf("%s\n", prb.PR.GetHTMLURL()))
 	details = append(details, fmt.Sprintf("Title: %s\n", prb.PR.GetTitle()))
 
@@ -227,6 +234,49 @@ func getComments(owner string, repo string, number int) (int, []string) {
 //			fmt.Println("Skipping check released due to repo.  PR is for repo: ", repo_name)
 //		}
 //	}
+
+func ProcessPRs(prs []*github.PullRequest, changes_channel chan FileChanges, doc *org.OrgDocument, section *org.Section, change_wg *sync.WaitGroup, delete_unfound bool) RunResult {
+	result := RunResult{}
+
+	// the index for both slices should match
+	seen_prs := []*github.PullRequest{}
+	pr_strings := []string{}
+	changes := []FileChanges{}
+
+	for _, pr := range prs {
+		pr_strings = append(pr_strings, fmt.Sprintf("%s-%v", *pr.Head.Repo.Name, pr.GetNumber()))
+		seen_prs = append(seen_prs, pr)
+		fmt.Printf("Checking My PR: %s\n", *pr.Title)
+		changes = append(changes, SyncTODOToSection(*doc, pr, *section))
+	}
+
+	if delete_unfound {
+		// prune items that are not seen.  Use the PR string as the comparator
+		for _, item := range section.Items {
+			check_string := fmt.Sprintf("%s-%s", item.Repo(), item.ID())
+			if slices.Contains(pr_strings, check_string) {
+				continue
+			} else {
+				fmt.Println("No longer need to review: ", check_string)
+				fileChange := FileChanges{
+					ChangeType: "Delete",
+					Filename:   doc.Filename,
+					Item:       item,
+					Section:    *section,
+				}
+				changes = append(changes, fileChange)
+			}
+
+		}
+	}
+
+	for _, output := range changes {
+		result.Process(&output, changes_channel, change_wg)
+	}
+
+	return result
+}
+
 func SyncTODOToSection(doc org.OrgDocument, pr *github.PullRequest, section org.Section) FileChanges {
 	pr_as_org := PRToOrgBridge{pr}
 	at_line, _ := org.CheckTODOInSection(pr_as_org, section)
@@ -258,23 +308,8 @@ func listWorkflowRunOptions(branch string) github.ListWorkflowRunsOptions {
 func getCIStatus(owner string, repo string, branch string) []string {
 	client := git_tools.GetGithubClient()
 	branch = strings.Split(branch, ":")[1]
-
-	// combined, _, err := client.Repositories.GetCombinedStatus(context.Background(), owner, repo, ref, nil)
-	// if err != nil {
-	//	fmt.Printf("Error getting combined status: %v\n", err)
-	//	return []string{}
-	// }
-	// fmt.Println(resp.Body)
-
-	// var statuses []string
-	// for _, status := range combined.Statuses {
-	//	statuses = append(statuses, *status.Context+":"+*status.State)
-	// }
 	opts := listWorkflowRunOptions(branch)
-	fmt.Println("getting ci: branch: ", opts.Branch)
-
 	runs, _, err := client.Actions.ListRepositoryWorkflowRuns(context.Background(), owner, repo, &opts)
-	// runs2, _, err := client.Actions.ListRepositoryWorkflowRuns(context.Background(), owner, repo, &opts)
 
 	if err != nil {
 		fmt.Printf("Error getting combined status: %v\n", err)
@@ -293,6 +328,8 @@ func getCIStatus(owner string, repo string, branch string) []string {
 			if *run.Conclusion == "success" {
 				conclusion = "✅"
 				status = "" // We know the status if it was a success
+			} else if *run.Conclusion == "failure" {
+				conclusion = "❌"
 			}
 		}
 
@@ -302,8 +339,6 @@ func getCIStatus(owner string, repo string, branch string) []string {
 		}
 
 		item := fmt.Sprintf("[%s] %s %s", conclusion, status, name)
-
-		fmt.Println("item: ", item)
 		statuses = append(statuses, item)
 	}
 	return statuses

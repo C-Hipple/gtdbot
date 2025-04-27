@@ -32,6 +32,9 @@ func ListenChanges(channel chan FileChanges, wg *sync.WaitGroup) {
 			} else if file_change.ChangeType == "Update" {
 				fmt.Print("Updating item in section: ", change_lines[3])
 				doc.UpdateItemInSection(file_change.Section.Name, &file_change.Item)
+			} else if file_change.ChangeType == "Delete" {
+				fmt.Print("Removing item from section: ", change_lines[3])
+				doc.DeleteItemInSection(file_change.Section.Name, &file_change.Item)
 			}
 		}
 		wg.Done() // The add is done when we enqueue the FileChange in the channel
