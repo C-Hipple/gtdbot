@@ -15,14 +15,7 @@ type OrgTODO interface {
 	ID() string
 	StartLine() int
 	LinesCount() int
-}
-
-func InterfaceCheck(a OrgTODO) bool {
-	return true
-}
-
-func useInterface(a OrgItem) bool {
-	return InterfaceCheck(a)
+	Repo() string
 }
 
 func CleanHeader(line string) string {

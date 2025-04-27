@@ -70,11 +70,8 @@ func (w SingleRepoSyncReviewRequestsWorkflow) Run(c chan FileChanges, file_chang
 		fmt.Println("Error getting section: ", err, w.SectionTitle)
 		return RunResult{}, errors.New("Section Not Found")
 	}
-	result := RunResult{}
-	for _, pr := range prs {
-		output := SyncTODOToSection(doc, pr, section)
-		result.Process(&output, c, file_change_wg)
-	}
+
+	result := ProcessPRs(prs, c, &doc, &section, file_change_wg, true)
 	return result, nil
 }
 
@@ -100,11 +97,7 @@ func (w SyncReviewRequestsWorkflow) Run(c chan FileChanges, file_change_wg *sync
 		fmt.Println("Error getting section: ", err, w.SectionTitle)
 		return RunResult{}, errors.New("Section Not Found")
 	}
-	result := RunResult{}
-	for _, pr := range prs {
-		output := SyncTODOToSection(doc, pr, section)
-		result.Process(&output, c, file_change_wg)
-	}
+	result := ProcessPRs(prs, c, &doc, &section, file_change_wg, true)
 	return result, nil
 }
 
@@ -155,26 +148,20 @@ func (w ListMyPRsWorkflow) Run(c chan FileChanges, file_change_wg *sync.WaitGrou
 		return RunResult{}, errors.New("Section Not Found")
 	}
 	prs = git_tools.ApplyPRFilters(prs, []git_tools.PRFilter{git_tools.MyPRs})
+	result := ProcessPRs(prs, c, &doc, &section, file_change_wg, false)
+	// TODO This is moving to the serializer
+	// if pr.MergedAt != nil && output.ChangeType != "No Change" {
+	//	repo_name := *pr.Base.Repo.Name
+	//	if repo_name == "chaturbate" {
+	//		released := git_tools.CheckCommitReleased(client, w.ReleasedVersion.SHA, *pr.MergeCommitSHA)
+	//		if released {
+	//			fmt.Printf("Released PR: %s %t\n", *pr.Title, released)
+	//		}
+	//		// output.Item.Details() = append(output.Lines, "Released: "+strconv.FormatBool(released))
+	//		//output.Lines[0] = strings.Replace(output.Lines[0], "merged", "released", 1)
+	//	}
+	// }
 
-	result := RunResult{}
-	for _, pr := range prs {
-		fmt.Printf("Checking My %s PR: %s\n", w.PRState, *pr.Title)
-		output := SyncTODOToSection(doc, pr, section)
-		result.Process(&output, c, file_change_wg)
-		// TODO This is moving to the serializer
-		// if pr.MergedAt != nil && output.ChangeType != "No Change" {
-		//	repo_name := *pr.Base.Repo.Name
-		//	if repo_name == "chaturbate" {
-		//		released := git_tools.CheckCommitReleased(client, w.ReleasedVersion.SHA, *pr.MergeCommitSHA)
-		//		if released {
-		//			fmt.Printf("Released PR: %s %t\n", *pr.Title, released)
-		//		}
-		//		// output.Item.Details() = append(output.Lines, "Released: "+strconv.FormatBool(released))
-		//		//output.Lines[0] = strings.Replace(output.Lines[0], "merged", "released", 1)
-		//	}
-		// }
-
-	}
 	return result, nil
 }
 
@@ -216,18 +203,6 @@ func (w ProjectListWorkflow) Run(c chan FileChanges, file_change_wg *sync.WaitGr
 	projectPRs := jira.GetProjectPRKeys(w.JiraDomain, w.JiraEpic, w.Repo)
 
 	prs := git_tools.GetSpecificPRs(client, w.Owner, w.Repo, projectPRs)
-	result := RunResult{}
-	for _, pr := range prs {
-		output := SyncTODOToSection(doc, pr, section)
-		// TODO This is moving to the serializer
-		if pr.MergedAt != nil && output.ChangeType != "No Change" {
-			// repo_name := *pr.Base.Repo.Name
-			// if repo_name == "chaturbate" {
-			//	released := git_tools.CheckCommitReleased(client, w.ReleasedVersion.SHA, *pr.MergeCommitSHA)
-			//	fmt.Printf("Released PR: %s %t\n", *pr.Title, released)
-			// }
-		}
-		result.Process(&output, c, file_change_wg)
-	}
+	result := ProcessPRs(prs, c, &doc, &section, file_change_wg, false)
 	return result, nil
 }
