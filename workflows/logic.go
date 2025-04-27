@@ -250,8 +250,6 @@ func ProcessPRs(prs []*github.PullRequest, changes_channel chan FileChanges, doc
 		changes = append(changes, SyncTODOToSection(*doc, pr, *section))
 	}
 
-	fmt.Println(pr_strings)
-
 	if delete_unfound {
 		// prune items that are not seen.  Use the PR string as the comparator
 		for _, item := range section.Items {
@@ -259,16 +257,11 @@ func ProcessPRs(prs []*github.PullRequest, changes_channel chan FileChanges, doc
 			if slices.Contains(pr_strings, check_string) {
 				continue
 			} else {
-				idx := slices.Index(pr_strings, check_string)
-				if idx == -1 {
-					fmt.Println("Tried to delete PR which was not found!: ", check_string)
-					continue
-				}
 				fmt.Println("No longer need to review: ", check_string)
 				fileChange := FileChanges{
 					ChangeType: "Delete",
 					Filename:   doc.Filename,
-					Item:       PRToOrgBridge{PR: prs[idx]},
+					Item:       item,
 					Section:    *section,
 				}
 				changes = append(changes, fileChange)
@@ -315,23 +308,8 @@ func listWorkflowRunOptions(branch string) github.ListWorkflowRunsOptions {
 func getCIStatus(owner string, repo string, branch string) []string {
 	client := git_tools.GetGithubClient()
 	branch = strings.Split(branch, ":")[1]
-
-	// combined, _, err := client.Repositories.GetCombinedStatus(context.Background(), owner, repo, ref, nil)
-	// if err != nil {
-	//	fmt.Printf("Error getting combined status: %v\n", err)
-	//	return []string{}
-	// }
-	// fmt.Println(resp.Body)
-
-	// var statuses []string
-	// for _, status := range combined.Statuses {
-	//	statuses = append(statuses, *status.Context+":"+*status.State)
-	// }
 	opts := listWorkflowRunOptions(branch)
-	fmt.Println("getting ci: branch: ", opts.Branch)
-
 	runs, _, err := client.Actions.ListRepositoryWorkflowRuns(context.Background(), owner, repo, &opts)
-	// runs2, _, err := client.Actions.ListRepositoryWorkflowRuns(context.Background(), owner, repo, &opts)
 
 	if err != nil {
 		fmt.Printf("Error getting combined status: %v\n", err)
@@ -361,8 +339,6 @@ func getCIStatus(owner string, repo string, branch string) []string {
 		}
 
 		item := fmt.Sprintf("[%s] %s %s", conclusion, status, name)
-
-		fmt.Println("item: ", item)
 		statuses = append(statuses, item)
 	}
 	return statuses
