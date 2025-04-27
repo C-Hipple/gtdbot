@@ -7,6 +7,7 @@ import (
 	"gtdbot/org"
 	"gtdbot/utils"
 	"regexp"
+	"slices"
 	"strings"
 	"sync"
 	"time"
@@ -84,6 +85,7 @@ func (prb PRToOrgBridge) GetStatus() string {
 func (prb PRToOrgBridge) Details() []string {
 	details := []string{}
 	details = append(details, fmt.Sprintf("%d\n", prb.PR.GetNumber()))
+	details = append(details, "Repo: ", *prb.PR.Base.Repo.Name)
 	details = append(details, fmt.Sprintf("%s\n", prb.PR.GetHTMLURL()))
 	details = append(details, fmt.Sprintf("Title: %s\n", prb.PR.GetTitle()))
 
@@ -227,6 +229,39 @@ func getComments(owner string, repo string, number int) (int, []string) {
 //			fmt.Println("Skipping check released due to repo.  PR is for repo: ", repo_name)
 //		}
 //	}
+
+func ProcessPRs(prs []*github.PullRequest, changes_channel chan FileChanges, doc *org.OrgDocument, section *org.Section, change_wg *sync.WaitGroup) RunResult {
+	result := RunResult{}
+	seen_prs := []string{} // format string of repo-id
+	for _, pr := range prs {
+		seen_prs = append(seen_prs, fmt.Sprintf("%s-%s", *pr.Base.Repo.Name, pr.GetID))
+		fmt.Printf("Checking My PR: %s\n", *pr.Title)
+		output := SyncTODOToSection(*doc, pr, *section)
+		result.Process(&output, changes_channel, change_wg)
+	}
+
+	// prune items that are not seen
+	for _, item := range section.Items {
+		if slices.Contains(
+			seen_prs,
+			fmt.Sprintf("%s-%s", item.Repo(), item.ID()),
+		) {
+			continue
+		} else {
+			fmt.Println("No longer need to review: ", fmt.Sprintf("%s-%s", item.Repo(), item.ID()))
+			fileChange := FileChanges{
+				ChangeType: "Delete",
+				Filename: doc.Filename,
+				Item: PRToOrgBridge{pr},
+				Section: *section,
+			}
+
+		}
+	}
+
+	return result
+}
+
 func SyncTODOToSection(doc org.OrgDocument, pr *github.PullRequest, section org.Section) FileChanges {
 	pr_as_org := PRToOrgBridge{pr}
 	at_line, _ := org.CheckTODOInSection(pr_as_org, section)

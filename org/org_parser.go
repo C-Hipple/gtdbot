@@ -334,6 +334,16 @@ func (oi OrgItem) Details() []string {
 	return oi.details
 }
 
+// TODO: Implement? Better way?
+func (oi OrgItem) Repo() string {
+	for _, line := range oi.Details() {
+		if strings.HasPrefix(line, "Repo:") {
+			return strings.Split(line, ": ")[1]
+		}
+	}
+	return ""
+}
+
 func (oi OrgItem) GetStatus() string {
 	return oi.status
 }

@@ -155,12 +155,8 @@ func (w ListMyPRsWorkflow) Run(c chan FileChanges, file_change_wg *sync.WaitGrou
 		return RunResult{}, errors.New("Section Not Found")
 	}
 	prs = git_tools.ApplyPRFilters(prs, []git_tools.PRFilter{git_tools.MyPRs})
+	result := ProcessPRs(prs , c)
 
-	result := RunResult{}
-	for _, pr := range prs {
-		fmt.Printf("Checking My %s PR: %s\n", w.PRState, *pr.Title)
-		output := SyncTODOToSection(doc, pr, section)
-		result.Process(&output, c, file_change_wg)
 		// TODO This is moving to the serializer
 		// if pr.MergedAt != nil && output.ChangeType != "No Change" {
 		//	repo_name := *pr.Base.Repo.Name
