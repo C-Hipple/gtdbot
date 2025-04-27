@@ -115,7 +115,7 @@ func (o OrgDocument) UpdateItemInSection(section_name string, new_item *OrgTODO)
 	return nil
 }
 
-func (o OrgDocument) DeleteItemInSection(section_name string, item_to_delete *OrgTODO) error{
+func (o OrgDocument) DeleteItemInSection(section_name string, item_to_delete *OrgTODO) error {
 	section, err := o.GetSection(section_name)
 	if err != nil {
 		return err

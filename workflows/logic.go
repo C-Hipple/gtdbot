@@ -90,7 +90,7 @@ func (prb PRToOrgBridge) GetStatus() string {
 func (prb PRToOrgBridge) Details() []string {
 	details := []string{}
 	details = append(details, fmt.Sprintf("%d\n", prb.PR.GetNumber()))
-	details = append(details, "Repo: ", *prb.PR.Base.Repo.Name)
+	details = append(details, "Repo: "+*prb.PR.Head.Repo.Name)
 	details = append(details, fmt.Sprintf("%s\n", prb.PR.GetHTMLURL()))
 	details = append(details, fmt.Sprintf("Title: %s\n", prb.PR.GetTitle()))
 
@@ -244,11 +244,13 @@ func ProcessPRs(prs []*github.PullRequest, changes_channel chan FileChanges, doc
 	changes := []FileChanges{}
 
 	for _, pr := range prs {
-		pr_strings = append(pr_strings, fmt.Sprintf("%s-%v", *pr.Base.Repo.Name, pr.GetID()))
+		pr_strings = append(pr_strings, fmt.Sprintf("%s-%v", *pr.Head.Repo.Name, pr.GetNumber()))
 		seen_prs = append(seen_prs, pr)
 		fmt.Printf("Checking My PR: %s\n", *pr.Title)
 		changes = append(changes, SyncTODOToSection(*doc, pr, *section))
 	}
+
+	fmt.Println(pr_strings)
 
 	if delete_unfound {
 		// prune items that are not seen.  Use the PR string as the comparator
