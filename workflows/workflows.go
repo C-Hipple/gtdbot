@@ -121,7 +121,6 @@ type ListMyPRsWorkflow struct {
 	OrgFileName     string
 	SectionTitle    string
 	PRState         string
-	ReleasedVersion git_tools.DeployedVersion
 }
 
 func (w ListMyPRsWorkflow) GetName() string {
@@ -149,19 +148,6 @@ func (w ListMyPRsWorkflow) Run(c chan FileChanges, file_change_wg *sync.WaitGrou
 	}
 	prs = git_tools.ApplyPRFilters(prs, []git_tools.PRFilter{git_tools.MyPRs})
 	result := ProcessPRs(prs, c, &doc, &section, file_change_wg, false)
-	// TODO This is moving to the serializer
-	// if pr.MergedAt != nil && output.ChangeType != "No Change" {
-	//	repo_name := *pr.Base.Repo.Name
-	//	if repo_name == "chaturbate" {
-	//		released := git_tools.CheckCommitReleased(client, w.ReleasedVersion.SHA, *pr.MergeCommitSHA)
-	//		if released {
-	//			fmt.Printf("Released PR: %s %t\n", *pr.Title, released)
-	//		}
-	//		// output.Item.Details() = append(output.Lines, "Released: "+strconv.FormatBool(released))
-	//		//output.Lines[0] = strings.Replace(output.Lines[0], "merged", "released", 1)
-	//	}
-	// }
-
 	return result, nil
 }
 
@@ -174,7 +160,6 @@ type ProjectListWorkflow struct {
 	SectionTitle    string
 	JiraDomain      string
 	JiraEpic        string
-	ReleasedVersion git_tools.DeployedVersion
 }
 
 func (w ProjectListWorkflow) GetName() string {

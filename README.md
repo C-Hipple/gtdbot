@@ -47,9 +47,6 @@ Repo: str
 ```
 
 ListMyPRsWorkflow takes the additional parameter PRState, which is passed through to the github API when filtering for PRs.
-
-Depending on whether it's in the current build or not, this workflow has additional handling on checking if a PR is released or in a release-candidate tag.
-
 ```
 PRState: str [open/closed/nil]
 ```
