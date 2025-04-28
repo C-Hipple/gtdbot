@@ -124,7 +124,8 @@ func (o OrgDocument) DeleteItemInSection(section_name string, item_to_delete *Or
 	if start_line == -1 {
 		return errors.New("Item not in section; Cannot Delete!")
 	}
-	utils.DeleteLinesInFile(o.GetFile(), start_line, existing_item.LinesCount())
+	// We subtract 1 since the utils methods are 0 index and the file methods are 1 index
+	utils.DeleteLinesInFile(o.GetFile(), start_line-1, existing_item.LinesCount())
 	return nil
 }
 
