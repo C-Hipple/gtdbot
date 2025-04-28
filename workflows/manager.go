@@ -18,7 +18,7 @@ type ManagerService struct {
 func ListenChanges(channel chan FileChanges, wg *sync.WaitGroup) {
 	for file_change := range channel {
 		if file_change.ChangeType != "No Change" {
-			doc := org.GetBaseOrgDocument(file_change.Filename)
+			doc := org.GetOrgDocument(file_change.Filename, org.BaseOrgSerializer{})
 			change_lines := doc.Serializer.Deserialize(file_change.Item, file_change.Section.IndentLevel)
 			if file_change.ChangeType == "Addition" {
 				if strings.Contains(change_lines[0], "draft") {
@@ -111,7 +111,8 @@ func (ms *ManagerService) Initialize() {
 	// Ensure all required sections exist.
 	// Does this sync since GetSection has creation side effect
 	for _, wf := range ms.Workflows {
-		doc := org.GetBaseOrgDocument(wf.GetOrgFilename())
+		// Don't need to check release command here
+		doc := org.GetOrgDocument(wf.GetOrgFilename(), org.BaseOrgSerializer{ReleaseCheckCommand: ""})
 		doc.GetSection(wf.GetOrgSectionName())
 	}
 }

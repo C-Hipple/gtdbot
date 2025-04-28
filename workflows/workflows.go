@@ -32,15 +32,13 @@ func (rr *RunResult) Report() string {
 }
 
 type SingleRepoSyncReviewRequestsWorkflow struct {
-	// Github repo info
-	Name    string
-	Owner   string
-	Repo    string
-	Filters []git_tools.PRFilter
-
-	// org output info
-	OrgFileName  string
-	SectionTitle string
+	Name                string
+	Owner               string
+	Repo                string
+	Filters             []git_tools.PRFilter
+	OrgFileName         string
+	SectionTitle        string
+	ReleaseCheckCommand string
 }
 
 func (w SingleRepoSyncReviewRequestsWorkflow) GetName() string {
@@ -64,7 +62,7 @@ func (w SingleRepoSyncReviewRequestsWorkflow) Run(c chan FileChanges, file_chang
 	)
 
 	prs = git_tools.ApplyPRFilters(prs, w.Filters)
-	doc := org.GetBaseOrgDocument(w.OrgFileName)
+	doc := org.GetOrgDocument(w.OrgFileName, org.BaseOrgSerializer{ReleaseCheckCommand: w.ReleaseCheckCommand})
 	section, err := doc.GetSection(w.SectionTitle)
 	if err != nil {
 		fmt.Println("Error getting section: ", err, w.SectionTitle)
@@ -83,15 +81,16 @@ type SyncReviewRequestsWorkflow struct {
 	Filters []git_tools.PRFilter
 
 	// org output info
-	OrgFileName  string
-	SectionTitle string
+	OrgFileName         string
+	SectionTitle        string
+	ReleaseCheckCommand string
 }
 
 func (w SyncReviewRequestsWorkflow) Run(c chan FileChanges, file_change_wg *sync.WaitGroup) (RunResult, error) {
 	client := git_tools.GetGithubClient()
 	prs := git_tools.GetManyRepoPRs(client, "open", w.Owner, w.Repos)
 	prs = git_tools.ApplyPRFilters(prs, w.Filters)
-	doc := org.GetBaseOrgDocument(w.OrgFileName)
+	doc := org.GetOrgDocument(w.OrgFileName, org.BaseOrgSerializer{ReleaseCheckCommand: w.ReleaseCheckCommand})
 	section, err := doc.GetSection(w.SectionTitle)
 	if err != nil {
 		fmt.Println("Error getting section: ", err, w.SectionTitle)
@@ -114,13 +113,14 @@ func (w SyncReviewRequestsWorkflow) GetOrgSectionName() string {
 }
 
 type ListMyPRsWorkflow struct {
-	Name            string
-	Owner           string
-	Repos           []string
-	Filters         []git_tools.PRFilter
-	OrgFileName     string
-	SectionTitle    string
-	PRState         string
+	Name                string
+	Owner               string
+	Repos               []string
+	Filters             []git_tools.PRFilter
+	OrgFileName         string
+	SectionTitle        string
+	PRState             string
+	ReleaseCheckCommand string
 }
 
 func (w ListMyPRsWorkflow) GetName() string {
@@ -140,7 +140,7 @@ func (w ListMyPRsWorkflow) Run(c chan FileChanges, file_change_wg *sync.WaitGrou
 	prs := git_tools.GetManyRepoPRs(client, w.PRState, w.Owner, w.Repos)
 
 	prs = git_tools.ApplyPRFilters(prs, w.Filters)
-	doc := org.GetOrgDocument(w.OrgFileName, org.MergeInfoOrgSerializer{})
+	doc := org.GetOrgDocument(w.OrgFileName, org.BaseOrgSerializer{ReleaseCheckCommand: w.ReleaseCheckCommand})
 	section, err := doc.GetSection(w.SectionTitle)
 	if err != nil {
 		fmt.Println("Error getting section: ", err, w.SectionTitle)
@@ -152,14 +152,15 @@ func (w ListMyPRsWorkflow) Run(c chan FileChanges, file_change_wg *sync.WaitGrou
 }
 
 type ProjectListWorkflow struct {
-	Name            string
-	Owner           string
-	Repo            string
-	OrgFileName     string
-	Filters         []git_tools.PRFilter
-	SectionTitle    string
-	JiraDomain      string
-	JiraEpic        string
+	Name                string
+	Owner               string
+	Repo                string
+	OrgFileName         string
+	Filters             []git_tools.PRFilter
+	SectionTitle        string
+	JiraDomain          string
+	JiraEpic            string
+	ReleaseCheckCommand string
 }
 
 func (w ProjectListWorkflow) GetName() string {
@@ -176,7 +177,7 @@ func (w ProjectListWorkflow) GetOrgSectionName() string {
 
 func (w ProjectListWorkflow) Run(c chan FileChanges, file_change_wg *sync.WaitGroup) (RunResult, error) {
 	client := git_tools.GetGithubClient()
-	doc := org.GetOrgDocument(w.OrgFileName, org.MergeInfoOrgSerializer{})
+	doc := org.GetOrgDocument(w.OrgFileName, org.BaseOrgSerializer{ReleaseCheckCommand: w.ReleaseCheckCommand})
 	section, err := doc.GetSection(w.SectionTitle)
 	if err != nil {
 		return RunResult{}, errors.New("Section Not Found")

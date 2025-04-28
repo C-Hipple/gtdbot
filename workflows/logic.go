@@ -1,11 +1,13 @@
 package workflows
 
 import (
+	"bytes"
 	"context"
 	"fmt"
 	"gtdbot/git_tools"
 	"gtdbot/org"
 	"gtdbot/utils"
+	"os/exec"
 	"regexp"
 	"slices"
 	"strings"
@@ -61,13 +63,21 @@ func (prb PRToOrgBridge) Title() string {
 	return *prb.PR.Title
 }
 
-func (prb PRToOrgBridge) FullLine(indent_level int) string {
+func (prb PRToOrgBridge) ItemTitle(indent_level int, release_check_command string) string {
 	line := fmt.Sprintf("%s %s %s\t\t:%s:", strings.Repeat("*", indent_level), prb.GetStatus(), prb.Title(), *prb.PR.Head.Repo.Name)
-	//fmt.Println("Here: ", prb.Title(), prb.PR.Merged, prb.PR.MergedAt)
 	if *prb.PR.Draft {
 		line = line + ":draft:"
 	} else if prb.PR.MergedAt != nil {
-		line = line + "merged:"
+		if release_check_command != "" {
+			status, err := GetReleaseStatus(&release_check_command, prb.PR.MergeCommitSHA)
+			if err != nil {
+				line = line + status + ":"
+			} else {
+				line = line + "merged:"
+			}
+		} else {
+			line = line + "merged:"
+		}
 	}
 	return line
 }
@@ -358,4 +368,23 @@ func processWorkflowRuns(runs []*github.WorkflowRun) []*github.WorkflowRun {
 		output = append(output, run)
 	}
 	return output
+}
+
+// If a command was given by the workflow,
+func GetReleaseStatus(command *string, sha *string) (string, error) {
+	cmd := exec.Command(*command, *sha)
+
+	var outb, errb bytes.Buffer
+	cmd.Stdout = &outb
+	cmd.Stderr = &errb
+
+	err := cmd.Run()
+
+	if err != nil {
+		return "", err
+	}
+
+	stdout := outb.String()
+	return stdout, nil
+
 }
