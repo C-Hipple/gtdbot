@@ -136,6 +136,22 @@ func Test_DeleteLines(t *testing.T) {
 	if len(removed) != len(existing_lines) {
 		t.Fatal("Removed lines when shouldn't ahve")
 	}
+
+	removed = removeLines(existing_lines, 1, 2)
+	target := []string{
+		"* TODO PR #1 <title> :draft:",
+		"url",
+		"the_author",
+		"*** Body",
+		"",
+		"In this PR We do things",
+	}
+
+	for _, ele := range Zip(removed, target) {
+		if ele.First != ele.Second {
+			t.Fatalf("Updated lines do not match.  Target: \n%v Actual \n%v", target, removed)
+		}
+	}
 }
 
 func Test_InsertLinesAtEnd(t *testing.T) {

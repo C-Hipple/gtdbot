@@ -138,7 +138,6 @@ func DeleteLinesInFile(file *os.File, at_line_number int, remove_count int) erro
 }
 
 func removeLines(existing_lines []string, at_line_number int, remove_count int) []string {
-	at_line_number -= 1 // TODO: Figure out why exactly we need this? I tried somes stuff with chanign the LT to LTE, etc. This fixes it perfectly though
 	output_lines := []string{}
 	for i, line := range existing_lines {
 		if i < at_line_number {
