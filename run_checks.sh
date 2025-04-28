@@ -1,14 +1,3 @@
-#!/bin/bash
-
-# echo "Running go vet"
-# go vet
-
-# echo "Running gofmt check"
-# gofmt -s -l .
-
-# echo "Running go test"
-# go test ./...
-
 failed=0
 
 echo "Running go vet"

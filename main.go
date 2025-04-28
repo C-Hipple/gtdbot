@@ -3,19 +3,13 @@ package main
 import (
 	"flag"
 	"fmt"
-	"gtdbot/git_tools"
 	"gtdbot/org"
 	"gtdbot/workflows"
 )
 
 func get_manager(one_off bool, config *Config) workflows.ManagerService {
-	release, err := git_tools.GetDeployedVersion()
-	if err != nil {
-		panic(err)
-	}
 	return workflows.NewManagerService(
 		config.Workflows,
-		release,
 		one_off,
 	)
 }

@@ -224,17 +224,6 @@ func getComments(owner string, repo string, number int) (int, []string) {
 	return len(comments), str_comments
 }
 
-// func (prb PRToOrgBridge) GetReleased() string {
-//	repo_name := *prb.PR.Base.Repo.Name
-//	if repo_name == "repo" {
-//		released := git_tools.CheckCommitReleased(client, w.ReleasedVersion.SHA, *pr.MergeCommitSHA)
-//		fmt.Println("Released: ", released)
-
-//		} else {
-//			fmt.Println("Skipping check released due to repo.  PR is for repo: ", repo_name)
-//		}
-//	}
-
 func ProcessPRs(prs []*github.PullRequest, changes_channel chan FileChanges, doc *org.OrgDocument, section *org.Section, change_wg *sync.WaitGroup, delete_unfound bool) RunResult {
 	result := RunResult{}
 

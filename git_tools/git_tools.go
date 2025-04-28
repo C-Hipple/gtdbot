@@ -2,12 +2,8 @@ package git_tools
 
 import (
 	"context"
-	"errors"
 	"fmt"
-	"io"
-	"net/http"
 	"os"
-	"regexp"
 	"slices"
 	"strings"
 
@@ -256,48 +252,3 @@ func FilterPRsByAssignedTeam(prs []*github.PullRequest, target_team string) []*g
 	}
 	return filtered
 }
-
-func CheckReleased(commit_sha string) bool {
-	return false
-}
-
-type DeployedVersion struct {
-	Tag string
-	SHA string
-}
-
-// TODO cache?
-func GetDeployedVersion() (DeployedVersion, error) {
-	res, err := http.Get("https://www.repo.com/healthcheck/")
-	if err != nil {
-		return DeployedVersion{}, err
-	}
-	body, err := io.ReadAll(res.Body)
-	if err != nil {
-		return DeployedVersion{}, err
-	}
-
-	//"v24.5.10.0.post4 (sha: 80c7ed3aab56c4549acc895c292bb3b256b2789c)"
-	// This regex matches 3 things for some reason, so we just index properly
-	extractor_regex, _ := regexp.Compile("(v\\d+\\.[\\w+\\.]+)(?:-rc\\d)?\\s\\(sha:\\s(\\w+)")
-	match := extractor_regex.FindStringSubmatch(string(body))
-	if len(match) < 3 {
-		return DeployedVersion{}, errors.New(fmt.Sprintf("Invalid version match from string: %s", string(body)))
-	}
-	return DeployedVersion{
-		Tag: match[1],
-		SHA: match[2],
-	}, nil
-}
-
-func CheckCommitReleased(client *github.Client, release_sha string, commit_sha string) bool {
-	res, _, err := client.Repositories.CompareCommits(context.Background(), "owner", "repo", release_sha, commit_sha, &github.ListOptions{Page: 1, PerPage: 100})
-	if err != nil {
-		fmt.Println(err)
-	}
-
-	return slices.Contains([]string{"identical", "behind"}, *res.Status)
-
-}
-
-//func GetCommitsForSha(sha string)
