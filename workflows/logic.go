@@ -25,10 +25,11 @@ type Workflow interface {
 }
 
 type FileChanges struct {
-	ChangeType string
-	Filename   string
-	Item       org.OrgTODO
-	Section    org.Section
+	ChangeType     string
+	Filename       string
+	Item           org.OrgTODO
+	Section        org.Section
+	ItemSerializer org.OrgSerializer
 }
 
 type PRToOrgBridge struct {
@@ -258,10 +259,11 @@ func ProcessPRs(prs []*github.PullRequest, changes_channel chan FileChanges, doc
 			} else {
 				fmt.Println("No longer need to review: ", check_string)
 				fileChange := FileChanges{
-					ChangeType: "Delete",
-					Filename:   doc.Filename,
-					Item:       item,
-					Section:    *section,
+					ChangeType:     "Delete",
+					Filename:       doc.Filename,
+					Item:           item,
+					Section:        *section,
+					ItemSerializer: doc.Serializer,
 				}
 				changes = append(changes, fileChange)
 			}
@@ -282,17 +284,19 @@ func SyncTODOToSection(doc org.OrgDocument, pr *github.PullRequest, section org.
 	if at_line != -1 {
 		// TODO : Determine if actual changes?
 		return FileChanges{
-			ChangeType: "Update",
-			Filename:   doc.Filename,
-			Item:       pr_as_org,
-			Section:    section,
+			ChangeType:     "Update",
+			Filename:       doc.Filename,
+			Item:           pr_as_org,
+			Section:        section,
+			ItemSerializer: doc.Serializer,
 		}
 	}
 	return FileChanges{
-		ChangeType: "Addition",
-		Filename:   doc.Filename,
-		Item:       pr_as_org,
-		Section:    section,
+		ChangeType:     "Addition",
+		Filename:       doc.Filename,
+		Item:           pr_as_org,
+		Section:        section,
+		ItemSerializer: doc.Serializer,
 	}
 }
 

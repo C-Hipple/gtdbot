@@ -96,6 +96,7 @@ func (w SyncReviewRequestsWorkflow) Run(c chan FileChanges, file_change_wg *sync
 		fmt.Println("Error getting section: ", err, w.SectionTitle)
 		return RunResult{}, errors.New("Section Not Found")
 	}
+	fmt.Println("in run: ", w.ReleaseCheckCommand)
 	result := ProcessPRs(prs, c, &doc, &section, file_change_wg, true)
 	return result, nil
 }
