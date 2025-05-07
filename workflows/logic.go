@@ -205,12 +205,17 @@ func getComments(owner string, repo string, number int) (int, []string) {
 	client := git_tools.GetGithubClient()
 	opts := github.PullRequestListCommentsOptions{}
 	comments, _, err := client.PullRequests.ListComments(context.Background(), owner, repo, number, &opts)
+	trees := buildCommentTrees(comments)
+	printCommentTree(trees)
+
 	if err != nil {
 		fmt.Printf("Error getting Comments for PR %v in repo %s: %v", number, repo, err)
 		return 0, []string{}
 	}
 	str_comments := []string{}
 	for _, comment := range comments {
+
+
 		if strings.Contains(*comment.User.Login, "advanced") {
 			// I don't care about the lint warning stuff
 			continue
@@ -286,18 +291,10 @@ func SyncTODOToSection(doc org.OrgDocument, pr *github.PullRequest, section org.
 	}
 }
 
-func listWorkflowRunOptions(branch string) github.ListWorkflowRunsOptions {
-	opts := github.ListWorkflowRunsOptions{}
-	if branch != "" {
-		opts.Branch = branch
-	}
-	return opts
-}
-
 func getCIStatus(owner string, repo string, branch string) []string {
 	client := git_tools.GetGithubClient()
-	branch = strings.Split(branch, ":")[1]
-	opts := listWorkflowRunOptions(branch)
+	branch = strings.Split(branch, ":")[1] // Comes as username:branch_name from github api.
+	opts := github.ListWorkflowRunsOptions{Branch: branch}
 	runs, _, err := client.Actions.ListRepositoryWorkflowRuns(context.Background(), owner, repo, &opts)
 
 	if err != nil {
@@ -358,4 +355,40 @@ func processWorkflowRuns(runs []*github.WorkflowRun) []*github.WorkflowRun {
 		output = append(output, run)
 	}
 	return output
+}
+
+func buildCommentTrees(comments []*github.PullRequestComment) [][]*github.PullRequestComment {
+	output := [][]*github.PullRequestComment{}
+	for _, comment := range comments {
+
+		replyTo := int64(-1)
+		if comment.InReplyTo != nil {
+			replyTo = comment.GetInReplyTo()
+		}
+
+		if len(output) == 0 || replyTo == -1 {
+			output = append(output, []*github.PullRequestComment{comment})
+			continue
+		}
+
+		for j, commentTree := range output {
+			if commentTree[len(commentTree)-1].GetID() == replyTo {
+				output[j] = append(commentTree, comment)
+				continue
+			}
+		}
+	}
+	return output
+}
+
+func printCommentTree(trees [][]*github.PullRequestComment) {
+	for i, tree := range trees {
+		fmt.Printf("Tree: %d\n", i)
+		for j, comment := range tree {
+			fmt.Printf("comment: %d - %d  (reply to: %d)\n", j, comment.GetID(), comment.GetInReplyTo())
+		}
+		fmt.Println("")
+
+	}
+
 }
