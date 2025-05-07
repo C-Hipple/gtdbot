@@ -205,27 +205,38 @@ func getComments(owner string, repo string, number int) (int, []string) {
 	client := git_tools.GetGithubClient()
 	opts := github.PullRequestListCommentsOptions{}
 	comments, _, err := client.PullRequests.ListComments(context.Background(), owner, repo, number, &opts)
+	comments = filterComments(comments)
 	trees := buildCommentTrees(comments)
-	printCommentTree(trees)
+	// debugPrintCommentTree(trees)
 
 	if err != nil {
 		fmt.Printf("Error getting Comments for PR %v in repo %s: %v", number, repo, err)
 		return 0, []string{}
 	}
 	str_comments := []string{}
-	for _, comment := range comments {
-
-
-		if strings.Contains(*comment.User.Login, "advanced") {
-			// I don't care about the lint warning stuff
-			continue
+	for _, tree := range trees {
+		// str_comments = append(str_comments, "\n-----------------------\n")
+		for i, comment := range tree {
+			// fmt.Println(j, i)
+			if i == 0 {
+				str_comments = append(str_comments, "**** "+comment.CreatedAt.Format(time.DateTime))
+				str_comments = append(str_comments, *comment.DiffHunk)
+			}
+			// fmt.Println(i, number)
+			clean_body := cleanBody(comment.Body)
+			str_comments = append(str_comments, fmt.Sprintf("***** (%d) %s %s", i, comment.CreatedAt.Format(time.DateTime), *comment.User.Login))
+			str_comments = append(str_comments, clean_body)
 		}
-		clean_body := cleanBody(comment.Body)
-		str_comments = append(str_comments, "**** "+comment.CreatedAt.Format(time.DateTime)+" "+*comment.User.Login)
-		str_comments = append(str_comments, *comment.DiffHunk)
-		str_comments = append(str_comments, "\n-----------------------\n")
-		str_comments = append(str_comments, clean_body)
 	}
+
+	// for _, comment := range comments {
+	//	clean_body := cleanBody(comment.Body)
+	//	str_comments = append(str_comments, "**** "+comment.CreatedAt.Format(time.DateTime)+" "+*comment.User.Login)
+	//	str_comments = append(str_comments, *comment.DiffHunk)
+	//	str_comments = append(str_comments, "\n-----------------------\n")
+	//	str_comments = append(str_comments, clean_body)
+	// }
+
 	return len(comments), str_comments
 }
 
@@ -240,7 +251,7 @@ func ProcessPRs(prs []*github.PullRequest, changes_channel chan FileChanges, doc
 	for _, pr := range prs {
 		pr_strings = append(pr_strings, fmt.Sprintf("%s-%v", *pr.Head.Repo.Name, pr.GetNumber()))
 		seen_prs = append(seen_prs, pr)
-		fmt.Printf("Checking My PR: %s\n", *pr.Title)
+		// fmt.Printf("Checking My PR: %s\n", *pr.Title)
 		changes = append(changes, SyncTODOToSection(*doc, pr, *section))
 	}
 
@@ -251,7 +262,7 @@ func ProcessPRs(prs []*github.PullRequest, changes_channel chan FileChanges, doc
 			if slices.Contains(pr_strings, check_string) {
 				continue
 			} else {
-				fmt.Println("No longer need to review: ", check_string)
+				// fmt.Println("No longer need to review: ", check_string)
 				fileChange := FileChanges{
 					ChangeType: "Delete",
 					Filename:   doc.Filename,
@@ -357,6 +368,19 @@ func processWorkflowRuns(runs []*github.WorkflowRun) []*github.WorkflowRun {
 	return output
 }
 
+func filterComments(comments []*github.PullRequestComment) []*github.PullRequestComment {
+	output := []*github.PullRequestComment{}
+	for _, comment := range comments {
+		if strings.Contains(*comment.User.Login, "advanced") {
+			// I don't care about the lint warning stuff
+			continue
+		}
+		output = append(output, comment)
+	}
+	return output
+
+}
+
 func buildCommentTrees(comments []*github.PullRequestComment) [][]*github.PullRequestComment {
 	output := [][]*github.PullRequestComment{}
 	for _, comment := range comments {
@@ -381,14 +405,12 @@ func buildCommentTrees(comments []*github.PullRequestComment) [][]*github.PullRe
 	return output
 }
 
-func printCommentTree(trees [][]*github.PullRequestComment) {
+func debugPrintCommentTree(trees [][]*github.PullRequestComment) {
 	for i, tree := range trees {
 		fmt.Printf("Tree: %d\n", i)
 		for j, comment := range tree {
 			fmt.Printf("comment: %d - %d  (reply to: %d)\n", j, comment.GetID(), comment.GetInReplyTo())
 		}
 		fmt.Println("")
-
 	}
-
 }
