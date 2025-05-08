@@ -215,27 +215,16 @@ func getComments(owner string, repo string, number int) (int, []string) {
 	}
 	str_comments := []string{}
 	for _, tree := range trees {
-		// str_comments = append(str_comments, "\n-----------------------\n")
 		for i, comment := range tree {
-			// fmt.Println(j, i)
 			if i == 0 {
-				str_comments = append(str_comments, "**** "+comment.CreatedAt.Format(time.DateTime))
+				str_comments = append(str_comments, "**** "+comment.CreatedAt.Format(time.DateTime)+" "+treeAuthors(tree))
 				str_comments = append(str_comments, *comment.DiffHunk)
 			}
-			// fmt.Println(i, number)
 			clean_body := cleanBody(comment.Body)
 			str_comments = append(str_comments, fmt.Sprintf("***** (%d) %s %s", i, comment.CreatedAt.Format(time.DateTime), *comment.User.Login))
 			str_comments = append(str_comments, clean_body)
 		}
 	}
-
-	// for _, comment := range comments {
-	//	clean_body := cleanBody(comment.Body)
-	//	str_comments = append(str_comments, "**** "+comment.CreatedAt.Format(time.DateTime)+" "+*comment.User.Login)
-	//	str_comments = append(str_comments, *comment.DiffHunk)
-	//	str_comments = append(str_comments, "\n-----------------------\n")
-	//	str_comments = append(str_comments, clean_body)
-	// }
 
 	return len(comments), str_comments
 }
@@ -403,6 +392,20 @@ func buildCommentTrees(comments []*github.PullRequestComment) [][]*github.PullRe
 		}
 	}
 	return output
+}
+
+// List all of the authors in a tree for the tree title line.
+func treeAuthors(tree []*github.PullRequestComment) string {
+	authors := []string{}
+	seen := make(map[string]bool)
+	for _, comment := range tree {
+		login := comment.User.GetLogin()
+		if _, ok := seen[login]; !ok {
+			authors = append(authors, login)
+			seen[login] = true
+		}
+	}
+	return strings.Join(authors, "|")
 }
 
 func debugPrintCommentTree(trees [][]*github.PullRequestComment) {
