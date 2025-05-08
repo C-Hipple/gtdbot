@@ -1,8 +1,24 @@
+(require 'magit-delta)
+
+;;;###autoload
+(defun delta-wash()
+  "interactive of the call magit-delta function"
+  (interactive)
+  (magit-delta-call-delta-and-convert-ansi-escape-sequences))
+
+(define-key evil-normal-state-map (kbd ", r d") 'delta-wash) ;; d for delta?
+
 ;;;###autoload
 (defun run-gtdbot-oneoff ()
   "Runs gtdbot with the oneoff flag to update reviews.org"
   (interactive)
-  (async-shell-command "gtdbot --oneoff" "*gtdbot*"))
+  (let ((gtdbot-buffer-name "*gtdbot*"))
+    (shell-command (concat "gtdbot --oneoff " gtdbot-buffer-name))))
+
+;; TODO: Add this.  Need
+;; (with-current-buffer "reviews.org"
+;;   (magit-delta-call-delta-and-convert-ansi-escape-sequences)
+;;   (save-buffer))))
 
 (define-key evil-normal-state-map (kbd ", r l") 'run-gtdbot-oneoff) ;; l for list?
 
