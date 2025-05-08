@@ -114,13 +114,13 @@ func (w SyncReviewRequestsWorkflow) GetOrgSectionName() string {
 }
 
 type ListMyPRsWorkflow struct {
-	Name            string
-	Owner           string
-	Repos           []string
-	Filters         []git_tools.PRFilter
-	OrgFileName     string
-	SectionTitle    string
-	PRState         string
+	Name         string
+	Owner        string
+	Repos        []string
+	Filters      []git_tools.PRFilter
+	OrgFileName  string
+	SectionTitle string
+	PRState      string
 }
 
 func (w ListMyPRsWorkflow) GetName() string {
@@ -152,14 +152,14 @@ func (w ListMyPRsWorkflow) Run(c chan FileChanges, file_change_wg *sync.WaitGrou
 }
 
 type ProjectListWorkflow struct {
-	Name            string
-	Owner           string
-	Repo            string
-	OrgFileName     string
-	Filters         []git_tools.PRFilter
-	SectionTitle    string
-	JiraDomain      string
-	JiraEpic        string
+	Name         string
+	Owner        string
+	Repo         string
+	OrgFileName  string
+	Filters      []git_tools.PRFilter
+	SectionTitle string
+	JiraDomain   string
+	JiraEpic     string
 }
 
 func (w ProjectListWorkflow) GetName() string {
