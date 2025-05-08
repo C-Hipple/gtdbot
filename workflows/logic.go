@@ -205,22 +205,27 @@ func getComments(owner string, repo string, number int) (int, []string) {
 	client := git_tools.GetGithubClient()
 	opts := github.PullRequestListCommentsOptions{}
 	comments, _, err := client.PullRequests.ListComments(context.Background(), owner, repo, number, &opts)
+	comments = filterComments(comments)
+	trees := buildCommentTrees(comments)
+	// debugPrintCommentTree(trees)
+
 	if err != nil {
 		fmt.Printf("Error getting Comments for PR %v in repo %s: %v", number, repo, err)
 		return 0, []string{}
 	}
 	str_comments := []string{}
-	for _, comment := range comments {
-		if strings.Contains(*comment.User.Login, "advanced") {
-			// I don't care about the lint warning stuff
-			continue
+	for _, tree := range trees {
+		for i, comment := range tree {
+			if i == 0 {
+				str_comments = append(str_comments, "**** "+comment.CreatedAt.Format(time.DateTime)+" "+treeAuthors(tree))
+				str_comments = append(str_comments, *comment.DiffHunk)
+			}
+			clean_body := cleanBody(comment.Body)
+			str_comments = append(str_comments, fmt.Sprintf("***** (%d) %s %s", i, comment.CreatedAt.Format(time.DateTime), *comment.User.Login))
+			str_comments = append(str_comments, clean_body)
 		}
-		clean_body := cleanBody(comment.Body)
-		str_comments = append(str_comments, "**** "+comment.CreatedAt.Format(time.DateTime)+" "+*comment.User.Login)
-		str_comments = append(str_comments, *comment.DiffHunk)
-		str_comments = append(str_comments, "\n-----------------------\n")
-		str_comments = append(str_comments, clean_body)
 	}
+
 	return len(comments), str_comments
 }
 
@@ -235,7 +240,7 @@ func ProcessPRs(prs []*github.PullRequest, changes_channel chan FileChanges, doc
 	for _, pr := range prs {
 		pr_strings = append(pr_strings, fmt.Sprintf("%s-%v", *pr.Head.Repo.Name, pr.GetNumber()))
 		seen_prs = append(seen_prs, pr)
-		fmt.Printf("Checking My PR: %s\n", *pr.Title)
+		// fmt.Printf("Checking My PR: %s\n", *pr.Title)
 		changes = append(changes, SyncTODOToSection(*doc, pr, *section))
 	}
 
@@ -246,7 +251,7 @@ func ProcessPRs(prs []*github.PullRequest, changes_channel chan FileChanges, doc
 			if slices.Contains(pr_strings, check_string) {
 				continue
 			} else {
-				fmt.Println("No longer need to review: ", check_string)
+				// fmt.Println("No longer need to review: ", check_string)
 				fileChange := FileChanges{
 					ChangeType: "Delete",
 					Filename:   doc.Filename,
@@ -286,18 +291,10 @@ func SyncTODOToSection(doc org.OrgDocument, pr *github.PullRequest, section org.
 	}
 }
 
-func listWorkflowRunOptions(branch string) github.ListWorkflowRunsOptions {
-	opts := github.ListWorkflowRunsOptions{}
-	if branch != "" {
-		opts.Branch = branch
-	}
-	return opts
-}
-
 func getCIStatus(owner string, repo string, branch string) []string {
 	client := git_tools.GetGithubClient()
-	branch = strings.Split(branch, ":")[1]
-	opts := listWorkflowRunOptions(branch)
+	branch = strings.Split(branch, ":")[1] // Comes as username:branch_name from github api.
+	opts := github.ListWorkflowRunsOptions{Branch: branch}
 	runs, _, err := client.Actions.ListRepositoryWorkflowRuns(context.Background(), owner, repo, &opts)
 
 	if err != nil {
@@ -358,4 +355,65 @@ func processWorkflowRuns(runs []*github.WorkflowRun) []*github.WorkflowRun {
 		output = append(output, run)
 	}
 	return output
+}
+
+func filterComments(comments []*github.PullRequestComment) []*github.PullRequestComment {
+	output := []*github.PullRequestComment{}
+	for _, comment := range comments {
+		if strings.Contains(*comment.User.Login, "advanced") {
+			// I don't care about the lint warning stuff
+			continue
+		}
+		output = append(output, comment)
+	}
+	return output
+
+}
+
+func buildCommentTrees(comments []*github.PullRequestComment) [][]*github.PullRequestComment {
+	output := [][]*github.PullRequestComment{}
+	for _, comment := range comments {
+
+		replyTo := int64(-1)
+		if comment.InReplyTo != nil {
+			replyTo = comment.GetInReplyTo()
+		}
+
+		if len(output) == 0 || replyTo == -1 {
+			output = append(output, []*github.PullRequestComment{comment})
+			continue
+		}
+
+		for j, commentTree := range output {
+			if commentTree[len(commentTree)-1].GetID() == replyTo {
+				output[j] = append(commentTree, comment)
+				continue
+			}
+		}
+	}
+	return output
+}
+
+// List all of the authors in a tree for the tree title line.
+func treeAuthors(tree []*github.PullRequestComment) string {
+	authors := []string{}
+	seen := make(map[string]bool)
+	for _, comment := range tree {
+		login := comment.User.GetLogin()
+		if _, ok := seen[login]; !ok {
+			authors = append(authors, login)
+			seen[login] = true
+		}
+	}
+	return strings.Join(authors, "|")
+}
+
+func debugPrintCommentTree(trees [][]*github.PullRequestComment) {
+	for i, tree := range trees {
+		fmt.Printf("Tree: %d\n", i)
+		for j, comment := range tree {
+			fmt.Printf("comment: %d - %d  (reply to: %d)\n", j, comment.GetID(), comment.GetInReplyTo())
+		}
+		fmt.Println("")
+	}
 }
