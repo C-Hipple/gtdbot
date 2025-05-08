@@ -13,7 +13,7 @@
   "Runs gtdbot with the oneoff flag to update reviews.org"
   (interactive)
   (let ((gtdbot-buffer-name "*gtdbot*"))
-    (shell-command (concat "gtdbot --oneoff " gtdbot-buffer-name))))
+    (async-shell-command (concat "gtdbot --oneoff " gtdbot-buffer-name))))
 
 ;; TODO: Add this.  Need
 ;; (with-current-buffer "reviews.org"
