@@ -42,7 +42,7 @@ func getAuth() (string, string) {
 	return jiraEmail, token
 }
 
-/// Get all of the PRs #s for a repo under a JIRA epic
+// / Get all of the PRs #s for a repo under a JIRA epic
 func GetProjectPRKeys(domain string, epicKey string, repo_name string) []int {
 
 	fmt.Printf("Searching for project shas for project: `%s`\n", epicKey)
