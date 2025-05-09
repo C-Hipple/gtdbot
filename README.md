@@ -103,11 +103,11 @@ export JIRA_AIP_EMAIL="your email with your jira account"
 JiraDomain="https://your-company.atlassain.net"
 
 [[Workflows]]
-WorkflowType = "SyncReviewRequestsWorkflow"
-Name = "List Open PRs"
-JiraEpic = "BOARD-123" # the epic key
+WorkflowType = "ProjectListWorkflow"
+Name = "Project - Example"
 Owner = "C-Hipple"
 Repo = "diff-lsp"
 OrgFileName = "reviews.org"
 SectionTitle = "Diff LSP Upgrade Project"
+JiraEpic = "BOARD-123" # the epic key
 ```
