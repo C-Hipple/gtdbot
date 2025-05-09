@@ -125,7 +125,7 @@ func (prb PRToOrgBridge) Details() []string {
 		}
 	}
 	escaped_body := escapeBody(prb.PR.Body)
-	details = append(details, fmt.Sprintf("*** BODY\n %s\n", cleanBody(&escaped_body))) // TODO: Do we need this end newline?
+	details = append(details, fmt.Sprintf("*** BODY\n %s\n", removePRBodySections(&escaped_body))) // TODO: Do we need this end newline?
 	comments_count, comments := getComments(*prb.PR.Base.Repo.Owner.Login, *prb.PR.Head.Repo.Name, *prb.PR.Number)
 	if len(comments) != 0 {
 		details = append(details, fmt.Sprintf("*** Comments [%v]\n", comments_count))
@@ -189,7 +189,7 @@ func cleanLines(lines *[]string) string {
 	return strings.Join(output_lines, "\n")
 }
 
-func cleanBody(body *string) string {
+func removePRBodySections(body *string) string {
 	// Define the regular expression pattern to match everything between <!-- and -->
 	//	re := regexp.MustCompile(`<!--.*?-->`)
 	// TODO more empty line cleaning
@@ -220,7 +220,7 @@ func getComments(owner string, repo string, number int) (int, []string) {
 				str_comments = append(str_comments, "**** "+comment.CreatedAt.Format(time.DateTime)+" "+treeAuthors(tree))
 				str_comments = append(str_comments, *comment.DiffHunk)
 			}
-			clean_body := cleanBody(comment.Body)
+			clean_body := escapeBody(comment.Body)
 			str_comments = append(str_comments, fmt.Sprintf("***** (%d) %s %s", i, comment.CreatedAt.Format(time.DateTime), *comment.User.Login))
 			str_comments = append(str_comments, clean_body)
 		}
