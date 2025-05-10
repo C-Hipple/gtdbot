@@ -33,6 +33,8 @@ Owner: str
 Filters: list[str]
 OrgFileName: str
 SectionTitle: str
+ReleaseCommandCheck: str
+Prune: bool
 ```
 
 The WorkflowType is one of the following strings:
@@ -41,6 +43,9 @@ SingleRepoSyncReviewRequestsWorkflow
 ListMyPRsWorkflow
 ProjectListWorkflow
 
+Prune tells the workflow runner whether or not to remove PRs from the section if they're no longer relevant.  The default is False
+
+### Workflow specific configurations
 Single Repo Sync workflow takes an additional paramter, Repo.
 ```
 Repo: str
@@ -50,6 +55,8 @@ ListMyPRsWorkflow takes the additional parameter PRState, which is passed throug
 ```
 PRState: str [open/closed/nil]
 ```
+
+
 
 An Example complete config file is below
 
@@ -68,6 +75,7 @@ Owner = "C-Hipple"
 Filters = ["FilterNotDraft"]
 OrgFileName = "reviews.org"
 SectionTitle = "Open PRs"
+Prune = true
 
 [[Workflows]]
 WorkflowType = "ListMyPRsWorkflow"
@@ -75,6 +83,7 @@ Name = "List Closed PRs"
 Owner = "C-Hipple"
 OrgFileName = "reviews.org"
 SectionTitle = "Closed PRs"
+Prune = false
 ```
 
 ## Filters
@@ -103,13 +112,13 @@ export JIRA_AIP_EMAIL="your email with your jira account"
 JiraDomain="https://your-company.atlassain.net"
 
 [[Workflows]]
-WorkflowType = "SyncReviewRequestsWorkflow"
-Name = "List Open PRs"
-JiraEpic = "BOARD-123" # the epic key
+WorkflowType = "ProjectListWorkflow"
+Name = "Project - Example"
 Owner = "C-Hipple"
 Repo = "diff-lsp"
 OrgFileName = "reviews.org"
 SectionTitle = "Diff LSP Upgrade Project"
+JiraEpic = "BOARD-123" # the epic key
 ```
 
 
@@ -133,4 +142,4 @@ merged
 ```
 
 
-That string will then be put into the title line of the PR via the org-serializer
+That string will then be put into the title line of the PR via the org-serializer.

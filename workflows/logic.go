@@ -70,11 +70,11 @@ func (prb PRToOrgBridge) ItemTitle(indent_level int, release_check_command strin
 		line = line + ":draft:"
 	} else if prb.PR.MergedAt != nil {
 		if release_check_command != "" {
-			status, err := GetReleaseStatus(&release_check_command, prb.PR.MergeCommitSHA)
+			status, err := GetReleaseStatus(&release_check_command, prb.PR.Head.Repo.Name, prb.PR.MergeCommitSHA)
 			if err != nil {
-				line = line + status + ":"
-			} else {
 				line = line + "merged:"
+			} else {
+				line = line + status + ":"
 			}
 		} else {
 			line = line + "merged:"
@@ -114,10 +114,19 @@ func (prb PRToOrgBridge) Details() []string {
 	details = append(details, author_string+"\n")
 
 	details = append(details, fmt.Sprintf("Branch: %s\n", *prb.PR.Head.Label))
-	details = append(details, fmt.Sprintf("Requested Reviewers: %s\n",
-		strings.Join(utils.Map(prb.PR.RequestedReviewers, getReviewerName), ", ")))
-	details = append(details, fmt.Sprintf("Requested Teams: %s\n",
-		strings.Join(utils.Map(prb.PR.RequestedTeams, getTeamName), ", ")))
+
+	reviewers := strings.Join(utils.Map(prb.PR.RequestedReviewers, getReviewerName), ", ")
+	if reviewers != "" {
+		details = append(details, fmt.Sprintf("Requested Reviewers: %s\n", reviewers))
+	} else {
+		details = append(details, "Requested Reviewers:\n")
+	}
+	teams := strings.Join(utils.Map(prb.PR.RequestedTeams, getTeamName), ", ")
+	if teams != "" {
+		details = append(details, fmt.Sprintf("Requested Teams: %s\n", teams))
+	} else {
+		details = append(details, "Requested Teams:\n")
+	}
 
 	// TODO: Consider putting these in subsection?
 	if prb.PR.MergedAt != nil {
@@ -136,7 +145,7 @@ func (prb PRToOrgBridge) Details() []string {
 		}
 	}
 	escaped_body := escapeBody(prb.PR.Body)
-	details = append(details, fmt.Sprintf("*** BODY\n %s\n", cleanBody(&escaped_body))) // TODO: Do we need this end newline?
+	details = append(details, fmt.Sprintf("*** BODY\n %s\n", removePRBodySections(&escaped_body))) // TODO: Do we need this end newline?
 	comments_count, comments := getComments(*prb.PR.Base.Repo.Owner.Login, *prb.PR.Head.Repo.Name, *prb.PR.Number)
 	if len(comments) != 0 {
 		details = append(details, fmt.Sprintf("*** Comments [%v]\n", comments_count))
@@ -200,7 +209,7 @@ func cleanLines(lines *[]string) string {
 	return strings.Join(output_lines, "\n")
 }
 
-func cleanBody(body *string) string {
+func removePRBodySections(body *string) string {
 	// Define the regular expression pattern to match everything between <!-- and -->
 	//	re := regexp.MustCompile(`<!--.*?-->`)
 	// TODO more empty line cleaning
@@ -216,22 +225,27 @@ func getComments(owner string, repo string, number int) (int, []string) {
 	client := git_tools.GetGithubClient()
 	opts := github.PullRequestListCommentsOptions{}
 	comments, _, err := client.PullRequests.ListComments(context.Background(), owner, repo, number, &opts)
+	comments = filterComments(comments)
+	trees := buildCommentTrees(comments)
+	// debugPrintCommentTree(trees)
+
 	if err != nil {
 		fmt.Printf("Error getting Comments for PR %v in repo %s: %v", number, repo, err)
 		return 0, []string{}
 	}
 	str_comments := []string{}
-	for _, comment := range comments {
-		if strings.Contains(*comment.User.Login, "advanced") {
-			// I don't care about the lint warning stuff
-			continue
+	for _, tree := range trees {
+		for i, comment := range tree {
+			if i == 0 {
+				str_comments = append(str_comments, "**** "+comment.CreatedAt.Format(time.DateTime)+" "+treeAuthors(tree))
+				str_comments = append(str_comments, *comment.DiffHunk)
+			}
+			clean_body := escapeBody(comment.Body)
+			str_comments = append(str_comments, fmt.Sprintf("***** (%d) %s %s", i, comment.CreatedAt.Format(time.DateTime), *comment.User.Login))
+			str_comments = append(str_comments, clean_body)
 		}
-		clean_body := cleanBody(comment.Body)
-		str_comments = append(str_comments, "**** "+comment.CreatedAt.Format(time.DateTime)+" "+*comment.User.Login)
-		str_comments = append(str_comments, *comment.DiffHunk)
-		str_comments = append(str_comments, "\n-----------------------\n")
-		str_comments = append(str_comments, clean_body)
 	}
+
 	return len(comments), str_comments
 }
 
@@ -246,7 +260,7 @@ func ProcessPRs(prs []*github.PullRequest, changes_channel chan FileChanges, doc
 	for _, pr := range prs {
 		pr_strings = append(pr_strings, fmt.Sprintf("%s-%v", *pr.Head.Repo.Name, pr.GetNumber()))
 		seen_prs = append(seen_prs, pr)
-		fmt.Printf("Checking My PR: %s\n", *pr.Title)
+		// fmt.Printf("Checking My PR: %s\n", *pr.Title)
 		changes = append(changes, SyncTODOToSection(*doc, pr, *section))
 	}
 
@@ -257,7 +271,7 @@ func ProcessPRs(prs []*github.PullRequest, changes_channel chan FileChanges, doc
 			if slices.Contains(pr_strings, check_string) {
 				continue
 			} else {
-				fmt.Println("No longer need to review: ", check_string)
+				// fmt.Println("No longer need to review: ", check_string)
 				fileChange := FileChanges{
 					ChangeType:     "Delete",
 					Filename:       doc.Filename,
@@ -300,18 +314,10 @@ func SyncTODOToSection(doc org.OrgDocument, pr *github.PullRequest, section org.
 	}
 }
 
-func listWorkflowRunOptions(branch string) github.ListWorkflowRunsOptions {
-	opts := github.ListWorkflowRunsOptions{}
-	if branch != "" {
-		opts.Branch = branch
-	}
-	return opts
-}
-
 func getCIStatus(owner string, repo string, branch string) []string {
 	client := git_tools.GetGithubClient()
-	branch = strings.Split(branch, ":")[1]
-	opts := listWorkflowRunOptions(branch)
+	branch = strings.Split(branch, ":")[1] // Comes as username:branch_name from github api.
+	opts := github.ListWorkflowRunsOptions{Branch: branch}
 	runs, _, err := client.Actions.ListRepositoryWorkflowRuns(context.Background(), owner, repo, &opts)
 
 	if err != nil {
@@ -375,8 +381,8 @@ func processWorkflowRuns(runs []*github.WorkflowRun) []*github.WorkflowRun {
 }
 
 // If a command was given by the workflow,
-func GetReleaseStatus(command *string, sha *string) (string, error) {
-	cmd := exec.Command(*command, *sha)
+func GetReleaseStatus(command *string, repo *string, sha *string) (string, error) {
+	cmd := exec.Command(*command, *repo, *sha)
 
 	var outb, errb bytes.Buffer
 	cmd.Stdout = &outb
@@ -389,6 +395,66 @@ func GetReleaseStatus(command *string, sha *string) (string, error) {
 	}
 
 	stdout := outb.String()
-	return stdout, nil
+	return strings.Replace(stdout, "\n", "", -1), nil
 
+}
+func filterComments(comments []*github.PullRequestComment) []*github.PullRequestComment {
+	output := []*github.PullRequestComment{}
+	for _, comment := range comments {
+		if strings.Contains(*comment.User.Login, "advanced") {
+			// I don't care about the lint warning stuff
+			continue
+		}
+		output = append(output, comment)
+	}
+	return output
+
+}
+
+func buildCommentTrees(comments []*github.PullRequestComment) [][]*github.PullRequestComment {
+	output := [][]*github.PullRequestComment{}
+	for _, comment := range comments {
+
+		replyTo := int64(-1)
+		if comment.InReplyTo != nil {
+			replyTo = comment.GetInReplyTo()
+		}
+
+		if len(output) == 0 || replyTo == -1 {
+			output = append(output, []*github.PullRequestComment{comment})
+			continue
+		}
+
+		for j, commentTree := range output {
+			if commentTree[len(commentTree)-1].GetID() == replyTo {
+				output[j] = append(commentTree, comment)
+				continue
+			}
+		}
+	}
+	return output
+}
+
+// List all of the authors in a tree for the tree title line.
+func treeAuthors(tree []*github.PullRequestComment) string {
+	authors := []string{}
+	seen := make(map[string]bool)
+	for _, comment := range tree {
+		login := comment.User.GetLogin()
+		if _, ok := seen[login]; !ok {
+			authors = append(authors, login)
+			seen[login] = true
+		}
+	}
+	return strings.Join(authors, "|")
+}
+
+func debugPrintCommentTree(trees [][]*github.PullRequestComment) {
+	for i, tree := range trees {
+		fmt.Printf("Tree: %d\n", i)
+		for j, comment := range tree {
+			fmt.Printf("comment: %d - %d  (reply to: %d)\n", j, comment.GetID(), comment.GetInReplyTo())
+		}
+		fmt.Println("")
+	}
 }

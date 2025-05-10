@@ -39,6 +39,7 @@ type SingleRepoSyncReviewRequestsWorkflow struct {
 	OrgFileName         string
 	SectionTitle        string
 	ReleaseCheckCommand string
+	Prune               bool
 }
 
 func (w SingleRepoSyncReviewRequestsWorkflow) GetName() string {
@@ -69,7 +70,7 @@ func (w SingleRepoSyncReviewRequestsWorkflow) Run(c chan FileChanges, file_chang
 		return RunResult{}, errors.New("Section Not Found")
 	}
 
-	result := ProcessPRs(prs, c, &doc, &section, file_change_wg, true)
+	result := ProcessPRs(prs, c, &doc, &section, file_change_wg, w.Prune)
 	return result, nil
 }
 
@@ -79,6 +80,7 @@ type SyncReviewRequestsWorkflow struct {
 	Owner   string
 	Repos   []string
 	Filters []git_tools.PRFilter
+	Prune   bool
 
 	// org output info
 	OrgFileName         string
@@ -96,8 +98,7 @@ func (w SyncReviewRequestsWorkflow) Run(c chan FileChanges, file_change_wg *sync
 		fmt.Println("Error getting section: ", err, w.SectionTitle)
 		return RunResult{}, errors.New("Section Not Found")
 	}
-	fmt.Println("in run: ", w.ReleaseCheckCommand)
-	result := ProcessPRs(prs, c, &doc, &section, file_change_wg, true)
+	result := ProcessPRs(prs, c, &doc, &section, file_change_wg, w.Prune)
 	return result, nil
 }
 
@@ -122,6 +123,7 @@ type ListMyPRsWorkflow struct {
 	SectionTitle        string
 	PRState             string
 	ReleaseCheckCommand string
+	Prune               bool
 }
 
 func (w ListMyPRsWorkflow) GetName() string {
@@ -148,7 +150,7 @@ func (w ListMyPRsWorkflow) Run(c chan FileChanges, file_change_wg *sync.WaitGrou
 		return RunResult{}, errors.New("Section Not Found")
 	}
 	prs = git_tools.ApplyPRFilters(prs, []git_tools.PRFilter{git_tools.MyPRs})
-	result := ProcessPRs(prs, c, &doc, &section, file_change_wg, false)
+	result := ProcessPRs(prs, c, &doc, &section, file_change_wg, w.Prune)
 	return result, nil
 }
 
@@ -162,6 +164,7 @@ type ProjectListWorkflow struct {
 	JiraDomain          string
 	JiraEpic            string
 	ReleaseCheckCommand string
+	Prune               bool
 }
 
 func (w ProjectListWorkflow) GetName() string {
@@ -190,6 +193,6 @@ func (w ProjectListWorkflow) Run(c chan FileChanges, file_change_wg *sync.WaitGr
 	projectPRs := jira.GetProjectPRKeys(w.JiraDomain, w.JiraEpic, w.Repo)
 
 	prs := git_tools.GetSpecificPRs(client, w.Owner, w.Repo, projectPRs)
-	result := ProcessPRs(prs, c, &doc, &section, file_change_wg, false)
+	result := ProcessPRs(prs, c, &doc, &section, file_change_wg, w.Prune)
 	return result, nil
 }

@@ -30,6 +30,7 @@ type RawWorkflow struct {
 	SectionTitle        string
 	PRState             string
 	ReleaseCheckCommand string
+	Prune               bool
 }
 
 func LoadConfig() Config {
@@ -84,6 +85,7 @@ func BuildSingleRepoReviewWorkflow(raw *RawWorkflow, repos *[]string) workflows.
 		OrgFileName:         raw.OrgFileName,
 		SectionTitle:        raw.SectionTitle,
 		ReleaseCheckCommand: raw.ReleaseCheckCommand,
+		Prune:               raw.Prune,
 	}
 	return wf
 }
@@ -97,6 +99,7 @@ func BuildSyncReviewRequestWorkflow(raw *RawWorkflow, repos *[]string) workflows
 		OrgFileName:         raw.OrgFileName,
 		SectionTitle:        raw.SectionTitle,
 		ReleaseCheckCommand: raw.ReleaseCheckCommand,
+		Prune:               raw.Prune,
 	}
 	return wf
 }
@@ -111,6 +114,7 @@ func BuildListMyPRsWorkflow(raw *RawWorkflow, repos *[]string) workflows.Workflo
 		OrgFileName:         raw.OrgFileName,
 		SectionTitle:        raw.SectionTitle,
 		ReleaseCheckCommand: raw.ReleaseCheckCommand,
+		Prune:               raw.Prune,
 	}
 	return wf
 }
@@ -126,6 +130,7 @@ func BuildProjectListWorkflow(raw *RawWorkflow, jiraDomain string) workflows.Wor
 		OrgFileName:         raw.OrgFileName,
 		SectionTitle:        raw.SectionTitle,
 		ReleaseCheckCommand: raw.ReleaseCheckCommand,
+		Prune:               raw.Prune,
 	}
 	return wf
 }

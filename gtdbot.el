@@ -1,8 +1,26 @@
+(require 'magit-delta)
+
+;;;###autoload
+(defun delta-wash()
+  "interactive of the call magit-delta function"
+  (interactive)
+  (magit-delta-call-delta-and-convert-ansi-escape-sequences))
+
+(define-key evil-normal-state-map (kbd ", r d") 'delta-wash) ;; d for delta?
+
+
+(defun gtdbot--callback (x)
+  (with-current-buffer (find-file-noselect "~/gtd/reviews.org")
+    (magit-delta-call-delta-and-convert-ansi-escape-sequences)
+    (save-buffer))
+  (message "gtdbot sync complete!"))
+
 ;;;###autoload
 (defun run-gtdbot-oneoff ()
   "Runs gtdbot with the oneoff flag to update reviews.org"
   (interactive)
-  (async-shell-command "gtdbot --oneoff" "*gtdbot*"))
+  (async-start-process "gtdbot-async" "gtdbot" 'gtdbot--callback "--oneoff"))
+
 
 (define-key evil-normal-state-map (kbd ", r l") 'run-gtdbot-oneoff) ;; l for list?
 
