@@ -1,11 +1,13 @@
 package workflows
 
 import (
+	"bytes"
 	"context"
 	"fmt"
 	"gtdbot/git_tools"
 	"gtdbot/org"
 	"gtdbot/utils"
+	"os/exec"
 	"regexp"
 	"slices"
 	"strings"
@@ -23,10 +25,11 @@ type Workflow interface {
 }
 
 type FileChanges struct {
-	ChangeType string
-	Filename   string
-	Item       org.OrgTODO
-	Section    org.Section
+	ChangeType     string
+	Filename       string
+	Item           org.OrgTODO
+	Section        org.Section
+	ItemSerializer org.OrgSerializer
 }
 
 type PRToOrgBridge struct {
@@ -61,13 +64,21 @@ func (prb PRToOrgBridge) Title() string {
 	return *prb.PR.Title
 }
 
-func (prb PRToOrgBridge) FullLine(indent_level int) string {
+func (prb PRToOrgBridge) ItemTitle(indent_level int, release_check_command string) string {
 	line := fmt.Sprintf("%s %s %s\t\t:%s:", strings.Repeat("*", indent_level), prb.GetStatus(), prb.Title(), *prb.PR.Head.Repo.Name)
-	//fmt.Println("Here: ", prb.Title(), prb.PR.Merged, prb.PR.MergedAt)
 	if *prb.PR.Draft {
 		line = line + ":draft:"
 	} else if prb.PR.MergedAt != nil {
-		line = line + "merged:"
+		if release_check_command != "" {
+			status, err := GetReleaseStatus(&release_check_command, prb.PR.Head.Repo.Name, prb.PR.MergeCommitSHA)
+			if err != nil {
+				line = line + "merged:"
+			} else {
+				line = line + status + ":"
+			}
+		} else {
+			line = line + "merged:"
+		}
 	}
 	return line
 }
@@ -262,10 +273,11 @@ func ProcessPRs(prs []*github.PullRequest, changes_channel chan FileChanges, doc
 			} else {
 				// fmt.Println("No longer need to review: ", check_string)
 				fileChange := FileChanges{
-					ChangeType: "Delete",
-					Filename:   doc.Filename,
-					Item:       item,
-					Section:    *section,
+					ChangeType:     "Delete",
+					Filename:       doc.Filename,
+					Item:           item,
+					Section:        *section,
+					ItemSerializer: doc.Serializer,
 				}
 				changes = append(changes, fileChange)
 			}
@@ -286,17 +298,19 @@ func SyncTODOToSection(doc org.OrgDocument, pr *github.PullRequest, section org.
 	if at_line != -1 {
 		// TODO : Determine if actual changes?
 		return FileChanges{
-			ChangeType: "Update",
-			Filename:   doc.Filename,
-			Item:       pr_as_org,
-			Section:    section,
+			ChangeType:     "Update",
+			Filename:       doc.Filename,
+			Item:           pr_as_org,
+			Section:        section,
+			ItemSerializer: doc.Serializer,
 		}
 	}
 	return FileChanges{
-		ChangeType: "Addition",
-		Filename:   doc.Filename,
-		Item:       pr_as_org,
-		Section:    section,
+		ChangeType:     "Addition",
+		Filename:       doc.Filename,
+		Item:           pr_as_org,
+		Section:        section,
+		ItemSerializer: doc.Serializer,
 	}
 }
 
@@ -366,6 +380,24 @@ func processWorkflowRuns(runs []*github.WorkflowRun) []*github.WorkflowRun {
 	return output
 }
 
+// If a command was given by the workflow,
+func GetReleaseStatus(command *string, repo *string, sha *string) (string, error) {
+	cmd := exec.Command(*command, *repo, *sha)
+
+	var outb, errb bytes.Buffer
+	cmd.Stdout = &outb
+	cmd.Stderr = &errb
+
+	err := cmd.Run()
+
+	if err != nil {
+		return "", err
+	}
+
+	stdout := outb.String()
+	return strings.Replace(stdout, "\n", "", -1), nil
+
+}
 func filterComments(comments []*github.PullRequestComment) []*github.PullRequestComment {
 	output := []*github.PullRequestComment{}
 	for _, comment := range comments {

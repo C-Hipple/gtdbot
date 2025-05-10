@@ -33,6 +33,7 @@ Owner: str
 Filters: list[str]
 OrgFileName: str
 SectionTitle: str
+ReleaseCommandCheck: str
 Prune: bool
 ```
 
@@ -119,3 +120,26 @@ OrgFileName = "reviews.org"
 SectionTitle = "Diff LSP Upgrade Project"
 JiraEpic = "BOARD-123" # the epic key
 ```
+
+
+## Release Checking
+
+Often for work-workflows, it's very important to know when your particular PR is not just merged, but released to production, or in a release client.
+
+You can configure a release check command which is run when PRs are added to the org file or updated.  GTDBOT will call-out to that program and expected a single string in response for
+
+example. If we have a program on our PATH variable named release-check, you should call it like this:
+
+```
+$ release-check C-Hipple gtdbot abcdef
+released
+
+$ release-check C-Hipple gtdbot hijklm
+release-client
+
+$ release-check C-Hipple gtdbot nopqrs
+merged
+```
+
+
+That string will then be put into the title line of the PR via the org-serializer.

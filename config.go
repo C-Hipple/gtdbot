@@ -17,18 +17,20 @@ type Config struct {
 	Workflows []workflows.Workflow
 }
 
+// This struct implements all possible values a workflow can define, then they're written as-needed.
 type RawWorkflow struct {
-	WorkflowType string
-	Name         string
-	Owner        string
-	Repo         string
-	Repos        []string
-	JiraEpic     string
-	Filters      []string
-	OrgFileName  string
-	SectionTitle string
-	PRState      string
-	Prune        bool
+	WorkflowType        string
+	Name                string
+	Owner               string
+	Repo                string
+	Repos               []string
+	JiraEpic            string
+	Filters             []string
+	OrgFileName         string
+	SectionTitle        string
+	PRState             string
+	ReleaseCheckCommand string
+	Prune               bool
 }
 
 func LoadConfig() Config {
@@ -76,55 +78,59 @@ func MatchWorkflows(workflow_maps []RawWorkflow, repos *[]string, jiraDomain str
 
 func BuildSingleRepoReviewWorkflow(raw *RawWorkflow, repos *[]string) workflows.Workflow {
 	wf := workflows.SingleRepoSyncReviewRequestsWorkflow{
-		Name:         raw.Name,
-		Owner:        raw.Owner,
-		Repo:         raw.Repo,
-		Filters:      BuildFiltersList(raw.Filters),
-		OrgFileName:  raw.OrgFileName,
-		SectionTitle: raw.SectionTitle,
-		Prune:        raw.Prune,
+		Name:                raw.Name,
+		Owner:               raw.Owner,
+		Repo:                raw.Repo,
+		Filters:             BuildFiltersList(raw.Filters),
+		OrgFileName:         raw.OrgFileName,
+		SectionTitle:        raw.SectionTitle,
+		ReleaseCheckCommand: raw.ReleaseCheckCommand,
+		Prune:               raw.Prune,
 	}
 	return wf
 }
 
 func BuildSyncReviewRequestWorkflow(raw *RawWorkflow, repos *[]string) workflows.Workflow {
 	wf := workflows.SyncReviewRequestsWorkflow{
-		Name:         raw.Name,
-		Owner:        raw.Owner,
-		Repos:        *repos,
-		Filters:      BuildFiltersList(raw.Filters),
-		OrgFileName:  raw.OrgFileName,
-		SectionTitle: raw.SectionTitle,
-		Prune:        raw.Prune,
+		Name:                raw.Name,
+		Owner:               raw.Owner,
+		Repos:               *repos,
+		Filters:             BuildFiltersList(raw.Filters),
+		OrgFileName:         raw.OrgFileName,
+		SectionTitle:        raw.SectionTitle,
+		ReleaseCheckCommand: raw.ReleaseCheckCommand,
+		Prune:               raw.Prune,
 	}
 	return wf
 }
 
 func BuildListMyPRsWorkflow(raw *RawWorkflow, repos *[]string) workflows.Workflow {
 	wf := workflows.ListMyPRsWorkflow{
-		Name:         raw.Name,
-		Owner:        raw.Owner,
-		Repos:        *repos,
-		Filters:      BuildFiltersList(raw.Filters),
-		PRState:      raw.PRState,
-		OrgFileName:  raw.OrgFileName,
-		SectionTitle: raw.SectionTitle,
-		Prune:        raw.Prune,
+		Name:                raw.Name,
+		Owner:               raw.Owner,
+		Repos:               *repos,
+		Filters:             BuildFiltersList(raw.Filters),
+		PRState:             raw.PRState,
+		OrgFileName:         raw.OrgFileName,
+		SectionTitle:        raw.SectionTitle,
+		ReleaseCheckCommand: raw.ReleaseCheckCommand,
+		Prune:               raw.Prune,
 	}
 	return wf
 }
 
 func BuildProjectListWorkflow(raw *RawWorkflow, jiraDomain string) workflows.Workflow {
 	wf := workflows.ProjectListWorkflow{
-		Name:         raw.Name,
-		Owner:        raw.Owner,
-		Repo:         raw.Repo,
-		JiraDomain:   jiraDomain,
-		JiraEpic:     raw.JiraEpic,
-		Filters:      BuildFiltersList(raw.Filters),
-		OrgFileName:  raw.OrgFileName,
-		SectionTitle: raw.SectionTitle,
-		Prune:        raw.Prune,
+		Name:                raw.Name,
+		Owner:               raw.Owner,
+		Repo:                raw.Repo,
+		JiraDomain:          jiraDomain,
+		JiraEpic:            raw.JiraEpic,
+		Filters:             BuildFiltersList(raw.Filters),
+		OrgFileName:         raw.OrgFileName,
+		SectionTitle:        raw.SectionTitle,
+		ReleaseCheckCommand: raw.ReleaseCheckCommand,
+		Prune:               raw.Prune,
 	}
 	return wf
 }

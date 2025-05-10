@@ -21,7 +21,7 @@ func main() {
 	initOnly := flag.Bool("init", false, "Pass init to only only setup the org file.")
 	flag.Parse()
 	if *parse {
-		doc := org.GetBaseOrgDocument("reviews.org")
+		doc := org.GetOrgDocument("reviews.org", org.BaseOrgSerializer{})
 		doc.PrintAll()
 		return
 	}

@@ -11,7 +11,7 @@ import (
 type NotificationTODO struct {
 }
 
-func (n NotificationTODO) FullLine(indent_level int) string {
+func (n NotificationTODO) ItemTitle(indent_level int) string {
 	return "abc"
 }
 
