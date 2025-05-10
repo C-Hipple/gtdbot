@@ -7,7 +7,7 @@ import (
 )
 
 type OrgTODO interface {
-	FullLine(indent_level int) string
+	ItemTitle(indent_level int, release_check_command string) string
 	Summary() string
 	Details() []string
 	GetStatus() string

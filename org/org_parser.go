@@ -21,11 +21,6 @@ type OrgDocument struct {
 	Serializer OrgSerializer
 }
 
-func GetBaseOrgDocument(file_name string) OrgDocument {
-	return GetOrgDocument(file_name, BaseOrgSerializer{})
-
-}
-
 func GetOrgDocument(file_name string, serializer OrgSerializer) OrgDocument {
 	file := GetOrgFile(file_name)
 	all_lines, _ := utils.LinesFromReader(file)
@@ -135,7 +130,7 @@ func (o OrgDocument) PrintAll() {
 		fmt.Println(section.Header())
 		fmt.Println(section.StartLine)
 		for _, item := range section.Items {
-			fmt.Println(item.FullLine(section.IndentLevel + 1))
+			fmt.Println(item.ItemTitle(section.IndentLevel+1, ""))
 			fmt.Println(item.StartLine(), item.LinesCount(), item.StartLine()+item.LinesCount())
 		}
 	}
@@ -340,7 +335,7 @@ func NewOrgItem(header string, details []string, status string, tags []string, s
 }
 
 // Implement the OrgTODO Interface for OrgItem
-func (oi OrgItem) FullLine(indent_level int) string {
+func (oi OrgItem) ItemTitle(indent_level int, release_command_check string) string {
 	return strings.Repeat("*", indent_level) + oi.header
 }
 
@@ -411,13 +406,15 @@ type OrgSerializer interface {
 	Serialize(lines []string, start_line int) (OrgTODO, error)
 }
 
-type BaseOrgSerializer struct{}
+type BaseOrgSerializer struct {
+	ReleaseCheckCommand string
+}
 
 // Implement the OrgSerializer interface with our most generic structs / interfaces
 
 func (bos BaseOrgSerializer) Deserialize(item OrgTODO, indent_level int) []string {
 	var result []string
-	result = append(result, item.FullLine(indent_level))
+	result = append(result, item.ItemTitle(indent_level, bos.ReleaseCheckCommand))
 	result = append(result, item.Details()...)
 	return result
 }
@@ -429,25 +426,5 @@ func (bos BaseOrgSerializer) Serialize(lines []string, start_line int) (OrgTODO,
 	}
 	status := findOrgStatus(lines[0])
 	tags := findOrgTags(lines[0])
-	return OrgItem{header: lines[0], status: status, details: lines[1:], tags: tags, start_line: start_line, lines_count: len(lines)}, nil
-}
-
-type MergeInfoOrgSerializer struct{}
-
-func (ser MergeInfoOrgSerializer) Deserialize(item OrgTODO, indent_level int) []string {
-	var result []string
-	result = append(result, item.FullLine(indent_level))
-	result = append(result, item.Details()...)
-	return result
-}
-
-func (bos MergeInfoOrgSerializer) Serialize(lines []string, start_line int) (OrgTODO, error) {
-	// each one has the format ** TODO URL Title.  Check stars to allow for auxillary text between items
-	if len(lines) == 0 {
-		return OrgItem{}, errors.New("No Lines passed for serialization")
-	}
-	status := findOrgStatus(lines[0])
-	tags := findOrgTags(lines[0])
-
 	return OrgItem{header: lines[0], status: status, details: lines[1:], tags: tags, start_line: start_line, lines_count: len(lines)}, nil
 }
