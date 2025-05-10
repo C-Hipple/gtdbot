@@ -19,20 +19,14 @@ func ListenChanges(channel chan FileChanges, wg *sync.WaitGroup) {
 	for file_change := range channel {
 		if file_change.ChangeType != "No Change" {
 			doc := org.GetBaseOrgDocument(file_change.Filename)
-			change_lines := doc.Serializer.Deserialize(file_change.Item, file_change.Section.IndentLevel)
 			if file_change.ChangeType == "Addition" {
-				if strings.Contains(change_lines[0], "draft") {
-					fmt.Print("Adding Draft PR: ", change_lines[3])
-				} else {
-					fmt.Print("Adding PR: ", change_lines[3])
-				}
-				fmt.Print(change_lines[2])
+				fmt.Println("Adding item in section: ", file_change.Item.Summary())
 				doc.AddItemInSection(file_change.Section.Name, &file_change.Item)
 			} else if file_change.ChangeType == "Update" {
-				fmt.Print("Updating item in section: ", change_lines[3])
+				fmt.Println("Updating item in section: ", file_change.Item.Summary())
 				doc.UpdateItemInSection(file_change.Section.Name, &file_change.Item)
 			} else if file_change.ChangeType == "Delete" {
-				fmt.Print("Removing item from section: ", change_lines[3])
+				fmt.Println("Removing item from section: ", file_change.Item.Summary())
 				doc.DeleteItemInSection(file_change.Section.Name, &file_change.Item)
 			}
 		}
