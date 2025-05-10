@@ -103,10 +103,19 @@ func (prb PRToOrgBridge) Details() []string {
 	details = append(details, author_string+"\n")
 
 	details = append(details, fmt.Sprintf("Branch: %s\n", *prb.PR.Head.Label))
-	details = append(details, fmt.Sprintf("Requested Reviewers: %s\n",
-		strings.Join(utils.Map(prb.PR.RequestedReviewers, getReviewerName), ", ")))
-	details = append(details, fmt.Sprintf("Requested Teams: %s\n",
-		strings.Join(utils.Map(prb.PR.RequestedTeams, getTeamName), ", ")))
+
+	reviewers := strings.Join(utils.Map(prb.PR.RequestedReviewers, getReviewerName), ", ")
+	if reviewers != "" {
+		details = append(details, fmt.Sprintf("Requested Reviewers: %s\n", reviewers))
+	} else {
+		details = append(details, "Requested Reviewers:\n")
+	}
+	teams := strings.Join(utils.Map(prb.PR.RequestedTeams, getTeamName), ", ")
+	if teams != "" {
+		details = append(details, fmt.Sprintf("Requested Teams: %s\n", teams))
+	} else {
+		details = append(details, "Requested Teams:\n")
+	}
 
 	// TODO: Consider putting these in subsection?
 	if prb.PR.MergedAt != nil {
