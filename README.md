@@ -42,7 +42,7 @@ SingleRepoSyncReviewRequestsWorkflow
 ListMyPRsWorkflow
 ProjectListWorkflow
 
-Prune tells the workflow runner whether or not to remove PRs from the section if they're no longer relevant
+Prune tells the workflow runner whether or not to remove PRs from the section if they're no longer relevant.  The default is False
 
 ### Workflow specific configurations
 Single Repo Sync workflow takes an additional paramter, Repo.
