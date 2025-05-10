@@ -33,6 +33,7 @@ Owner: str
 Filters: list[str]
 OrgFileName: str
 SectionTitle: str
+Prune: bool
 ```
 
 The WorkflowType is one of the following strings:
@@ -41,6 +42,9 @@ SingleRepoSyncReviewRequestsWorkflow
 ListMyPRsWorkflow
 ProjectListWorkflow
 
+Prune tells the workflow runner whether or not to remove PRs from the section if they're no longer relevant
+
+### Workflow specific configurations
 Single Repo Sync workflow takes an additional paramter, Repo.
 ```
 Repo: str
@@ -50,6 +54,8 @@ ListMyPRsWorkflow takes the additional parameter PRState, which is passed throug
 ```
 PRState: str [open/closed/nil]
 ```
+
+
 
 An Example complete config file is below
 
@@ -68,6 +74,7 @@ Owner = "C-Hipple"
 Filters = ["FilterNotDraft"]
 OrgFileName = "reviews.org"
 SectionTitle = "Open PRs"
+Prune = true
 
 [[Workflows]]
 WorkflowType = "ListMyPRsWorkflow"
@@ -75,6 +82,7 @@ Name = "List Closed PRs"
 Owner = "C-Hipple"
 OrgFileName = "reviews.org"
 SectionTitle = "Closed PRs"
+Prune = false
 ```
 
 ## Filters
