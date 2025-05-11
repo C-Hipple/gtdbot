@@ -143,3 +143,14 @@ merged
 
 
 That string will then be put into the title line of the PR via the org-serializer.
+
+## Keybinds
+
+
+You'll likely want to bind run-gtdbot-oneoff and/or run-gtdbot-service.
+
+By default this package sets (if you use evil mode) `,r l` and `, r s` for those two commands.
+
+If you don't use evil mode, you'll have to pick your own keybinds.
+
+In org-agenda mode, this package adds a new command "R" which allows for a quick review (filtered by day/week/month/sprint) of completed items.
