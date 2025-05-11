@@ -154,3 +154,13 @@ By default this package sets (if you use evil mode) `,r l` and `, r s` for those
 If you don't use evil mode, you'll have to pick your own keybinds.
 
 In org-agenda mode, this package adds a new command "R" which allows for a quick review (filtered by day/week/month/sprint) of completed items.
+
+## Org-mode Review Notes
+
+The default value for the files searched by the review functionality is:
+
+```elisp
+(setq gtdbot-org-agenda-files '("~/gtd/inbox.org" "~/gtd/gtd.org" "~/gtd/notes.org" "~/gtd/next_actions.org" "~/gtd/reviews.org"))
+```
+
+You can set this variable to wherever you keep your org files
