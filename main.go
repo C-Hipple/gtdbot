@@ -11,6 +11,7 @@ func get_manager(one_off bool, config *Config) workflows.ManagerService {
 	return workflows.NewManagerService(
 		config.Workflows,
 		one_off,
+		config.SleepDuration,
 	)
 }
 
