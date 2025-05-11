@@ -17,5 +17,8 @@ main
 
 .vscode
 
+# Test for other stuff
+*.diff-test
+
 # the executable
 gtdbot
