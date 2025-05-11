@@ -34,7 +34,7 @@ func ListenChanges(channel chan FileChanges, wg *sync.WaitGroup) {
 	}
 }
 
-func NewManagerService(workflows []Workflow, oneoff bool) ManagerService {
+func NewManagerService(workflows []Workflow, oneoff bool, sleep_time time.Duration) ManagerService {
 	used_workflows := []Workflow{}
 	for _, wf := range workflows {
 		if strings.Contains(fmt.Sprintf("%T", wf), "ListMyPRsWorkflow") {
@@ -49,7 +49,7 @@ func NewManagerService(workflows []Workflow, oneoff bool) ManagerService {
 	return ManagerService{
 		Workflows:     used_workflows,
 		workflow_chan: make(chan FileChanges),
-		sleep_time:    1 * time.Minute,
+		sleep_time:    sleep_time,
 		oneoff:        oneoff,
 	}
 }

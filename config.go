@@ -6,6 +6,7 @@ import (
 	"gtdbot/workflows"
 	"os"
 	"path/filepath"
+	"time"
 
 	"github.com/google/go-github/v48/github"
 	"github.com/pelletier/go-toml/v2"
@@ -13,8 +14,9 @@ import (
 
 // Define your classes
 type Config struct {
-	Repos     []string
-	Workflows []workflows.Workflow
+	Repos         []string
+	Workflows     []workflows.Workflow
+	SleepDuration time.Duration
 }
 
 // This struct implements all possible values a workflow can define, then they're written as-needed.
@@ -37,9 +39,10 @@ func LoadConfig() Config {
 	// Load TOML config
 
 	var intermediate_config struct {
-		Repos      []string
-		JiraDomain string
-		Workflows  []RawWorkflow
+		Repos         []string
+		JiraDomain    string
+		SleepDuration int64
+		Workflows     []RawWorkflow
 	}
 	home_dir, err := os.UserHomeDir()
 	the_bytes, err := os.ReadFile(filepath.Join(home_dir, ".config/gtdbot.toml"))
@@ -52,8 +55,9 @@ func LoadConfig() Config {
 	}
 
 	return Config{
-		Repos:     intermediate_config.Repos,
-		Workflows: MatchWorkflows(intermediate_config.Workflows, &intermediate_config.Repos, intermediate_config.JiraDomain),
+		Repos:         intermediate_config.Repos,
+		Workflows:     MatchWorkflows(intermediate_config.Workflows, &intermediate_config.Repos, intermediate_config.JiraDomain),
+		SleepDuration: time.Duration(intermediate_config.SleepDuration) * time.Minute,
 	}
 }
 
