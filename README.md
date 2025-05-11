@@ -21,8 +21,16 @@ go run
 
 gtdbot works from a toml config expected at the path `~/config/gtdbot.toml`.
 
-the basic format is root level config for "repos"
+the basic format is root level config for general fields
+
 and then a list of tables called [[Workflows]] configuring each workflow.
+
+The general fields are:
+-
+```
+Repos: list[str]
+SleepDuration: int (in minutes, optional, default=1 minute)
+```
 
 
 Each workflow entry can take the fields:
@@ -67,6 +75,7 @@ Repos = [
     "C-Hipple/diff-lsp",
     "C-Hipple/diff-lsp.el",
 ]
+SleepDuration = 5
 
 [[Workflows]]
 WorkflowType = "SyncReviewRequestsWorkflow"

@@ -53,11 +53,15 @@ func LoadConfig() Config {
 	if err != nil {
 		panic(err)
 	}
+	parsed_sleep_duration := time.Duration(1) * time.Minute
+	if intermediate_config.SleepDuration == 0 {
+		parsed_sleep_duration = time.Duration(intermediate_config.SleepDuration) * time.Minute
+	}
 
 	return Config{
 		Repos:         intermediate_config.Repos,
 		Workflows:     MatchWorkflows(intermediate_config.Workflows, &intermediate_config.Repos, intermediate_config.JiraDomain),
-		SleepDuration: time.Duration(intermediate_config.SleepDuration) * time.Minute,
+		SleepDuration: parsed_sleep_duration,
 	}
 }
 
