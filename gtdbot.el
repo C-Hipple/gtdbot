@@ -22,7 +22,7 @@
 (defun delta-wash()
   "interactive of the call magit-delta function if you have the package installed."
   (interactive)
-  (if (functionp magit-delta-call-delta-and-convert-ansi-escape-sequences)
+  (if (functionp 'magit-delta-call-delta-and-convert-ansi-escape-sequences)
       (magit-delta-call-delta-and-convert-ansi-escape-sequences)
     (message "You do not have magit-delta installed!")))
 
@@ -31,7 +31,7 @@
 (defun gtdbot--callback (x)
   ;; TODO: Allow for setting the reviews file
   (with-current-buffer (find-file-noselect "~/gtd/reviews.org")
-    (if (functionp magit-delta-call-delta-and-convert-ansi-escape-sequences)
+    (if (functionp 'magit-delta-call-delta-and-convert-ansi-escape-sequences)
         (progn
           (magit-delta-call-delta-and-convert-ansi-escape-sequences)
           (save-buffer))))
@@ -46,6 +46,7 @@
 
 ;;;###autoload
 (defun run-gtdbot-service ()
+
   "Runs gtdbot with the oneoff flag to update reviews.org"
   (interactive)
   (async-shell-command "gtdbot" "*gtdbot*"))
