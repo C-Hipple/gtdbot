@@ -144,8 +144,10 @@ func (prb PRToOrgBridge) Details() []string {
 			details = append(details, ciStatus...)
 		}
 	}
-	escaped_body := escapeBody(prb.PR.Body)
-	details = append(details, fmt.Sprintf("*** BODY\n %s\n", removePRBodySections(&escaped_body))) // TODO: Do we need this end newline?
+
+	escaped_body := removePRBodySections(prb.PR.Body)
+	escaped_body = escapeBody(&escaped_body)
+	details = append(details, fmt.Sprintf("*** BODY\n %s\n", escaped_body)) // TODO: Do we need this end newline?
 	comments_count, comments := getComments(*prb.PR.Base.Repo.Owner.Login, *prb.PR.Head.Repo.Name, *prb.PR.Number)
 	if len(comments) != 0 {
 		details = append(details, fmt.Sprintf("*** Comments [%v]\n", comments_count))
