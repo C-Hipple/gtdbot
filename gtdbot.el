@@ -41,7 +41,8 @@
 (defun run-gtdbot-oneoff ()
   "Runs gtdbot with the oneoff flag to update reviews.org"
   (interactive)
-  (async-start-process "gtdbot-async" "gtdbot" 'gtdbot--callback "--oneoff"))
+  (async-start-process "*gtdbot-async*" "gtdbot" 'gtdbot--callback "--oneoff"
+                       :stderr (get-buffer-create "*gtdbot-async::stderr*")))
 
 
 ;;;###autoload
