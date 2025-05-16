@@ -34,6 +34,7 @@
     (if (functionp 'magit-delta-call-delta-and-convert-ansi-escape-sequences)
         (progn
           (magit-delta-call-delta-and-convert-ansi-escape-sequences)
+          (org-update-statistics-cookies "ALL")
           (save-buffer))))
   (message "gtdbot sync complete!"))
 
