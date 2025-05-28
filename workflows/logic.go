@@ -217,9 +217,12 @@ func removePRBodySections(body *string) string {
 	// TODO more empty line cleaning
 	re := regexp.MustCompile(`(?s)<!--.*?-->`)
 
+	if body == nil {
+		return ""
+	}
+
 	// Replace all matches with an empty string
 	cleaned := re.ReplaceAllString(*body, "")
-
 	return cleaned
 }
 

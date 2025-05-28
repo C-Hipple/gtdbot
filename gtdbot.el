@@ -42,6 +42,9 @@
 (defun run-gtdbot-oneoff ()
   "Runs gtdbot with the oneoff flag to update reviews.org"
   (interactive)
+  (if-let ((async-buffer (get-buffer "*gtdbot-async")))
+      (kill-buffer "*gtdbot-async*"))
+
   (async-start-process "gtdbot-async" "gtdbot" 'gtdbot--callback "--oneoff"))
 ;; (async-start-process "*gtdbot-async*" "gtdbot" 'gtdbot--callback "--oneoff"
 ;;                        :stderr (get-buffer-create "*gtdbot-async::stderr*")))
@@ -49,10 +52,10 @@
 
 ;;;###autoload
 (defun run-gtdbot-service ()
-
   "Runs gtdbot with the oneoff flag to update reviews.org"
   (interactive)
-  (async-shell-command "gtdbot" "*gtdbot*"))
+  (run-with-timer 0 300 #'run-gtdbot-oneoff))
+;; (async-shell-command "gtdbot" "*gtdbot*"))
 
 ;; I only bind for evil-mode
 (if (not (eq evil-normal-state-map nil))
