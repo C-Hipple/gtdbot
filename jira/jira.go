@@ -46,11 +46,12 @@ func getAuth() (string, string) {
 func GetProjectPRKeys(domain string, epicKey string, repo_name string) []int {
 
 	fmt.Printf("Searching for project shas for project: `%s`\n", epicKey)
-	searchURL := fmt.Sprintf("%srest/api/3/search", domain)
 
 	if !strings.HasSuffix(domain, "/") {
 		domain += "/"
 	}
+
+	searchURL := fmt.Sprintf("%srest/api/3/search", domain)
 
 	jiraEmail, token := getAuth()
 
