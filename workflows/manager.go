@@ -18,15 +18,13 @@ type ManagerService struct {
 func ListenChanges(channel chan FileChanges, wg *sync.WaitGroup) {
 	for file_change := range channel {
 		if file_change.ChangeType != "No Change" {
+			file_change.Log()
 			doc := org.GetOrgDocument(file_change.Filename, file_change.ItemSerializer)
 			if file_change.ChangeType == "Addition" {
-				fmt.Println("Adding item in section: ", file_change.Item.Summary())
 				doc.AddItemInSection(file_change.Section.Name, &file_change.Item)
 			} else if file_change.ChangeType == "Update" {
-				fmt.Println("Updating item in section: ", file_change.Item.Summary())
 				doc.UpdateItemInSection(file_change.Section.Name, &file_change.Item)
 			} else if file_change.ChangeType == "Delete" {
-				fmt.Println("Removing item from section: ", file_change.Item.Summary())
 				doc.DeleteItemInSection(file_change.Section.Name, &file_change.Item)
 			}
 		}
@@ -76,7 +74,7 @@ func (ms ManagerService) RunOnce(file_change_wg *sync.WaitGroup) {
 		}(workflow)
 	}
 	wg.Wait()
-	println("Completed RunOnce Waitgroup")
+	fmt.Println("Completed RunOnce Waitgroup")
 }
 
 func (ms ManagerService) Run() {

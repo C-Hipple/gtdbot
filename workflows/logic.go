@@ -32,6 +32,10 @@ type FileChanges struct {
 	ItemSerializer org.OrgSerializer
 }
 
+func (fc FileChanges) Log() {
+	fmt.Printf("[%c] %-20s - %s\n", fc.ChangeType[0], fc.Section.Name, fc.Item.Summary())
+}
+
 type PRToOrgBridge struct {
 	// Implement the OrgTODO Interface for PRs
 	PR *github.PullRequest
