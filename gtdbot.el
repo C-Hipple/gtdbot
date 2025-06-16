@@ -45,6 +45,9 @@
   (if-let ((async-buffer (get-buffer "*gtdbot-async")))
       (kill-buffer "*gtdbot-async*"))
 
+  (if-let ((review-buffer (find-buffer-visiting "~/gtd/reviews.org")))
+      (kill-buffer review-buffer))
+
   (async-start-process "gtdbot-async" "gtdbot" 'gtdbot--callback "--oneoff"))
 ;; (async-start-process "*gtdbot-async*" "gtdbot" 'gtdbot--callback "--oneoff"
 ;;                        :stderr (get-buffer-create "*gtdbot-async::stderr*")))
