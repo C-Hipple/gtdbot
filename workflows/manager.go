@@ -17,8 +17,8 @@ type ManagerService struct {
 
 func ListenChanges(channel chan FileChanges, wg *sync.WaitGroup) {
 	for file_change := range channel {
+		file_change.Log()
 		if file_change.ChangeType != "No Change" {
-			file_change.Log()
 			doc := org.GetOrgDocument(file_change.Filename, file_change.ItemSerializer)
 			if file_change.ChangeType == "Addition" {
 				doc.AddItemInSection(file_change.Section.Name, &file_change.Item)

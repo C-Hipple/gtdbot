@@ -304,18 +304,17 @@ func ProcessPRs(prs []*github.PullRequest, changes_channel chan FileChanges, doc
 func SyncTODOToSection(doc org.OrgDocument, pr *github.PullRequest, section org.Section) FileChanges {
 	pr_as_org := PRToOrgBridge{pr}
 	at_line, _ := org.CheckTODOInSection(pr_as_org, section)
+	changeType := "Addition"
 	if at_line != -1 {
-		// TODO : Determine if actual changes?
-		return FileChanges{
-			ChangeType:     "Update",
-			Filename:       doc.Filename,
-			Item:           pr_as_org,
-			Section:        section,
-			ItemSerializer: doc.Serializer,
+		// After a week we stop updating old ones
+		if pr_as_org.PR.GetMergedAt().After(time.Now().Add(-7 * 24 * time.Hour)) {
+			changeType = "Update"
+		} else {
+			changeType = "No Change"
 		}
 	}
 	return FileChanges{
-		ChangeType:     "Addition",
+		ChangeType:     changeType,
 		Filename:       doc.Filename,
 		Item:           pr_as_org,
 		Section:        section,
