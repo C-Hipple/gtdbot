@@ -92,9 +92,7 @@ func (o OrgDocument) AddItemInSection(section_name string, new_item *OrgTODO) er
 	return nil
 }
 
-func (o OrgDocument) UpdateItemInSection(section_name string, new_item *OrgTODO) error {
-	// TODO If the existing section has more lines than the update, then we need to remove the trailing lines
-	// otherwise the extra lines will persist
+func (o OrgDocument) UpdateItemInSection(section_name string, new_item *OrgTODO, archive bool) error {
 	section, err := o.GetSection(section_name)
 	if err != nil {
 		return err
@@ -105,8 +103,15 @@ func (o OrgDocument) UpdateItemInSection(section_name string, new_item *OrgTODO)
 	}
 
 	new_lines := o.Serializer.Deserialize(*new_item, section.IndentLevel)
+	if archive && !strings.Contains(new_lines[0], "ARCHIVE") {
+		if !strings.HasSuffix(new_lines[0], ":") {
+			// org tags are of the format :tag1:tag2:, if this is going to be the first tag, we need the first :
+			new_lines[0] = new_lines[0] + ":"
+		}
+		new_lines[0] = new_lines[0] + "ARCHIVE:"
+	}
+
 	utils.ReplaceLinesInFile(o.GetFile(), new_lines, start_line-1, existing_item.LinesCount()) // we do -1 since the util is 0 index
-	// utils.InsertLinesInFile(o.GetFile(), new_lines, start_line)
 	return nil
 }
 
@@ -336,7 +341,12 @@ func NewOrgItem(header string, details []string, status string, tags []string, s
 
 // Implement the OrgTODO Interface for OrgItem
 func (oi OrgItem) ItemTitle(indent_level int, release_command_check string) string {
-	return strings.Repeat("*", indent_level) + oi.header
+	// This reads from the org file, so it'll still have the ** in it.
+	stripped_header := oi.header
+	if strings.HasPrefix(oi.header, "*") {
+		stripped_header = strings.Join(strings.Split(oi.header, "* ")[1:], "")
+	}
+	return strings.Repeat("*", indent_level) + " " + stripped_header
 }
 
 func (oi OrgItem) Details() []string {
