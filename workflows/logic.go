@@ -99,6 +99,9 @@ func (prb PRToOrgBridge) GetStatus() string {
 	if prb.CheckDone() {
 		return "DONE"
 	}
+	if *prb.PR.Draft {
+		return "WAITING"
+	}
 	return "TODO"
 }
 
