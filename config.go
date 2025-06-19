@@ -32,7 +32,7 @@ type RawWorkflow struct {
 	SectionTitle        string
 	PRState             string
 	ReleaseCheckCommand string
-	Prune               bool
+	Prune               string
 }
 
 func LoadConfig() Config {

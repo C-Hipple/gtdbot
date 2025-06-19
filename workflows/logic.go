@@ -33,7 +33,7 @@ type FileChanges struct {
 }
 
 func (fc FileChanges) Log() {
-	fmt.Printf("[%c] %-20s - %s\n", fc.ChangeType[0], fc.Section.Name, fc.Item.Summary())
+	fmt.Printf("[%s] %-20s - %s\n", fc.ChangeType[:2], fc.Section.Name, fc.Item.Summary())
 }
 
 type PRToOrgBridge struct {
@@ -69,6 +69,7 @@ func (prb PRToOrgBridge) Title() string {
 }
 
 func (prb PRToOrgBridge) ItemTitle(indent_level int, release_check_command string) string {
+
 	line := fmt.Sprintf("%s %s %s\t\t:%s:", strings.Repeat("*", indent_level), prb.GetStatus(), prb.Title(), *prb.PR.Head.Repo.Name)
 	if *prb.PR.Draft {
 		line = line + ":draft:"
@@ -261,7 +262,7 @@ func getComments(owner string, repo string, number int) (int, []string) {
 	return len(comments), str_comments
 }
 
-func ProcessPRs(prs []*github.PullRequest, changes_channel chan FileChanges, doc *org.OrgDocument, section *org.Section, change_wg *sync.WaitGroup, delete_unfound bool) RunResult {
+func ProcessPRs(prs []*github.PullRequest, changes_channel chan FileChanges, doc *org.OrgDocument, section *org.Section, change_wg *sync.WaitGroup, prune_command string) RunResult {
 	result := RunResult{}
 
 	// the index for both slices should match
@@ -276,16 +277,15 @@ func ProcessPRs(prs []*github.PullRequest, changes_channel chan FileChanges, doc
 		changes = append(changes, SyncTODOToSection(*doc, pr, *section))
 	}
 
-	if delete_unfound {
+	if prune_command == "Delete" || prune_command == "Archive" {
 		// prune items that are not seen.  Use the PR string as the comparator
 		for _, item := range section.Items {
 			check_string := fmt.Sprintf("%s-%s", item.Repo(), item.ID())
 			if slices.Contains(pr_strings, check_string) {
 				continue
 			} else {
-				// fmt.Println("No longer need to review: ", check_string)
 				fileChange := FileChanges{
-					ChangeType:     "Delete",
+					ChangeType:     prune_command,
 					Filename:       doc.Filename,
 					Item:           item,
 					Section:        *section,
@@ -293,7 +293,6 @@ func ProcessPRs(prs []*github.PullRequest, changes_channel chan FileChanges, doc
 				}
 				changes = append(changes, fileChange)
 			}
-
 		}
 	}
 

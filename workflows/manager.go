@@ -16,19 +16,24 @@ type ManagerService struct {
 }
 
 func ListenChanges(channel chan FileChanges, wg *sync.WaitGroup) {
-	for file_change := range channel {
-		file_change.Log()
-		if file_change.ChangeType != "No Change" {
-			doc := org.GetOrgDocument(file_change.Filename, file_change.ItemSerializer)
-			if file_change.ChangeType == "Addition" {
-				doc.AddItemInSection(file_change.Section.Name, &file_change.Item)
-			} else if file_change.ChangeType == "Update" {
-				doc.UpdateItemInSection(file_change.Section.Name, &file_change.Item)
-			} else if file_change.ChangeType == "Delete" {
-				doc.DeleteItemInSection(file_change.Section.Name, &file_change.Item)
-			}
+	for fileChange := range channel {
+		fileChange.Log()
+
+		if fileChange.ChangeType == "No Change" {
+			wg.Done()
+			continue
 		}
-		wg.Done() // The add is done when we enqueue the FileChange in the channel
+
+		doc := org.GetOrgDocument(fileChange.Filename, fileChange.ItemSerializer)
+		switch fileChange.ChangeType {
+		case "Addition":
+			doc.AddItemInSection(fileChange.Section.Name, &fileChange.Item)
+		case "Update", "Archive":
+			doc.UpdateItemInSection(fileChange.Section.Name, &fileChange.Item, fileChange.ChangeType == "Archive")
+		case "Delete":
+			doc.DeleteItemInSection(fileChange.Section.Name, &fileChange.Item)
+		}
+		wg.Done()
 	}
 }
 

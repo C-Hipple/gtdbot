@@ -318,7 +318,7 @@ abc2
 		t.Fatal("Failed to serialze new item in UpdateItemSection")
 	}
 	doc := makeTestOrgDoc(rawLines())
-	err = doc.UpdateItemInSection("Team Reviews", &new_item)
+	err = doc.UpdateItemInSection("Team Reviews", &new_item, false)
 	if err != nil {
 		t.Fatalf("Error on updating item in section: %v", err)
 	}
