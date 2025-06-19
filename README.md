@@ -42,7 +42,7 @@ Filters: list[str]
 OrgFileName: str
 SectionTitle: str
 ReleaseCommandCheck: str
-Prune: bool
+Prune: string
 ```
 
 The WorkflowType is one of the following strings:
@@ -51,10 +51,13 @@ SingleRepoSyncReviewRequestsWorkflow
 ListMyPRsWorkflow
 ProjectListWorkflow
 
-Prune tells the workflow runner whether or not to remove PRs from the section if they're no longer relevant.  The default is False
+Prune tells the workflow runner whether or not to remove PRs from the section if they're no longer relevant.  The default behavior is to do nothing, and the options are:
+Delete: Removes the item from the section.
+Archive: Tags the items with :ARCHIVE: so that org functions can clean them up
+Keep: Leave existing items in the section untouched.
 
 ### Workflow specific configurations
-Single Repo Sync workflow takes an additional paramter, Repo.
+Single Repo Sync workflow takes an additional parameter, Repo.
 ```
 Repo: str
 ```
@@ -84,7 +87,7 @@ Owner = "C-Hipple"
 Filters = ["FilterNotDraft"]
 OrgFileName = "reviews.org"
 SectionTitle = "Open PRs"
-Prune = true
+Prune = "Archive"
 
 [[Workflows]]
 WorkflowType = "ListMyPRsWorkflow"
@@ -92,7 +95,7 @@ Name = "List Closed PRs"
 Owner = "C-Hipple"
 OrgFileName = "reviews.org"
 SectionTitle = "Closed PRs"
-Prune = false
+Prune = "Delete"
 ```
 
 ## Filters

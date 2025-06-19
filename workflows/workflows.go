@@ -44,7 +44,7 @@ type SingleRepoSyncReviewRequestsWorkflow struct {
 	OrgFileName         string
 	SectionTitle        string
 	ReleaseCheckCommand string
-	Prune               bool
+	Prune               string
 }
 
 func (w SingleRepoSyncReviewRequestsWorkflow) GetName() string {
@@ -85,7 +85,7 @@ type SyncReviewRequestsWorkflow struct {
 	Owner   string
 	Repos   []string
 	Filters []git_tools.PRFilter
-	Prune   bool
+	Prune   string
 
 	// org output info
 	OrgFileName         string
@@ -128,7 +128,7 @@ type ListMyPRsWorkflow struct {
 	SectionTitle        string
 	PRState             string
 	ReleaseCheckCommand string
-	Prune               bool
+	Prune               string
 }
 
 func (w ListMyPRsWorkflow) GetName() string {
@@ -169,7 +169,7 @@ type ProjectListWorkflow struct {
 	JiraDomain          string
 	JiraEpic            string
 	ReleaseCheckCommand string
-	Prune               bool
+	Prune               string
 }
 
 func (w ProjectListWorkflow) GetName() string {
