@@ -12,7 +12,8 @@ import (
 type RunResult struct {
 	Added   int
 	Updated int
-	Removed int // TODO
+	Deleted int
+	Skipped int
 }
 
 func (rr *RunResult) Process(output *FileChanges, c chan FileChanges, wg *sync.WaitGroup) {
@@ -21,14 +22,18 @@ func (rr *RunResult) Process(output *FileChanges, c chan FileChanges, wg *sync.W
 			rr.Updated += 1
 		} else if output.ChangeType == "Addition" {
 			rr.Added += 1
+		} else if output.ChangeType == "Delete" {
+			rr.Deleted += 1
 		}
 		wg.Add(1)
 		c <- *output
+	} else {
+		rr.Skipped += 1
 	}
 }
 
 func (rr *RunResult) Report() string {
-	return fmt.Sprintf("A: %d; U: %d; R: %d", rr.Added, rr.Updated, rr.Removed)
+	return fmt.Sprintf("A: %d; U: %d; R: %d; S: %d", rr.Added, rr.Updated, rr.Deleted, rr.Skipped)
 }
 
 type SingleRepoSyncReviewRequestsWorkflow struct {
