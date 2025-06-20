@@ -18,6 +18,12 @@
 ;; For using the review functionality, open one of your files called out in org-agenda list and then call (org-agenda).  There you will have a new binding of R to enter your review periods.
 
 ;;; Code:
+(defvar gtdbot-sync-frequency 10
+  "How often gtdbot will sync reviews in service mode (seconds)")
+
+(defvar gtdbot--timer nil
+  "The timer object when gtdbot is running as a service")
+
 ;;;###autoload
 (defun delta-wash()
   "interactive of the call magit-delta function if you have the package installed."
@@ -25,7 +31,6 @@
   (if (functionp 'magit-delta-call-delta-and-convert-ansi-escape-sequences)
       (magit-delta-call-delta-and-convert-ansi-escape-sequences)
     (message "You do not have magit-delta installed!")))
-
 
 
 (defun gtdbot--callback (x)
@@ -42,6 +47,7 @@
 (defun run-gtdbot-oneoff ()
   "Runs gtdbot with the oneoff flag to update reviews.org"
   (interactive)
+  (message "gtdbot sync starting!")
   (if-let ((async-buffer (get-buffer "*gtdbot-async")))
       (kill-buffer "*gtdbot-async*"))
 
@@ -49,23 +55,25 @@
       (kill-buffer review-buffer))
 
   (async-start-process "gtdbot-async" "gtdbot" 'gtdbot--callback "--oneoff"))
-;; (async-start-process "*gtdbot-async*" "gtdbot" 'gtdbot--callback "--oneoff"
-;;                        :stderr (get-buffer-create "*gtdbot-async::stderr*")))
 
 
 ;;;###autoload
 (defun run-gtdbot-service ()
   "Runs gtdbot with the oneoff flag to update reviews.org"
   (interactive)
-  (run-with-timer 0 300 #'run-gtdbot-oneoff))
-;; (async-shell-command "gtdbot" "*gtdbot*"))
+  (setq gtdbot--timer (run-with-timer 0 gtdbot-sync-frequency #'run-gtdbot-oneoff)))
+
+(defun stop-gtdbot-service ()
+  (interactive)
+  (cancel-timer gtdbot--timer))
 
 ;; I only bind for evil-mode
 (if (not (eq evil-normal-state-map nil))
     (progn
       (define-key evil-normal-state-map (kbd ", r S") 'run-gtdbot-service) ;; s I already have bound to review start at url
       (define-key evil-normal-state-map (kbd ", r l") 'run-gtdbot-oneoff) ;; l for list?
-      (define-key evil-normal-state-map (kbd ", r d") 'delta-wash)))
+      (define-key evil-normal-state-map (kbd ", r d") 'delta-wash)
+      (define-key evil-normal-state-map (kbd ", r k") 'stop-gtdbot-service)))
 
 
 ;; Theese are testing helper functions to make development a little bit easier
