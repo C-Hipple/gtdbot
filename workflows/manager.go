@@ -16,6 +16,8 @@ type ManagerService struct {
 }
 
 func ListenChanges(channel chan FileChanges, wg *sync.WaitGroup) {
+	var serialziedChannel = make(chan SerializedFileChange)
+	go ApplyChanges(serialziedChannel, wg)
 	for fileChange := range channel {
 		fileChange.Log()
 
@@ -24,17 +26,27 @@ func ListenChanges(channel chan FileChanges, wg *sync.WaitGroup) {
 			continue
 		}
 
-		doc := org.GetOrgDocument(fileChange.Filename, fileChange.ItemSerializer)
-		switch fileChange.ChangeType {
+		go func() {
+			serialziedChannel <- fileChange.Deserialize()
+		}()
+	}
+}
+
+func ApplyChanges(channel chan SerializedFileChange, wg *sync.WaitGroup) {
+	for deserializedChange := range channel {
+		doc := org.GetOrgDocument(deserializedChange.FileChange.Filename, deserializedChange.FileChange.ItemSerializer)
+		switch deserializedChange.FileChange.ChangeType {
 		case "Addition":
-			doc.AddItemInSection(fileChange.Section.Name, &fileChange.Item)
+			doc.AddDeserializedItemInSection(deserializedChange.FileChange.Section.Name, deserializedChange.Lines)
 		case "Update", "Archive":
-			doc.UpdateItemInSection(fileChange.Section.Name, &fileChange.Item, fileChange.ChangeType == "Archive")
+			doc.UpdateDeserializedItemInSection(deserializedChange.FileChange.Section.Name, &deserializedChange.FileChange.Item, deserializedChange.FileChange.ChangeType == "Archive", deserializedChange.Lines)
 		case "Delete":
-			doc.DeleteItemInSection(fileChange.Section.Name, &fileChange.Item)
+			doc.DeleteItemInSection(deserializedChange.FileChange.Section.Name, &deserializedChange.FileChange.Item)
 		}
 		wg.Done()
+
 	}
+
 }
 
 func NewManagerService(workflows []Workflow, oneoff bool, sleep_time time.Duration) ManagerService {

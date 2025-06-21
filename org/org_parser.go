@@ -92,6 +92,15 @@ func (o OrgDocument) AddItemInSection(section_name string, new_item *OrgTODO) er
 	return nil
 }
 
+func (o OrgDocument) AddDeserializedItemInSection(section_name string, new_lines []string) error {
+	section, err := o.GetSection(section_name)
+	if err != nil {
+		panic(err)
+	}
+	utils.InsertLinesInFile(o.GetFile(), new_lines, section.StartLine)
+	return nil
+}
+
 func (o OrgDocument) UpdateItemInSection(section_name string, new_item *OrgTODO, archive bool) error {
 	section, err := o.GetSection(section_name)
 	if err != nil {
@@ -103,6 +112,28 @@ func (o OrgDocument) UpdateItemInSection(section_name string, new_item *OrgTODO,
 	}
 
 	new_lines := o.Serializer.Deserialize(*new_item, section.IndentLevel)
+	if archive && !strings.Contains(new_lines[0], "ARCHIVE") {
+		if !strings.HasSuffix(new_lines[0], ":") {
+			// org tags are of the format :tag1:tag2:, if this is going to be the first tag, we need the first :
+			new_lines[0] = new_lines[0] + ":"
+		}
+		new_lines[0] = new_lines[0] + "ARCHIVE:"
+	}
+
+	utils.ReplaceLinesInFile(o.GetFile(), new_lines, start_line-1, existing_item.LinesCount()) // we do -1 since the util is 0 index
+	return nil
+}
+
+func (o OrgDocument) UpdateDeserializedItemInSection(section_name string, new_item *OrgTODO, archive bool, new_lines []string) error {
+	section, err := o.GetSection(section_name)
+	if err != nil {
+		return err
+	}
+	start_line, existing_item := CheckTODOInSection(*new_item, section)
+	if start_line == -1 {
+		return errors.New("Item not in section; Cannot update!")
+	}
+
 	if archive && !strings.Contains(new_lines[0], "ARCHIVE") {
 		if !strings.HasSuffix(new_lines[0], ":") {
 			// org tags are of the format :tag1:tag2:, if this is going to be the first tag, we need the first :
