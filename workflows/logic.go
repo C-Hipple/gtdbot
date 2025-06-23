@@ -32,8 +32,24 @@ type FileChanges struct {
 	ItemSerializer org.OrgSerializer
 }
 
+type SerializedFileChange struct {
+	FileChange *FileChanges
+	Lines      []string
+}
+
 func (fc FileChanges) Log() {
 	fmt.Printf("[%s] %-20s - %s\n", fc.ChangeType[:2], fc.Section.Name, fc.Item.Summary())
+}
+
+func (fc *FileChanges) Deserialize() SerializedFileChange {
+	var lines []string
+	if fc.ChangeType != "Delete" {
+		lines = fc.ItemSerializer.Deserialize(fc.Item, fc.Section.IndentLevel)
+	}
+	return SerializedFileChange{
+		FileChange: fc,
+		Lines:      lines,
+	}
 }
 
 type PRToOrgBridge struct {
