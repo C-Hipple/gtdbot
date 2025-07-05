@@ -28,7 +28,7 @@
 (defun delta-wash()
   "interactive of the call magit-delta function if you have the package installed."
   (interactive)
-  (if (functionp 'magit-delta-call-delta-and-convert-ansi-escape-sequences)
+  (if (fboundp 'magit-delta-call-delta-and-convert-ansi-escape-sequences)
       (magit-delta-call-delta-and-convert-ansi-escape-sequences)
     (message "You do not have magit-delta installed!")))
 
