@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"gtdbot/utils"
 	"io"
+	"log/slog"
 	"os"
 	"strconv"
 	"strings"
@@ -27,7 +28,7 @@ func GetOrgDocument(file_name string, serializer OrgSerializer) OrgDocument {
 	file.Close()
 	sections, err := ParseSectionsFromLines(all_lines, serializer)
 	if err != nil {
-		fmt.Println("Error parsing sections from file: ", err)
+		slog.Error("Error parsing sections from file", "error", err)
 		os.Exit(1)
 	}
 	doc := OrgDocument{Filename: file_name, Sections: sections, Serializer: serializer}
@@ -43,7 +44,7 @@ func (o OrgDocument) Refresh() {
 
 	sections, err := ParseSectionsFromLines(all_lines, serializer)
 	if err != nil {
-		fmt.Println("Error parsing sections from file: ", err)
+		slog.Error("Error parsing sections from file", "error", err)
 		os.Exit(1)
 	}
 	o.Sections = sections
@@ -51,7 +52,7 @@ func (o OrgDocument) Refresh() {
 
 func (o OrgDocument) AddSection(section_name string) (Section, error) {
 	// Adds a new section always at the end
-	fmt.Println("Adding section to file: ", section_name)
+	slog.Info("Adding section to file", "section_name", section_name)
 	formatted := fmt.Sprintf("* TODO %s [0/0]", section_name)
 	at_line, err := utils.InsertLinesInFile(o.GetFile(), []string{formatted}, -1)
 	if err != nil {
@@ -161,13 +162,11 @@ func (o OrgDocument) DeleteItemInSection(section_name string, item_to_delete *Or
 }
 
 func (o OrgDocument) PrintAll() {
-	fmt.Println("Printing all sections from Document: ", o.Filename)
+	slog.Info("Printing all sections from Document", "filename", o.Filename)
 	for _, section := range o.Sections {
-		fmt.Println(section.Header())
-		fmt.Println(section.StartLine)
+		slog.Info("Section", "header", section.Header(), "start_line", section.StartLine)
 		for _, item := range section.Items {
-			fmt.Println(item.ItemTitle(section.IndentLevel+1, ""))
-			fmt.Println(item.StartLine(), item.LinesCount(), item.StartLine()+item.LinesCount())
+			slog.Info("Item", "title", item.ItemTitle(section.IndentLevel+1, ""), "start_line", item.StartLine(), "line_count", item.LinesCount(), "end_line", item.StartLine()+item.LinesCount())
 		}
 	}
 }
@@ -226,23 +225,12 @@ func AddTODO(doc OrgDocument, section Section, new_item OrgTODO) {
 	utils.InsertLinesInFile(doc.GetFile(), new_lines, section.StartLine+1)
 }
 
-type ParseDebugger struct {
-	active bool
-}
-
-func (pd ParseDebugger) Println(line ...any) {
-	if pd.active {
-		fmt.Println(line...)
-	}
-}
-
 func ParseSectionsFromLines(all_lines []string, serializer OrgSerializer) ([]Section, error) {
 	var sections []Section
 	var header string
 	section_start_line := 0
 	item_start_line := 0
 	in_section := false
-	print_debugger := ParseDebugger{active: false}
 
 	var items []OrgTODO
 	var item_lines []string
@@ -250,20 +238,20 @@ func ParseSectionsFromLines(all_lines []string, serializer OrgSerializer) ([]Sec
 
 	for i, line := range all_lines {
 		i = i + 1 // remove 0 index of file
-		print_debugger.Println("line:", i, line)
+		slog.Debug("Parsing line", "line_number", i, "line", line)
 		// TODO need a better way of handling this
 		if !strings.HasPrefix(line, "*") || strings.Contains(line, "*** BODY") || strings.Contains(line, "*** C") || strings.Contains(line, "****") || strings.Contains(line, "CI Status") {
 			if building_item {
 				item_lines = append(item_lines, line)
-				print_debugger.Println("Building item: ", line)
+				slog.Debug("Building item", "line", line)
 				continue
 			}
 			if i == len(all_lines)-1 && line == "" {
 				// Allow empty line at the end of file?
-				print_debugger.Println("Found empty last line of file.")
+				slog.Debug("Found empty last line of file.")
 				continue
 			}
-			print_debugger.Println(fmt.Sprintf("panic state: Building Item: %v, in_section: %v, item_start_line: %v, header: %s;", building_item, in_section, item_start_line, header))
+			slog.Warn("Rogue line", "line", line, "building_item", building_item, "in_section", in_section, "item_start_line", item_start_line, "header", header)
 			panic("Rogue line: " + line)
 		}
 
@@ -276,7 +264,7 @@ func ParseSectionsFromLines(all_lines []string, serializer OrgSerializer) ([]Sec
 					panic("Error serializing item: " + serialize_err.Error())
 				}
 				items = append(items, item)
-				print_debugger.Println("Adding item inside: ", item.Summary(), item.Details(), "i:", i, "start_line:", item_start_line, "len:", item.LinesCount())
+				slog.Debug("Adding item inside", "summary", item.Summary(), "details", item.Details(), "line_number", i, "start_line", item_start_line, "line_count", item.LinesCount())
 			}
 			sections = append(sections, Section{
 				Name:      CleanHeader(header),
@@ -285,7 +273,7 @@ func ParseSectionsFromLines(all_lines []string, serializer OrgSerializer) ([]Sec
 				IndentLevel: 2,
 				Items:       items,
 			})
-			print_debugger.Println("Adding section: ", sections[len(sections)-1].Name)
+			slog.Debug("Adding section", "section_name", sections[len(sections)-1].Name)
 
 			// cleanup, get ready for next section
 			items = []OrgTODO{}
@@ -299,7 +287,7 @@ func ParseSectionsFromLines(all_lines []string, serializer OrgSerializer) ([]Sec
 			in_section = true
 			section_start_line = i
 			header = CleanHeader(line)
-			print_debugger.Println("Found Section Header: ", header)
+			slog.Debug("Found Section Header", "header", header)
 			items = []OrgTODO{}
 			building_item = false
 			item_lines = []string{}
@@ -316,9 +304,9 @@ func ParseSectionsFromLines(all_lines []string, serializer OrgSerializer) ([]Sec
 					panic("Error serializing item: " + serialize_err.Error())
 				}
 				items = append(items, item)
-				print_debugger.Println("Adding item: ", item.Summary(), item.Details(), "i:", i, "start_line:", item_start_line, "len:", len(item.Details()))
+				slog.Debug("Adding item", "summary", item.Summary(), "details", item.Details(), "line_number", i, "start_line", item_start_line, "line_count", len(item.Details()))
 			}
-			print_debugger.Println("Starting to build item: ", line, "; at i: ", i)
+			slog.Debug("Starting to build item", "line", line, "line_number", i)
 			item_lines = []string{line}
 			building_item = true
 			item_start_line = int(i)
@@ -439,7 +427,7 @@ func findOrgStatus(line string) string {
 
 func PrintOrgFile(file *os.File) {
 	res, _ := io.ReadAll(file)
-	fmt.Println(string(res))
+	slog.Info("Org file contents", "content", string(res))
 }
 
 type OrgSerializer interface {

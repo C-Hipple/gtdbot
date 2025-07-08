@@ -44,9 +44,7 @@ func getAuth() (string, string) {
 
 // / Get all of the PRs #s for a repo under a JIRA epic
 func GetProjectPRKeys(domain string, epicKey string, repo_name string) []int {
-
-	fmt.Printf("Searching for project shas for project: `%s`\n", epicKey)
-
+	// fmt.Printf("Searching for project shas for project: `%s`\n", epicKey)
 	if !strings.HasSuffix(domain, "/") {
 		domain += "/"
 	}
@@ -194,7 +192,7 @@ func getPRLinkForIssue(domain string, issueID string) (*JiraPullRequestIdentifie
 	}
 
 	if len(data.Detail) == 0 || len(data.Detail[0].PullRequests) == 0 {
-		fmt.Printf("No PR for issue: %s\n", issueID)
+		// fmt.Printf("No PR for issue: %s\n", issueID)
 		return nil, nil // Indicate no PR found without an error
 	}
 
