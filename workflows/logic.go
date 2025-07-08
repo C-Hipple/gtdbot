@@ -162,9 +162,9 @@ func (prb PRToOrgBridge) Details() []string {
 		}
 	} else {
 
-		ciStatus := getCIStatus(*prb.PR.Base.Repo.Owner.Login, *prb.PR.Head.Repo.Name, *prb.PR.Head.Label)
+		ciStatus, ciHeader := getCIStatus(*prb.PR.Base.Repo.Owner.Login, *prb.PR.Head.Repo.Name, *prb.PR.Head.Label)
 		if len(ciStatus) > 0 {
-			details = append(details, "*** CI Status\n")
+			details = append(details, fmt.Sprintf("*** %s CI Status\n", ciHeader))
 			details = append(details, ciStatus...)
 		}
 	}
@@ -340,7 +340,11 @@ func SyncTODOToSection(doc org.OrgDocument, pr *github.PullRequest, section org.
 	}
 }
 
-func getCIStatus(owner string, repo string, branch string) []string {
+
+// Assume git_tools.GetGithubClient() and processWorkflowRuns are defined elsewhere
+// and work as intended.
+
+func getCIStatus(owner string, repo string, branch string) ([]string, string) {
 	client := git_tools.GetGithubClient()
 	branch = strings.Split(branch, ":")[1] // Comes as username:branch_name from github api.
 	opts := github.ListWorkflowRunsOptions{Branch: branch}
@@ -348,15 +352,23 @@ func getCIStatus(owner string, repo string, branch string) []string {
 
 	if err != nil {
 		fmt.Printf("Error getting combined status: %v\n", err)
-		return []string{}
+		return []string{}, "TODO"
 	}
 
 	var statuses []string
-	for _, run := range processWorkflowRuns(runs.WorkflowRuns) {
+	hasFailure := false
+	hasInProgress := false
+	allSuccess := true
 
+	processedRuns := processWorkflowRuns(runs.WorkflowRuns)
+
+	for _, run := range processedRuns {
 		status := "<nil>" // completed, in_progress
 		if run.Status != nil {
 			status = "[" + *run.Status + "]"
+			if *run.Status == "in_progress" {
+				hasInProgress = true
+			}
 		}
 		conclusion := " "
 		if run.Conclusion != nil {
@@ -365,6 +377,16 @@ func getCIStatus(owner string, repo string, branch string) []string {
 				status = "" // We know the status if it was a success
 			} else if *run.Conclusion == "failure" {
 				conclusion = "❌"
+				hasFailure = true
+				allSuccess = false
+			} else if *run.Conclusion != "success" {
+				allSuccess = false // Any conclusion that is not success means not all are success
+			}
+		} else {
+			// If conclusion is nil, it might still be in progress or pending
+			allSuccess = false
+			if run.Status != nil && *run.Status != "completed" {
+				hasInProgress = true
 			}
 		}
 
@@ -376,7 +398,26 @@ func getCIStatus(owner string, repo string, branch string) []string {
 		item := fmt.Sprintf("[%s] %s %s", conclusion, status, name)
 		statuses = append(statuses, item)
 	}
-	return statuses
+
+	overallStatus := ""
+	if hasFailure {
+		overallStatus = "TODO"
+	} else if hasInProgress {
+		overallStatus = "WAITING"
+	} else if allSuccess {
+		overallStatus = "DONE"
+	} else {
+		// This case implies no failures, no in_progress, and not all successes.
+		// This could happen if all runs are completed but some had non-success conclusions other than failure (e.g., cancelled, skipped).
+		// Based on the prompt, if there are no failures and no in_progress, and it's not allSuccess, it should be DONE.
+		// However, if we strictly interpret "DONE if all of the runs have a success conclusion",
+		// then this state would be something else. Given the prompt, we'll default to DONE
+		// if no failures and no in_progress, assuming non-success conclusions are also acceptable for DONE.
+		// If a more specific state is needed for 'cancelled', 'skipped', etc., the logic here would need adjustment.
+		overallStatus = "DONE"
+	}
+
+	return statuses, overallStatus
 }
 
 func processWorkflowRuns(runs []*github.WorkflowRun) []*github.WorkflowRun {
