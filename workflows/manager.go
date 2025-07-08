@@ -3,6 +3,7 @@ package workflows
 import (
 	"fmt"
 	"gtdbot/org"
+	"log/slog"
 	"strings"
 	"sync"
 	"time"
@@ -15,11 +16,11 @@ type ManagerService struct {
 	oneoff        bool
 }
 
-func ListenChanges(channel chan FileChanges, wg *sync.WaitGroup) {
+func ListenChanges(log *slog.Logger, channel chan FileChanges, wg *sync.WaitGroup) {
 	var serialziedChannel = make(chan SerializedFileChange)
-	go ApplyChanges(serialziedChannel, wg)
+	go ApplyChanges(log, serialziedChannel, wg)
 	for fileChange := range channel {
-		fileChange.Log()
+		fileChange.Log(log)
 
 		if fileChange.ChangeType == "No Change" {
 			wg.Done()
@@ -32,7 +33,7 @@ func ListenChanges(channel chan FileChanges, wg *sync.WaitGroup) {
 	}
 }
 
-func ApplyChanges(channel chan SerializedFileChange, wg *sync.WaitGroup) {
+func ApplyChanges(log *slog.Logger, channel chan SerializedFileChange, wg *sync.WaitGroup) {
 	for deserializedChange := range channel {
 		doc := org.GetOrgDocument(deserializedChange.FileChange.Filename, deserializedChange.FileChange.ItemSerializer)
 		switch deserializedChange.FileChange.ChangeType {
@@ -69,51 +70,51 @@ func NewManagerService(workflows []Workflow, oneoff bool, sleep_time time.Durati
 	}
 }
 
-func (ms ManagerService) runWorkflow(workflow Workflow, workflow_chan chan FileChanges, file_change_wg *sync.WaitGroup) {
+func (ms ManagerService) runWorkflow(log *slog.Logger, workflow Workflow, workflow_chan chan FileChanges, file_change_wg *sync.WaitGroup) {
 	// Helper which times the workflow run command.
-	fmt.Println("Starting Workflow: ", workflow.GetName())
+	log.Info("Starting Workflow", "workflow", workflow.GetName())
 	start := time.Now()
-	result, err := workflow.Run(workflow_chan, file_change_wg)
+	result, err := workflow.Run(log, workflow_chan, file_change_wg)
 	duration := time.Since(start)
 	if err != nil {
-		fmt.Println("Errored in Workflow: ", workflow.GetName(), " After: ", duration, ": ", err)
+		log.Error("Errored in Workflow", "workflow", workflow.GetName(), "after", duration, "error", err)
 	}
-	fmt.Println("Finishing Workflow: ", workflow.GetName(), " Took: ", duration, ":", result.Report())
+	log.Info("Finishing Workflow", "workflow", workflow.GetName(), "took", duration, "result", result.Report())
 }
 
-func (ms ManagerService) RunOnce(file_change_wg *sync.WaitGroup) {
+func (ms ManagerService) RunOnce(log *slog.Logger, file_change_wg *sync.WaitGroup) {
 	var wg sync.WaitGroup
 	for _, workflow := range ms.Workflows {
 		wg.Add(1)
 		go func(workflow Workflow) {
 			defer wg.Done()
-			ms.runWorkflow(workflow, ms.workflow_chan, file_change_wg)
+			ms.runWorkflow(log, workflow, ms.workflow_chan, file_change_wg)
 		}(workflow)
 	}
 	wg.Wait()
-	fmt.Println("Completed RunOnce Waitgroup")
+	log.Info("Completed RunOnce Waitgroup")
 }
 
-func (ms ManagerService) Run() {
-	fmt.Println("Starting Service: ")
+func (ms ManagerService) Run(log *slog.Logger) {
+	log.Info("Starting Service")
 	var listener_wg sync.WaitGroup
 	listener_wg.Add(1)
-	go ListenChanges(ms.workflow_chan, &listener_wg)
+	go ListenChanges(log, ms.workflow_chan, &listener_wg)
 	if ms.oneoff {
-		fmt.Println("Running Once")
-		ms.RunOnce(&listener_wg)
+		log.Info("Running Once")
+		ms.RunOnce(log, &listener_wg)
 	} else {
 		cycle_count := 0
 		for {
-			fmt.Println("Cycle: ", cycle_count)
-			ms.RunOnce(&listener_wg)
+			log.Info("Cycle", "count", cycle_count)
+			ms.RunOnce(log, &listener_wg)
 			time.Sleep(ms.sleep_time)
 			cycle_count++
 		}
 	}
 	listener_wg.Done()
 	listener_wg.Wait()
-	fmt.Println("Exiting Service")
+	log.Info("Exiting Service")
 }
 
 func (ms *ManagerService) Initialize() {

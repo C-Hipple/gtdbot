@@ -7,6 +7,7 @@ import (
 	"gtdbot/git_tools"
 	"gtdbot/org"
 	"gtdbot/utils"
+	"log/slog"
 	"os/exec"
 	"regexp"
 	"slices"
@@ -19,7 +20,7 @@ import (
 
 type Workflow interface {
 	GetName() string
-	Run(chan FileChanges, *sync.WaitGroup) (RunResult, error)
+	Run(log *slog.Logger, c chan FileChanges, file_change_wg *sync.WaitGroup) (RunResult, error)
 	GetOrgSectionName() string
 	GetOrgFilename() string
 }
@@ -37,8 +38,8 @@ type SerializedFileChange struct {
 	Lines      []string
 }
 
-func (fc FileChanges) Log() {
-	fmt.Printf("[%s] %-20s - %s\n", fc.ChangeType[:2], fc.Section.Name, fc.Item.Summary())
+func (fc FileChanges) Log(log *slog.Logger) {
+	log.Info("FileChange", "type", fc.ChangeType, "section", fc.Section.Name, "summary", fc.Item.Summary())
 }
 
 func (fc *FileChanges) Deserialize() SerializedFileChange {
@@ -259,7 +260,7 @@ func getComments(owner string, repo string, number int) (int, []string) {
 	// debugPrintCommentTree(trees)
 
 	if err != nil {
-		fmt.Printf("Error getting Comments for PR %v in repo %s: %v", number, repo, err)
+		slog.Error("Error getting Comments", "pr", number, "repo", repo, "error", err)
 		return 0, []string{}
 	}
 	str_comments := []string{}
@@ -278,7 +279,7 @@ func getComments(owner string, repo string, number int) (int, []string) {
 	return len(comments), str_comments
 }
 
-func ProcessPRs(prs []*github.PullRequest, changes_channel chan FileChanges, doc *org.OrgDocument, section *org.Section, change_wg *sync.WaitGroup, prune_command string) RunResult {
+func ProcessPRs(log *slog.Logger, prs []*github.PullRequest, changes_channel chan FileChanges, doc *org.OrgDocument, section *org.Section, change_wg *sync.WaitGroup, prune_command string) RunResult {
 	result := RunResult{}
 
 	// the index for both slices should match
@@ -289,7 +290,6 @@ func ProcessPRs(prs []*github.PullRequest, changes_channel chan FileChanges, doc
 	for _, pr := range prs {
 		pr_strings = append(pr_strings, fmt.Sprintf("%s-%v", *pr.Head.Repo.Name, pr.GetNumber()))
 		seen_prs = append(seen_prs, pr)
-		// fmt.Printf("Checking My PR: %s\n", *pr.Title)
 		changes = append(changes, SyncTODOToSection(*doc, pr, *section))
 	}
 
@@ -350,7 +350,7 @@ func getCIStatus(owner string, repo string, branch string) ([]string, string) {
 	runs, _, err := client.Actions.ListRepositoryWorkflowRuns(context.Background(), owner, repo, &opts)
 
 	if err != nil {
-		fmt.Printf("Error getting combined status: %v\n", err)
+		slog.Error("Error getting combined status", "error", err)
 		return []string{}, "TODO"
 	}
 
@@ -513,14 +513,4 @@ func treeAuthors(tree []*github.PullRequestComment) string {
 		}
 	}
 	return strings.Join(authors, "|")
-}
-
-func debugPrintCommentTree(trees [][]*github.PullRequestComment) {
-	for i, tree := range trees {
-		fmt.Printf("Tree: %d\n", i)
-		for j, comment := range tree {
-			fmt.Printf("comment: %d - %d  (reply to: %d)\n", j, comment.GetID(), comment.GetInReplyTo())
-		}
-		fmt.Println("")
-	}
 }

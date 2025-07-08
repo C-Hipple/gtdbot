@@ -6,6 +6,7 @@ import (
 	"gtdbot/git_tools"
 	"gtdbot/jira"
 	"gtdbot/org"
+	"log/slog"
 	"sync"
 )
 
@@ -59,7 +60,7 @@ func (w SingleRepoSyncReviewRequestsWorkflow) GetOrgSectionName() string {
 	return w.SectionTitle
 }
 
-func (w SingleRepoSyncReviewRequestsWorkflow) Run(c chan FileChanges, file_change_wg *sync.WaitGroup) (RunResult, error) {
+func (w SingleRepoSyncReviewRequestsWorkflow) Run(log *slog.Logger, c chan FileChanges, file_change_wg *sync.WaitGroup) (RunResult, error) {
 	prs := git_tools.GetPRs(
 		git_tools.GetGithubClient(),
 		"open",
@@ -71,11 +72,11 @@ func (w SingleRepoSyncReviewRequestsWorkflow) Run(c chan FileChanges, file_chang
 	doc := org.GetOrgDocument(w.OrgFileName, org.BaseOrgSerializer{ReleaseCheckCommand: w.ReleaseCheckCommand})
 	section, err := doc.GetSection(w.SectionTitle)
 	if err != nil {
-		fmt.Println("Error getting section: ", err, w.SectionTitle)
+		log.Error("Error getting section", "error", err, "section", w.SectionTitle)
 		return RunResult{}, errors.New("Section Not Found")
 	}
 
-	result := ProcessPRs(prs, c, &doc, &section, file_change_wg, w.Prune)
+	result := ProcessPRs(log, prs, c, &doc, &section, file_change_wg, w.Prune)
 	return result, nil
 }
 
@@ -93,17 +94,17 @@ type SyncReviewRequestsWorkflow struct {
 	ReleaseCheckCommand string
 }
 
-func (w SyncReviewRequestsWorkflow) Run(c chan FileChanges, file_change_wg *sync.WaitGroup) (RunResult, error) {
+func (w SyncReviewRequestsWorkflow) Run(log *slog.Logger, c chan FileChanges, file_change_wg *sync.WaitGroup) (RunResult, error) {
 	client := git_tools.GetGithubClient()
 	prs := git_tools.GetManyRepoPRs(client, "open", w.Owner, w.Repos)
 	prs = git_tools.ApplyPRFilters(prs, w.Filters)
 	doc := org.GetOrgDocument(w.OrgFileName, org.BaseOrgSerializer{ReleaseCheckCommand: w.ReleaseCheckCommand})
 	section, err := doc.GetSection(w.SectionTitle)
 	if err != nil {
-		fmt.Println("Error getting section: ", err, w.SectionTitle)
+		log.Error("Error getting section", "error", err, "section", w.SectionTitle)
 		return RunResult{}, errors.New("Section Not Found")
 	}
-	result := ProcessPRs(prs, c, &doc, &section, file_change_wg, w.Prune)
+	result := ProcessPRs(log, prs, c, &doc, &section, file_change_wg, w.Prune)
 	return result, nil
 }
 
@@ -143,7 +144,7 @@ func (w ListMyPRsWorkflow) GetOrgSectionName() string {
 	return w.SectionTitle
 }
 
-func (w ListMyPRsWorkflow) Run(c chan FileChanges, file_change_wg *sync.WaitGroup) (RunResult, error) {
+func (w ListMyPRsWorkflow) Run(log *slog.Logger, c chan FileChanges, file_change_wg *sync.WaitGroup) (RunResult, error) {
 	client := git_tools.GetGithubClient()
 	prs := git_tools.GetManyRepoPRs(client, w.PRState, w.Owner, w.Repos)
 
@@ -151,11 +152,11 @@ func (w ListMyPRsWorkflow) Run(c chan FileChanges, file_change_wg *sync.WaitGrou
 	doc := org.GetOrgDocument(w.OrgFileName, org.BaseOrgSerializer{ReleaseCheckCommand: w.ReleaseCheckCommand})
 	section, err := doc.GetSection(w.SectionTitle)
 	if err != nil {
-		fmt.Println("Error getting section: ", err, w.SectionTitle)
+		log.Error("Error getting section", "error", err, "section", w.SectionTitle)
 		return RunResult{}, errors.New("Section Not Found")
 	}
 	prs = git_tools.ApplyPRFilters(prs, []git_tools.PRFilter{git_tools.MyPRs})
-	result := ProcessPRs(prs, c, &doc, &section, file_change_wg, w.Prune)
+	result := ProcessPRs(log, prs, c, &doc, &section, file_change_wg, w.Prune)
 	return result, nil
 }
 
@@ -184,7 +185,7 @@ func (w ProjectListWorkflow) GetOrgSectionName() string {
 	return w.SectionTitle
 }
 
-func (w ProjectListWorkflow) Run(c chan FileChanges, file_change_wg *sync.WaitGroup) (RunResult, error) {
+func (w ProjectListWorkflow) Run(log *slog.Logger, c chan FileChanges, file_change_wg *sync.WaitGroup) (RunResult, error) {
 	client := git_tools.GetGithubClient()
 	doc := org.GetOrgDocument(w.OrgFileName, org.BaseOrgSerializer{ReleaseCheckCommand: w.ReleaseCheckCommand})
 	section, err := doc.GetSection(w.SectionTitle)
@@ -198,6 +199,6 @@ func (w ProjectListWorkflow) Run(c chan FileChanges, file_change_wg *sync.WaitGr
 	projectPRs := jira.GetProjectPRKeys(w.JiraDomain, w.JiraEpic, w.Repo)
 
 	prs := git_tools.GetSpecificPRs(client, w.Owner, w.Repo, projectPRs)
-	result := ProcessPRs(prs, c, &doc, &section, file_change_wg, w.Prune)
+	result := ProcessPRs(log, prs, c, &doc, &section, file_change_wg, w.Prune)
 	return result, nil
 }

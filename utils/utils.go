@@ -4,8 +4,8 @@ import (
 	"bufio"
 	"bytes"
 	"encoding/json"
-	"fmt"
 	"io"
+	"log/slog"
 	"os"
 	"path/filepath"
 	"strings"
@@ -40,10 +40,7 @@ func replaceLines(existing_lines []string, new_lines []string, at_line_number in
 	j := 0
 	shorten_end := len(new_lines) < existing_lines_count
 
-	// fmt.Println("new_lines[0]", new_lines[0])
-	// fmt.Println("len(new_lines):", len(new_lines))
-	// fmt.Println("at_line_number:", at_line_number)
-	// fmt.Println("existing_lines_count:", existing_lines_count)
+	// slog.Debug("Replacing lines", "new_lines[0]", new_lines[0], "len(new_lines)", len(new_lines), "at_line_number", at_line_number, "existing_lines_count", existing_lines_count)
 
 	for i, line := range existing_lines {
 		if i < at_line_number {
@@ -85,13 +82,13 @@ func InsertLinesInFile(file *os.File, new_lines []string, at_line_number int) (i
 
 // insertLines within the existin lines at point.  use -1 to append to end.
 func insertLines(existing_lines []string, new_lines []string, at_line_number int) string {
-	// fmt.Println("insert lines@ ", at_line_number)
+	// slog.Debug("Inserting lines", "at_line_number", at_line_number)
 	// for i, out := range existing_lines {
-	//	fmt.Println(i, out)
+	// 	slog.Debug("existing_line", "index", i, "line", out)
 	// }
 
 	// for i, out := range new_lines {
-	//	fmt.Println(i, strings.TrimSpace(out))
+	// 	slog.Debug("new_line", "index", i, "line", strings.TrimSpace(out))
 	// }
 	// Helper! for unit tests so we don't need to make a file
 	if at_line_number == -1 || at_line_number == len(existing_lines) {
@@ -178,9 +175,9 @@ func PrettyPrint(body []byte) {
 	var pretty_json bytes.Buffer
 	err := json.Indent(&pretty_json, body, "", "\t")
 	if err != nil {
-		fmt.Println("Error prettyifying json", err)
+		slog.Error("Error prettyifying json", "error", err)
 	}
-	fmt.Println(string(pretty_json.Bytes()))
+	slog.Info("Pretty printed JSON", "json", string(pretty_json.Bytes()))
 }
 
 type Pair[T, U any] struct {
