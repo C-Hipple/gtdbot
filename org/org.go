@@ -1,7 +1,7 @@
 package org
 
 import (
-	"fmt"
+	"log/slog"
 	"os"
 	"strings"
 )
@@ -38,14 +38,14 @@ func CheckForHeader(section_name string, line string, stars string) bool {
 func GetOrgFile(filename string) *os.File {
 	home, err := os.UserHomeDir()
 	if err != nil {
-		fmt.Println("Error getting home directory: ", err)
+		slog.Error("Error getting home directory", "error", err)
 		os.Exit(1)
 	}
 	org_file_path := home + "/gtd/" + filename
 
 	file, err := os.Open(org_file_path)
 	if err != nil {
-		fmt.Println("Error Opening Org filefile: ", file, err)
+		slog.Error("Error opening org file", "file", file, "error", err)
 		os.Exit(1)
 	}
 	return file
