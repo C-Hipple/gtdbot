@@ -39,7 +39,8 @@ type SerializedFileChange struct {
 }
 
 func (fc FileChanges) Log(log *slog.Logger) {
-	log.Info("FileChange", "type", fc.ChangeType, "section", fc.Section.Name, "summary", fc.Item.Summary())
+	// log.Info("type", fc.ChangeType, "section", fc.Section.Name, "summary", fc.Item.Summary())
+	log.Info(fmt.Sprintf("[%s] %-20s - %s", fc.ChangeType[:2], fc.Section.Name, fc.Item.Summary()))
 }
 
 func (fc *FileChanges) Deserialize() SerializedFileChange {
