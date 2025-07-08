@@ -30,8 +30,9 @@ func CleanHeader(line string) string {
 }
 
 func CheckForHeader(section_name string, line string, stars string) bool {
+	// Need a better way of handling this,
 	prefix := strings.HasPrefix(line, stars+" TODO ") || strings.HasPrefix(line, stars+" DONE ")
-	return prefix && strings.Contains(line, section_name)
+	return prefix && strings.Contains(line, section_name) && !strings.Contains(line, "CI Status")
 }
 
 func GetOrgFile(filename string) *os.File {
