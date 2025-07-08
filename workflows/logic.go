@@ -340,7 +340,6 @@ func SyncTODOToSection(doc org.OrgDocument, pr *github.PullRequest, section org.
 	}
 }
 
-
 // Assume git_tools.GetGithubClient() and processWorkflowRuns are defined elsewhere
 // and work as intended.
 
