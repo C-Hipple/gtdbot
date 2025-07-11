@@ -20,10 +20,11 @@ type OrgDocument struct {
 	Filename   string
 	Sections   []Section
 	Serializer OrgSerializer
+	OrgFileDir string
 }
 
-func GetOrgDocument(file_name string, serializer OrgSerializer) OrgDocument {
-	file := GetOrgFile(file_name)
+func GetOrgDocument(file_name string, serializer OrgSerializer, orgFileDir string) OrgDocument {
+	file := GetOrgFile(file_name, orgFileDir)
 	all_lines, _ := utils.LinesFromReader(file)
 	file.Close()
 	sections, err := ParseSectionsFromLines(all_lines, serializer)
@@ -31,14 +32,14 @@ func GetOrgDocument(file_name string, serializer OrgSerializer) OrgDocument {
 		slog.Error("Error parsing sections from file", "error", err)
 		os.Exit(1)
 	}
-	doc := OrgDocument{Filename: file_name, Sections: sections, Serializer: serializer}
+	doc := OrgDocument{Filename: file_name, Sections: sections, Serializer: serializer, OrgFileDir: orgFileDir}
 	return doc
 }
 
 func (o OrgDocument) Refresh() {
 	serializer := BaseOrgSerializer{}
 
-	file := GetOrgFile(o.Filename)
+	file := GetOrgFile(o.Filename, o.OrgFileDir)
 	all_lines, _ := utils.LinesFromReader(file)
 	file.Close()
 
@@ -202,7 +203,7 @@ func (s Section) Header() string {
 }
 
 func (o OrgDocument) GetFile() *os.File {
-	return GetOrgFile(o.Filename)
+	return GetOrgFile(o.Filename, o.OrgFileDir)
 }
 
 func (s Section) CheckAllComplete() bool {

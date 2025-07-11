@@ -1,72 +1,15 @@
-package main
+package workflows
 
 import (
 	"fmt"
+	"gtdbot/config"
 	"gtdbot/git_tools"
-	"gtdbot/workflows"
-	"os"
-	"path/filepath"
-	"time"
 
 	"github.com/google/go-github/v48/github"
-	"github.com/pelletier/go-toml/v2"
 )
 
-// Define your classes
-type Config struct {
-	Repos         []string
-	Workflows     []workflows.Workflow
-	SleepDuration time.Duration
-}
-
-// This struct implements all possible values a workflow can define, then they're written as-needed.
-type RawWorkflow struct {
-	WorkflowType        string
-	Name                string
-	Owner               string
-	Repo                string
-	Repos               []string
-	JiraEpic            string
-	Filters             []string
-	OrgFileName         string
-	SectionTitle        string
-	PRState             string
-	ReleaseCheckCommand string
-	Prune               string
-}
-
-func LoadConfig() Config {
-	// Load TOML config
-
-	var intermediate_config struct {
-		Repos         []string
-		JiraDomain    string
-		SleepDuration int64
-		Workflows     []RawWorkflow
-	}
-	home_dir, err := os.UserHomeDir()
-	the_bytes, err := os.ReadFile(filepath.Join(home_dir, ".config/gtdbot.toml"))
-	if err != nil {
-		panic(err)
-	}
-	err = toml.Unmarshal(the_bytes, &intermediate_config)
-	if err != nil {
-		panic(err)
-	}
-	parsed_sleep_duration := time.Duration(1) * time.Minute
-	if intermediate_config.SleepDuration == 0 {
-		parsed_sleep_duration = time.Duration(intermediate_config.SleepDuration) * time.Minute
-	}
-
-	return Config{
-		Repos:         intermediate_config.Repos,
-		Workflows:     MatchWorkflows(intermediate_config.Workflows, &intermediate_config.Repos, intermediate_config.JiraDomain),
-		SleepDuration: parsed_sleep_duration,
-	}
-}
-
-func MatchWorkflows(workflow_maps []RawWorkflow, repos *[]string, jiraDomain string) []workflows.Workflow {
-	workflows := []workflows.Workflow{}
+func MatchWorkflows(workflow_maps []config.RawWorkflow, repos *[]string, jiraDomain string) []Workflow {
+	workflows := []Workflow{}
 	for _, raw_workflow := range workflow_maps {
 		if raw_workflow.WorkflowType == "SyncReviewRequestsWorkflow" {
 			workflows = append(workflows, BuildSyncReviewRequestWorkflow(&raw_workflow, repos))
@@ -84,8 +27,8 @@ func MatchWorkflows(workflow_maps []RawWorkflow, repos *[]string, jiraDomain str
 	return workflows
 }
 
-func BuildSingleRepoReviewWorkflow(raw *RawWorkflow, repos *[]string) workflows.Workflow {
-	wf := workflows.SingleRepoSyncReviewRequestsWorkflow{
+func BuildSingleRepoReviewWorkflow(raw *config.RawWorkflow, repos *[]string) Workflow {
+	wf := SingleRepoSyncReviewRequestsWorkflow{
 		Name:                raw.Name,
 		Owner:               raw.Owner,
 		Repo:                raw.Repo,
@@ -98,8 +41,8 @@ func BuildSingleRepoReviewWorkflow(raw *RawWorkflow, repos *[]string) workflows.
 	return wf
 }
 
-func BuildSyncReviewRequestWorkflow(raw *RawWorkflow, repos *[]string) workflows.Workflow {
-	wf := workflows.SyncReviewRequestsWorkflow{
+func BuildSyncReviewRequestWorkflow(raw *config.RawWorkflow, repos *[]string) Workflow {
+	wf := SyncReviewRequestsWorkflow{
 		Name:                raw.Name,
 		Owner:               raw.Owner,
 		Repos:               *repos,
@@ -112,8 +55,8 @@ func BuildSyncReviewRequestWorkflow(raw *RawWorkflow, repos *[]string) workflows
 	return wf
 }
 
-func BuildListMyPRsWorkflow(raw *RawWorkflow, repos *[]string) workflows.Workflow {
-	wf := workflows.ListMyPRsWorkflow{
+func BuildListMyPRsWorkflow(raw *config.RawWorkflow, repos *[]string) Workflow {
+	wf := ListMyPRsWorkflow{
 		Name:                raw.Name,
 		Owner:               raw.Owner,
 		Repos:               *repos,
@@ -127,8 +70,8 @@ func BuildListMyPRsWorkflow(raw *RawWorkflow, repos *[]string) workflows.Workflo
 	return wf
 }
 
-func BuildProjectListWorkflow(raw *RawWorkflow, jiraDomain string) workflows.Workflow {
-	wf := workflows.ProjectListWorkflow{
+func BuildProjectListWorkflow(raw *config.RawWorkflow, jiraDomain string) Workflow {
+	wf := ProjectListWorkflow{
 		Name:                raw.Name,
 		Owner:               raw.Owner,
 		Repo:                raw.Repo,
