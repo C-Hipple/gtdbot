@@ -2,6 +2,7 @@ package workflows
 
 import (
 	"fmt"
+	"gtdbot/config"
 	"gtdbot/org"
 	"log/slog"
 	"strings"
@@ -35,7 +36,7 @@ func ListenChanges(log *slog.Logger, channel chan FileChanges, wg *sync.WaitGrou
 
 func ApplyChanges(log *slog.Logger, channel chan SerializedFileChange, wg *sync.WaitGroup) {
 	for deserializedChange := range channel {
-		doc := org.GetOrgDocument(deserializedChange.FileChange.Filename, deserializedChange.FileChange.ItemSerializer)
+		doc := org.GetOrgDocument(deserializedChange.FileChange.Filename, deserializedChange.FileChange.ItemSerializer, deserializedChange.FileChange.OrgFileDir)
 		switch deserializedChange.FileChange.ChangeType {
 		case "Addition":
 			doc.AddDeserializedItemInSection(deserializedChange.FileChange.Section.Name, deserializedChange.Lines)
@@ -122,7 +123,7 @@ func (ms *ManagerService) Initialize() {
 	// Does this sync since GetSection has creation side effect
 	for _, wf := range ms.Workflows {
 		// Don't need to check release command here
-		doc := org.GetOrgDocument(wf.GetOrgFilename(), org.BaseOrgSerializer{ReleaseCheckCommand: ""})
+		doc := org.GetOrgDocument(wf.GetOrgFilename(), org.BaseOrgSerializer{ReleaseCheckCommand: ""}, config.C.OrgFileDir)
 		doc.GetSection(wf.GetOrgSectionName())
 	}
 }
