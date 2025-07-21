@@ -407,6 +407,10 @@ func (oi OrgItem) CheckDone() bool {
 	return oi.GetStatus() == "DONE" || oi.GetStatus() == "CANCELLED"
 }
 
+func (oi OrgItem) Identifier() string {
+	return oi.details[0] + oi.details[1]
+}
+
 func findOrgTags(line string) []string {
 	splits := strings.Split(line, ":")
 	if len(splits) < 2 {

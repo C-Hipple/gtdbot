@@ -36,7 +36,6 @@ type Config struct {
 var C Config
 
 func init() {
-	// Load TOML config
 
 	var intermediate_config struct {
 		Repos         []string

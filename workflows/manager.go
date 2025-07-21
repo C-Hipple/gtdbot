@@ -17,6 +17,46 @@ type ManagerService struct {
 	oneoff        bool
 }
 
+func deduplicateChanges(log *slog.Logger, changes []SerializedFileChange) []SerializedFileChange {
+	changesByIdentifier := make(map[string][]SerializedFileChange)
+	for _, change := range changes {
+		identifier := change.FileChange.Item.Identifier()
+		changesByIdentifier[identifier] = append(changesByIdentifier[identifier], change)
+	}
+
+	finalChanges := []SerializedFileChange{}
+	log.Debug("Deduplicating changes", "count", len(changesByIdentifier))
+
+	for identifier, itemChanges := range changesByIdentifier {
+		var updateChange *SerializedFileChange
+		var addChange *SerializedFileChange
+		var deleteChange *SerializedFileChange
+
+		for i, change := range itemChanges {
+			switch change.FileChange.ChangeType {
+			case "Addition":
+				addChange = &itemChanges[i]
+			case "Update", "Archive":
+				updateChange = &itemChanges[i]
+			case "Delete":
+				deleteChange = &itemChanges[i]
+			}
+		}
+
+		if updateChange != nil {
+			log.Debug("Found update, discarding other changes", "identifier", identifier)
+			finalChanges = append(finalChanges, *updateChange)
+		} else if addChange != nil {
+			log.Debug("Found add, discarding delete", "identifier", identifier)
+			finalChanges = append(finalChanges, *addChange)
+		} else if deleteChange != nil {
+			log.Debug("Found delete", "identifier", identifier)
+			finalChanges = append(finalChanges, *deleteChange)
+		}
+	}
+	return finalChanges
+}
+
 func ListenChanges(log *slog.Logger, channel chan FileChanges, wg *sync.WaitGroup) {
 	changesMap := make(map[string][]SerializedFileChange)
 	for fileChange := range channel {
@@ -33,7 +73,8 @@ func ListenChanges(log *slog.Logger, channel chan FileChanges, wg *sync.WaitGrou
 	go ApplyChanges(log, serialziedChannel, wg)
 
 	for _, changes := range changesMap {
-		for _, change := range changes {
+		deduplicatedChanges := deduplicateChanges(log, changes)
+		for _, change := range deduplicatedChanges {
 			serialziedChannel <- change
 		}
 	}
