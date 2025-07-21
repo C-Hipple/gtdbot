@@ -13,6 +13,10 @@ jobs:
           go-version: 1.22
       - name: Install dependencies
         run: go get -v ./...
+      - name: Create dummy config file
+        run: |
+          mkdir -p ~/.config
+          touch ~/.config/gtdbot.toml
       - name: Test with Go
         run: go test ./...
       - name: Vet with Go
