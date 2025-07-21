@@ -17,6 +17,7 @@ type OrgTODO interface {
 	StartLine() int
 	LinesCount() int
 	Repo() string
+	Identifier() string
 }
 
 func CleanHeader(line string) string {
