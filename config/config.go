@@ -59,6 +59,10 @@ func init() {
 		parsed_sleep_duration = time.Duration(intermediate_config.SleepDuration) * time.Minute
 	}
 
+	if intermediate_config.OrgFileDir == "" {
+		intermediate_config.OrgFileDir = "~/"
+	}
+
 	C = Config{
 		Repos:         intermediate_config.Repos,
 		RawWorkflows:  intermediate_config.Workflows,
