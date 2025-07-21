@@ -2,19 +2,12 @@ package main
 
 import (
 	"flag"
+	"gtdbot/config"
 	"gtdbot/logger"
 	"gtdbot/org"
 	"gtdbot/workflows"
 	"log/slog"
 )
-
-func get_manager(one_off bool, config *Config) workflows.ManagerService {
-	return workflows.NewManagerService(
-		config.Workflows,
-		one_off,
-		config.SleepDuration,
-	)
-}
 
 func main() {
 	log := logger.New()
@@ -25,12 +18,17 @@ func main() {
 	initOnly := flag.Bool("init", false, "Pass init to only only setup the org file.")
 	flag.Parse()
 	if *parse {
-		doc := org.GetOrgDocument("reviews.org", org.BaseOrgSerializer{})
+		doc := org.GetOrgDocument("reviews.org", org.BaseOrgSerializer{}, config.C.OrgFileDir)
 		doc.PrintAll()
 		return
 	}
-	config := LoadConfig()
-	ms := get_manager(*one_off, &config)
+
+	workflows_list := workflows.MatchWorkflows(config.C.RawWorkflows, &config.C.Repos, config.C.JiraDomain)
+	ms := workflows.NewManagerService(
+		workflows_list,
+		*one_off,
+		config.C.SleepDuration,
+	)
 	ms.Initialize()
 	if *initOnly {
 		slog.Info("Finished Initilization, Exiting.")

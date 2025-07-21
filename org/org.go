@@ -3,6 +3,7 @@ package org
 import (
 	"log/slog"
 	"os"
+	"path/filepath"
 	"strings"
 )
 
@@ -35,17 +36,22 @@ func CheckForHeader(section_name string, line string, stars string) bool {
 	return prefix && strings.Contains(line, section_name) && !strings.Contains(line, "CI Status")
 }
 
-func GetOrgFile(filename string) *os.File {
-	home, err := os.UserHomeDir()
-	if err != nil {
-		slog.Error("Error getting home directory", "error", err)
-		os.Exit(1)
+func GetOrgFile(filename string, orgFileDir string) *os.File {
+	orgFilePath := orgFileDir
+	if strings.HasPrefix(orgFilePath, "~/") {
+		home, err := os.UserHomeDir()
+		if err != nil {
+			slog.Error("Error getting home directory", "error", err)
+			os.Exit(1)
+		}
+		orgFilePath = filepath.Join(home, orgFilePath[2:])
 	}
-	org_file_path := home + "/gtd/" + filename
 
-	file, err := os.Open(org_file_path)
+	orgFilePath = filepath.Join(orgFilePath, filename)
+
+	file, err := os.OpenFile(orgFilePath, os.O_RDWR|os.O_CREATE, 0666)
 	if err != nil {
-		slog.Error("Error opening org file", "file", file, "error", err)
+		slog.Error("Error opening or creating org file", "file", orgFilePath, "error", err)
 		os.Exit(1)
 	}
 	return file

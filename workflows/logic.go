@@ -31,6 +31,7 @@ type FileChanges struct {
 	Item           org.OrgTODO
 	Section        org.Section
 	ItemSerializer org.OrgSerializer
+	OrgFileDir     string
 }
 
 type SerializedFileChange struct {
@@ -307,6 +308,7 @@ func ProcessPRs(log *slog.Logger, prs []*github.PullRequest, changes_channel cha
 					Item:           item,
 					Section:        *section,
 					ItemSerializer: doc.Serializer,
+					OrgFileDir:     doc.OrgFileDir,
 				}
 				changes = append(changes, fileChange)
 			}
@@ -338,6 +340,7 @@ func SyncTODOToSection(doc org.OrgDocument, pr *github.PullRequest, section org.
 		Item:           pr_as_org,
 		Section:        section,
 		ItemSerializer: doc.Serializer,
+		OrgFileDir:     doc.OrgFileDir,
 	}
 }
 

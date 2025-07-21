@@ -3,6 +3,7 @@ package workflows
 import (
 	"errors"
 	"fmt"
+	"gtdbot/config"
 	"gtdbot/git_tools"
 	"gtdbot/jira"
 	"gtdbot/org"
@@ -69,7 +70,7 @@ func (w SingleRepoSyncReviewRequestsWorkflow) Run(log *slog.Logger, c chan FileC
 	)
 
 	prs = git_tools.ApplyPRFilters(prs, w.Filters)
-	doc := org.GetOrgDocument(w.OrgFileName, org.BaseOrgSerializer{ReleaseCheckCommand: w.ReleaseCheckCommand})
+	doc := org.GetOrgDocument(w.OrgFileName, org.BaseOrgSerializer{ReleaseCheckCommand: w.ReleaseCheckCommand}, config.C.OrgFileDir)
 	section, err := doc.GetSection(w.SectionTitle)
 	if err != nil {
 		log.Error("Error getting section", "error", err, "section", w.SectionTitle)
@@ -98,7 +99,7 @@ func (w SyncReviewRequestsWorkflow) Run(log *slog.Logger, c chan FileChanges, fi
 	client := git_tools.GetGithubClient()
 	prs := git_tools.GetManyRepoPRs(client, "open", w.Owner, w.Repos)
 	prs = git_tools.ApplyPRFilters(prs, w.Filters)
-	doc := org.GetOrgDocument(w.OrgFileName, org.BaseOrgSerializer{ReleaseCheckCommand: w.ReleaseCheckCommand})
+	doc := org.GetOrgDocument(w.OrgFileName, org.BaseOrgSerializer{ReleaseCheckCommand: w.ReleaseCheckCommand}, config.C.OrgFileDir)
 	section, err := doc.GetSection(w.SectionTitle)
 	if err != nil {
 		log.Error("Error getting section", "error", err, "section", w.SectionTitle)
@@ -149,7 +150,7 @@ func (w ListMyPRsWorkflow) Run(log *slog.Logger, c chan FileChanges, file_change
 	prs := git_tools.GetManyRepoPRs(client, w.PRState, w.Owner, w.Repos)
 
 	prs = git_tools.ApplyPRFilters(prs, w.Filters)
-	doc := org.GetOrgDocument(w.OrgFileName, org.BaseOrgSerializer{ReleaseCheckCommand: w.ReleaseCheckCommand})
+	doc := org.GetOrgDocument(w.OrgFileName, org.BaseOrgSerializer{ReleaseCheckCommand: w.ReleaseCheckCommand}, config.C.OrgFileDir)
 	section, err := doc.GetSection(w.SectionTitle)
 	if err != nil {
 		log.Error("Error getting section", "error", err, "section", w.SectionTitle)
@@ -187,7 +188,7 @@ func (w ProjectListWorkflow) GetOrgSectionName() string {
 
 func (w ProjectListWorkflow) Run(log *slog.Logger, c chan FileChanges, file_change_wg *sync.WaitGroup) (RunResult, error) {
 	client := git_tools.GetGithubClient()
-	doc := org.GetOrgDocument(w.OrgFileName, org.BaseOrgSerializer{ReleaseCheckCommand: w.ReleaseCheckCommand})
+	doc := org.GetOrgDocument(w.OrgFileName, org.BaseOrgSerializer{ReleaseCheckCommand: w.ReleaseCheckCommand}, config.C.OrgFileDir)
 	section, err := doc.GetSection(w.SectionTitle)
 	if err != nil {
 		return RunResult{}, errors.New("Section Not Found")
