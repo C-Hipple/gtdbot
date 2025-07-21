@@ -4,9 +4,7 @@ on: [push]
 
 jobs:
   build:
-
     runs-on: ubuntu-latest
-
     steps:
       - uses: actions/checkout@v3
       - name: Setup Go
@@ -14,20 +12,14 @@ jobs:
         with:
           go-version: 1.22
       - name: Install dependencies
-        run: go get .
+        run: go get -v ./...
       - name: Test with Go
-        run: go test ./... -json > TestResults-results.json
-      - name: Upload Go test results
-        uses: actions/upload-artifact@v4
-        with:
-          name: Go-test-results
-          path: TestResults-results.json
+        run: go test ./...
       - name: Vet with Go
-        run: go vet -json > VetResults-results.json
-      - name: Upload Go vet results
-        uses: actions/upload-artifact@v4
-        with:
-          name: Go-vet-results
-          path: VetResults-results.json
+        run: go vet ./...
       - name: Format Check
-        run: if [ "$(gofmt -s -l . | wc -l)" -gt 0 ]; then exit 1; fi
+        run: |
+          if ! gofmt -s -l .; then
+            echo "Go code is not formatted correctly. Please run 'go fmt ./...'."
+            exit 1
+          fi
