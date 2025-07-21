@@ -18,20 +18,26 @@ type ManagerService struct {
 }
 
 func ListenChanges(log *slog.Logger, channel chan FileChanges, wg *sync.WaitGroup) {
-	var serialziedChannel = make(chan SerializedFileChange)
-	go ApplyChanges(log, serialziedChannel, wg)
+	changesMap := make(map[string][]SerializedFileChange)
 	for fileChange := range channel {
-		fileChange.Log(log)
-
 		if fileChange.ChangeType == "No Change" {
 			wg.Done()
 			continue
 		}
-
-		go func() {
-			serialziedChannel <- fileChange.Deserialize()
-		}()
+		fileChange.Log(log)
+		key := fileChange.Filename + fileChange.Section.Name
+		changesMap[key] = append(changesMap[key], fileChange.Deserialize())
 	}
+
+	var serialziedChannel = make(chan SerializedFileChange)
+	go ApplyChanges(log, serialziedChannel, wg)
+
+	for _, changes := range changesMap {
+		for _, change := range changes {
+			serialziedChannel <- change
+		}
+	}
+	close(serialziedChannel)
 }
 
 func ApplyChanges(log *slog.Logger, channel chan SerializedFileChange, wg *sync.WaitGroup) {
@@ -104,6 +110,7 @@ func (ms ManagerService) Run(log *slog.Logger) {
 	if ms.oneoff {
 		log.Info("Running Once")
 		ms.RunOnce(log, &listener_wg)
+		close(ms.workflow_chan)
 	} else {
 		cycle_count := 0
 		for {
