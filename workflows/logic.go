@@ -87,6 +87,10 @@ func (prb PRToOrgBridge) Title() string {
 	return *prb.PR.Title
 }
 
+func (prb PRToOrgBridge) Identifier() string {
+	return prb.Repo() + prb.ID()
+}
+
 func (prb PRToOrgBridge) ItemTitle(indent_level int, release_check_command string) string {
 
 	line := fmt.Sprintf("%s %s %s\t\t:%s:", strings.Repeat("*", indent_level), prb.GetStatus(), prb.Title(), *prb.PR.Head.Repo.Name)
