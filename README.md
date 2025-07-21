@@ -30,7 +30,10 @@ The general fields are:
 ```
 Repos: list[str]
 SleepDuration: int (in minutes, optional, default=1 minute)
+OrgFileDir: str
 ```
+
+OrgFileDir will default to "~/" if it's not defined.
 
 
 Each workflow entry can take the fields:
@@ -79,6 +82,7 @@ Repos = [
     "C-Hipple/diff-lsp.el",
 ]
 SleepDuration = 5
+OrgFileDir = "~/gtd/"
 
 [[Workflows]]
 WorkflowType = "SyncReviewRequestsWorkflow"
