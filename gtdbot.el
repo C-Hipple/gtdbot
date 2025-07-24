@@ -2,7 +2,7 @@
 
 ;; Author: Chris Hipple
 ;; URL: https://github.com/C-Hipple/gtdbot
-;; Version: 0.1.0
+;; Version: 0.1.1
 ;; Package-Requires: ((emacs "25.1"))
 
 ;; SPDX-License-Identifier: GPL-3.0+
@@ -24,6 +24,8 @@
 (defvar gtdbot--timer nil
   "The timer object when gtdbot is running as a service")
 
+(defvar gtdbot-review-files '("~/gtd/reviews.org" "~/gtd/full_reviews.org"))
+
 ;;;###autoload
 (defun delta-wash()
   "interactive of the call magit-delta function if you have the package installed."
@@ -35,16 +37,20 @@
 
 (defun gtdbot--callback (x)
   ;; TODO: Allow for setting the reviews file
-  (with-current-buffer (find-file-noselect "~/gtd/reviews.org")
-    (if (functionp 'magit-delta-call-delta-and-convert-ansi-escape-sequences)
-        (progn
-          (magit-delta-call-delta-and-convert-ansi-escape-sequences)
-          (org-map-entries
-           (lambda ()
-             (org-archive-subtree-default))
-           "ARCHIVE")
-          (org-update-statistics-cookies "ALL")
-          (save-buffer))))
+  (dolist (f gtdbot-review-files nil )
+    (if (file-exists-p f)
+        (with-current-buffer (find-file-noselect f)
+          (progn
+            (when (functionp 'magit-delta-call-delta-and-convert-ansi-escape-sequences)
+              (magit-delta-call-delta-and-convert-ansi-escape-sequences))
+            (org-map-entries
+             (lambda ()
+               (org-archive-subtree-default))
+             "ARCHIVE"
+             'file)
+            (org-update-statistics-cookies "ALL")
+            (save-buffer)))
+      (message (concat "file does not exist: " f))))
   (message "gtdbot sync complete!"))
 
 ;;;###autoload

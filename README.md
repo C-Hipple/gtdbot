@@ -160,7 +160,22 @@ merged
 
 That string will then be put into the title line of the PR via the org-serializer.
 
-## Keybinds
+## Emacs integration
+
+This project ships with `gtdbot.el` for running and configuring this in emacs seamlessly.
+
+### Installation
+
+#### Spacemacs
+```elisp
+   ;; in dotspacemacs-additional-packages
+   (gtdbot :location (recipe
+                      :fetcher github
+                      :repo "C-Hipple/gtdbot"
+                      :files ("*.el")))
+```
+
+### Keybinds
 
 
 You'll likely want to bind run-gtdbot-oneoff and/or run-gtdbot-service.
