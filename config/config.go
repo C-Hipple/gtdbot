@@ -22,6 +22,7 @@ type RawWorkflow struct {
 	PRState             string
 	ReleaseCheckCommand string
 	Prune               string
+	IncludeDiff         bool
 }
 
 // Define your classes
