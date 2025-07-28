@@ -178,13 +178,9 @@ func (prb PRToOrgBridge) Details() []string {
 	}
 
 	if prb.IncludeDiff {
-		client := git_tools.GetGithubClient()
-		diff, _, err := client.PullRequests.GetRaw(context.Background(), *prb.PR.Base.Repo.Owner.Login, *prb.PR.Base.Repo.Name, prb.PR.GetNumber(), github.RawOptions{Type: github.Diff})
-		if err != nil {
-			slog.Error("Error getting PR diff", "pr", prb.PR.GetNumber(), "repo", *prb.PR.Base.Repo.Name, "error", err)
-		} else {
-			details = append(details, "*** Diff\n")
-			details = append(details, diff)
+		diff := getPRDiff(*prb.PR.Base.Repo.Owner.Login, *prb.PR.Base.Repo.Name, prb.PR.GetNumber())
+		if len(diff) > 0 {
+			details = append(details, diff...)
 		}
 	}
 
@@ -437,6 +433,16 @@ func getCIStatus(owner string, repo string, branch string) ([]string, string) {
 	}
 
 	return statuses, overallStatus
+}
+
+func getPRDiff(owner string, repo string, number int) []string {
+	client := git_tools.GetGithubClient()
+	diff, _, err := client.PullRequests.GetRaw(context.Background(), owner, repo, number, github.RawOptions{Type: github.Diff})
+	if err != nil {
+		slog.Error("Error getting PR diff", "pr", number, "repo", repo, "error", err)
+		return []string{}
+	}
+	return []string{"*** Diff\n", diff}
 }
 
 func processWorkflowRuns(runs []*github.WorkflowRun) []*github.WorkflowRun {
