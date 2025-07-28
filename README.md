@@ -46,6 +46,7 @@ OrgFileName: str
 SectionTitle: str
 ReleaseCommandCheck: str
 Prune: string
+IncludeDiff: bool
 ```
 
 The WorkflowType is one of the following strings:
@@ -58,6 +59,8 @@ Prune tells the workflow runner whether or not to remove PRs from the section if
 Delete: Removes the item from the section.
 Archive: Tags the items with :ARCHIVE: so that org functions can clean them up
 Keep: Leave existing items in the section untouched.
+
+IncludeDiff is a boolean that will include the diff of the PR in the org file entry.
 
 ### Workflow specific configurations
 Single Repo Sync workflow takes an additional parameter, Repo.

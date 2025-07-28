@@ -241,7 +241,7 @@ func ParseSectionsFromLines(all_lines []string, serializer OrgSerializer) ([]Sec
 		i = i + 1 // remove 0 index of file
 		slog.Debug("Parsing line", "line_number", i, "line", line)
 		// TODO need a better way of handling this
-		if !strings.HasPrefix(line, "*") || strings.Contains(line, "*** BODY") || strings.Contains(line, "*** C") || strings.Contains(line, "****") || strings.Contains(line, "CI Status") {
+		if !strings.HasPrefix(line, "*") || strings.Contains(line, "*** BODY") || strings.Contains(line, "*** C") || strings.Contains(line, "****") || strings.Contains(line, "CI Status") || strings.Contains(line, "*** Diff"){
 			if building_item {
 				item_lines = append(item_lines, line)
 				slog.Debug("Building item", "line", line)
