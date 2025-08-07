@@ -10,6 +10,22 @@ import (
 	"time"
 )
 
+// waitTimeout waits for the WaitGroup for the specified duration.
+// It returns true if the wait timed out, false otherwise.
+func waitTimeout(wg *sync.WaitGroup, timeout time.Duration) bool {
+	c := make(chan struct{})
+	go func() {
+		defer close(c)
+		wg.Wait()
+	}()
+	select {
+	case <-c:
+		return false
+	case <-time.After(timeout):
+		return true
+	}
+}
+
 type ManagerService struct {
 	Workflows     []Workflow
 	workflow_chan chan FileChanges
@@ -74,6 +90,13 @@ func ListenChanges(log *slog.Logger, channel chan FileChanges, wg *sync.WaitGrou
 
 	for _, changes := range changesMap {
 		deduplicatedChanges := deduplicateChanges(log, changes)
+		numDeduplicated := len(changes) - len(deduplicatedChanges)
+		if numDeduplicated > 0 {
+			log.Debug("Deduplicated changes, adjusting WaitGroup", "count", numDeduplicated)
+			for i := 0; i < numDeduplicated; i++ {
+				wg.Done()
+			}
+		}
 		for _, change := range deduplicatedChanges {
 			serialziedChannel <- change
 		}
@@ -139,8 +162,11 @@ func (ms ManagerService) RunOnce(log *slog.Logger, file_change_wg *sync.WaitGrou
 			ms.runWorkflow(log, workflow, ms.workflow_chan, file_change_wg)
 		}(workflow)
 	}
-	wg.Wait()
-	log.Info("Completed RunOnce Waitgroup")
+	if waitTimeout(&wg, 60*time.Second) {
+		log.Error("RunOnce waitgroup timed out waiting for workflows")
+	} else {
+		log.Info("Completed RunOnce Waitgroup")
+	}
 }
 
 func (ms ManagerService) Run(log *slog.Logger) {
@@ -162,7 +188,9 @@ func (ms ManagerService) Run(log *slog.Logger) {
 		}
 	}
 	listener_wg.Done()
-	listener_wg.Wait()
+	if waitTimeout(&listener_wg, 60*time.Second) {
+		log.Error("Listener waitgroup timed out waiting for changes to be applied")
+	}
 	log.Info("Exiting Service")
 }
 
