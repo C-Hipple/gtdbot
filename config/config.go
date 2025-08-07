@@ -22,15 +22,17 @@ type RawWorkflow struct {
 	PRState             string
 	ReleaseCheckCommand string
 	Prune               string
+	GithubUsername      string
 }
 
 // Define your classes
 type Config struct {
-	Repos         []string
-	RawWorkflows  []RawWorkflow
-	SleepDuration time.Duration
-	OrgFileDir    string
-	JiraDomain    string
+	Repos          []string
+	RawWorkflows   []RawWorkflow
+	SleepDuration  time.Duration
+	OrgFileDir     string
+	JiraDomain     string
+	GithubUsername string
 }
 
 var C Config
@@ -38,11 +40,12 @@ var C Config
 func init() {
 
 	var intermediate_config struct {
-		Repos         []string
-		JiraDomain    string
-		SleepDuration int64
-		Workflows     []RawWorkflow
-		OrgFileDir    string
+		Repos          []string
+		JiraDomain     string
+		SleepDuration  int64
+		Workflows      []RawWorkflow
+		OrgFileDir     string
+		GithubUsername string
 	}
 	home_dir, err := os.UserHomeDir()
 	the_bytes, err := os.ReadFile(filepath.Join(home_dir, ".config/gtdbot.toml"))
@@ -53,6 +56,13 @@ func init() {
 	if err != nil {
 		panic(err)
 	}
+
+	for i := range intermediate_config.Workflows {
+		if intermediate_config.Workflows[i].GithubUsername == "" {
+			intermediate_config.Workflows[i].GithubUsername = intermediate_config.GithubUsername
+		}
+	}
+
 	parsed_sleep_duration := time.Duration(1) * time.Minute
 	if intermediate_config.SleepDuration == 0 {
 		parsed_sleep_duration = time.Duration(intermediate_config.SleepDuration) * time.Minute
@@ -63,10 +73,11 @@ func init() {
 	}
 
 	C = Config{
-		Repos:         intermediate_config.Repos,
-		RawWorkflows:  intermediate_config.Workflows,
-		SleepDuration: parsed_sleep_duration,
-		OrgFileDir:    intermediate_config.OrgFileDir,
-		JiraDomain:    intermediate_config.JiraDomain,
+		Repos:          intermediate_config.Repos,
+		RawWorkflows:   intermediate_config.Workflows,
+		SleepDuration:  parsed_sleep_duration,
+		OrgFileDir:     intermediate_config.OrgFileDir,
+		JiraDomain:     intermediate_config.JiraDomain,
+		GithubUsername: intermediate_config.GithubUsername,
 	}
 }
