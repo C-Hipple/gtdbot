@@ -20,9 +20,9 @@ func waitTimeout(wg *sync.WaitGroup, timeout time.Duration) bool {
 	}()
 	select {
 	case <-c:
-		return false // completed normally
+		return false
 	case <-time.After(timeout):
-		return true // timed out
+		return true
 	}
 }
 
