@@ -31,9 +31,10 @@ The general fields are:
 Repos: list[str]
 SleepDuration: int (in minutes, optional, default=1 minute)
 OrgFileDir: str
+GithubUsername: str [optional]
 ```
 
-OrgFileDir will default to "~/" if it's not defined.
+OrgFileDir will default to "~/" if it's not defined.  Github username is used for determining when using the NotMyPRs or MyPRs filters
 
 
 Each workflow entry can take the fields:
@@ -47,6 +48,8 @@ SectionTitle: str
 ReleaseCommandCheck: str
 Prune: string
 ```
+
+The `GithubUsername` can be set at the top level of the config file. If a workflow does not have a `GithubUsername` set, it will inherit the top-level setting. This is useful for setting a default user for all workflows.
 
 The WorkflowType is one of the following strings:
 SyncReviewRequestsWorkflow

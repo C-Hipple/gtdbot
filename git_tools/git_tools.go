@@ -3,6 +3,7 @@ package git_tools
 import (
 	"context"
 	"fmt"
+	"gtdbot/config"
 	"os"
 	"slices"
 	"strings"
@@ -120,11 +121,11 @@ func FilterPRsByLabel(prs []*github.PullRequest, label string) []*github.PullReq
 }
 
 func MyPRs(prs []*github.PullRequest) []*github.PullRequest {
-	return FilterPRsByAuthor(prs, "C-Hipple")
+	return FilterPRsByAuthor(prs, config.C.GithubUsername)
 }
 
 func FilterNotMyPRs(prs []*github.PullRequest) []*github.PullRequest {
-	return FilterPRsExcludeAuthor(prs, "C-Hipple")
+	return FilterPRsExcludeAuthor(prs, config.C.GithubUsername)
 }
 
 func FilterIsDraft(prs []*github.PullRequest) []*github.PullRequest {
@@ -180,7 +181,7 @@ func FilterMyReviewRequested(prs []*github.PullRequest) []*github.PullRequest {
 	filtered := []*github.PullRequest{}
 	for _, pr := range prs {
 		for _, reviewer := range pr.RequestedReviewers {
-			if *reviewer.Login == "C-Hipple" {
+			if *reviewer.Login == config.C.GithubUsername {
 				filtered = append(filtered, pr)
 				break
 			}
