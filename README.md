@@ -1,25 +1,27 @@
 # gtdbot
-Once-Simple bot to help with my gtd workflows
 
-# Installation
+gtdbot is a service which runs highly configurable workflows to load github reviews which your are interested in locally to org-files.
 
+## Installation
 
 Build from source, it's go, just do it.
 Binaries not provided.
 
+```bash
+git clone git@github.com/C-Hipple/gtdbot
+cd gtdbot
+go install
+```
+
+
+## Configuration
+
+gtdbot works from a toml config expected at the path `~/config/gtdbot.toml`.  A valid github api token is also expected.  If you are using fine-grained tokens, ensure you have access to pull requests, discussions, and commit status, and actions data.
 
 
 ```bash
 export GTDBOT_GITHUB_TOKEN="Github Token"
-
-
-go build
-go run
 ```
-
-# Configuration
-
-gtdbot works from a toml config expected at the path `~/config/gtdbot.toml`.
 
 the basic format is root level config for general fields
 
@@ -124,7 +126,7 @@ Each workflow is tied to a single github repository, if you want multiple repos 
 
 ```bash
 export JIRA_API_TOKEN="Jira API Token"
-export JIRA_AIP_EMAIL="your email with your jira account"
+export JIRA_API_EMAIL="your email with your jira account"
 ```
 
 ```toml
@@ -159,7 +161,6 @@ release-client
 $ release-check C-Hipple gtdbot nopqrs
 merged
 ```
-
 
 That string will then be put into the title line of the PR via the org-serializer.
 
