@@ -47,6 +47,7 @@ type SingleRepoSyncReviewRequestsWorkflow struct {
 	SectionTitle        string
 	ReleaseCheckCommand string
 	Prune               string
+	IncludeDiff         bool
 }
 
 func (w SingleRepoSyncReviewRequestsWorkflow) GetName() string {
@@ -77,17 +78,18 @@ func (w SingleRepoSyncReviewRequestsWorkflow) Run(log *slog.Logger, c chan FileC
 		return RunResult{}, errors.New("Section Not Found")
 	}
 
-	result := ProcessPRs(log, prs, c, &doc, &section, file_change_wg, w.Prune)
+	result := ProcessPRs(log, prs, c, &doc, &section, file_change_wg, w.Prune, w.IncludeDiff)
 	return result, nil
 }
 
 type SyncReviewRequestsWorkflow struct {
 	// Github repo info
-	Name    string
-	Owner   string
-	Repos   []string
-	Filters []git_tools.PRFilter
-	Prune   string
+	Name        string
+	Owner       string
+	Repos       []string
+	Filters     []git_tools.PRFilter
+	Prune       string
+	IncludeDiff bool
 
 	// org output info
 	OrgFileName         string
@@ -105,7 +107,7 @@ func (w SyncReviewRequestsWorkflow) Run(log *slog.Logger, c chan FileChanges, fi
 		log.Error("Error getting section", "error", err, "section", w.SectionTitle)
 		return RunResult{}, errors.New("Section Not Found")
 	}
-	result := ProcessPRs(log, prs, c, &doc, &section, file_change_wg, w.Prune)
+	result := ProcessPRs(log, prs, c, &doc, &section, file_change_wg, w.Prune, w.IncludeDiff)
 	return result, nil
 }
 
@@ -131,6 +133,7 @@ type ListMyPRsWorkflow struct {
 	PRState             string
 	ReleaseCheckCommand string
 	Prune               string
+	IncludeDiff         bool
 }
 
 func (w ListMyPRsWorkflow) GetName() string {
@@ -157,7 +160,7 @@ func (w ListMyPRsWorkflow) Run(log *slog.Logger, c chan FileChanges, file_change
 		return RunResult{}, errors.New("Section Not Found")
 	}
 	prs = git_tools.ApplyPRFilters(prs, []git_tools.PRFilter{git_tools.MyPRs})
-	result := ProcessPRs(log, prs, c, &doc, &section, file_change_wg, w.Prune)
+	result := ProcessPRs(log, prs, c, &doc, &section, file_change_wg, w.Prune, w.IncludeDiff)
 	return result, nil
 }
 
@@ -172,6 +175,7 @@ type ProjectListWorkflow struct {
 	JiraEpic            string
 	ReleaseCheckCommand string
 	Prune               string
+	IncludeDiff         bool
 }
 
 func (w ProjectListWorkflow) GetName() string {
@@ -200,6 +204,6 @@ func (w ProjectListWorkflow) Run(log *slog.Logger, c chan FileChanges, file_chan
 	projectPRs := jira.GetProjectPRKeys(w.JiraDomain, w.JiraEpic, w.Repo)
 
 	prs := git_tools.GetSpecificPRs(client, w.Owner, w.Repo, projectPRs)
-	result := ProcessPRs(log, prs, c, &doc, &section, file_change_wg, w.Prune)
+	result := ProcessPRs(log, prs, c, &doc, &section, file_change_wg, w.Prune, w.IncludeDiff)
 	return result, nil
 }
