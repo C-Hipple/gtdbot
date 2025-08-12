@@ -57,7 +57,8 @@ func (fc *FileChanges) Deserialize() SerializedFileChange {
 
 type PRToOrgBridge struct {
 	// Implement the OrgTODO Interface for PRs
-	PR *github.PullRequest
+	PR          *github.PullRequest
+	IncludeDiff bool
 }
 
 func (prb PRToOrgBridge) ID() string {
@@ -176,6 +177,13 @@ func (prb PRToOrgBridge) Details() []string {
 		}
 	}
 
+	if prb.IncludeDiff {
+		diff := getPRDiff(*prb.PR.Base.Repo.Owner.Login, *prb.PR.Base.Repo.Name, prb.PR.GetNumber())
+		if len(diff) > 0 {
+			details = append(details, diff...)
+		}
+	}
+
 	escaped_body := removePRBodySections(prb.PR.Body)
 	escaped_body = escapeBody(&escaped_body)
 	details = append(details, fmt.Sprintf("*** BODY\n %s\n", escaped_body)) // TODO: Do we need this end newline?
@@ -285,7 +293,7 @@ func getComments(owner string, repo string, number int) (int, []string) {
 	return len(comments), str_comments
 }
 
-func ProcessPRs(log *slog.Logger, prs []*github.PullRequest, changes_channel chan FileChanges, doc *org.OrgDocument, section *org.Section, change_wg *sync.WaitGroup, prune_command string) RunResult {
+func ProcessPRs(log *slog.Logger, prs []*github.PullRequest, changes_channel chan FileChanges, doc *org.OrgDocument, section *org.Section, change_wg *sync.WaitGroup, prune_command string, includeDiff bool) RunResult {
 	result := RunResult{}
 
 	// the index for both slices should match
@@ -296,7 +304,7 @@ func ProcessPRs(log *slog.Logger, prs []*github.PullRequest, changes_channel cha
 	for _, pr := range prs {
 		pr_strings = append(pr_strings, fmt.Sprintf("%s-%v", *pr.Head.Repo.Name, pr.GetNumber()))
 		seen_prs = append(seen_prs, pr)
-		changes = append(changes, SyncTODOToSection(*doc, pr, *section))
+		changes = append(changes, SyncTODOToSection(*doc, pr, *section, includeDiff))
 	}
 
 	if prune_command == "Delete" || prune_command == "Archive" {
@@ -326,8 +334,8 @@ func ProcessPRs(log *slog.Logger, prs []*github.PullRequest, changes_channel cha
 	return result
 }
 
-func SyncTODOToSection(doc org.OrgDocument, pr *github.PullRequest, section org.Section) FileChanges {
-	pr_as_org := PRToOrgBridge{pr}
+func SyncTODOToSection(doc org.OrgDocument, pr *github.PullRequest, section org.Section, includeDiff bool) FileChanges {
+	pr_as_org := PRToOrgBridge{PR: pr, IncludeDiff: includeDiff}
 	at_line, _ := org.CheckTODOInSection(pr_as_org, section)
 	changeType := "Addition"
 	if at_line != -1 {
@@ -425,6 +433,16 @@ func getCIStatus(owner string, repo string, branch string) ([]string, string) {
 	}
 
 	return statuses, overallStatus
+}
+
+func getPRDiff(owner string, repo string, number int) []string {
+	client := git_tools.GetGithubClient()
+	diff, _, err := client.PullRequests.GetRaw(context.Background(), owner, repo, number, github.RawOptions{Type: github.Diff})
+	if err != nil {
+		slog.Error("Error getting PR diff", "pr", number, "repo", repo, "error", err)
+		return []string{}
+	}
+	return []string{"*** Diff\n", diff}
 }
 
 func processWorkflowRuns(runs []*github.WorkflowRun) []*github.WorkflowRun {

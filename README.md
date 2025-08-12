@@ -49,6 +49,7 @@ OrgFileName: str
 SectionTitle: str
 ReleaseCommandCheck: str
 Prune: string
+IncludeDiff: bool
 ```
 
 The `GithubUsername` can be set at the top level of the config file. If a workflow does not have a `GithubUsername` set, it will inherit the top-level setting. This is useful for setting a default user for all workflows.
@@ -63,6 +64,8 @@ Prune tells the workflow runner whether or not to remove PRs from the section if
 Delete: Removes the item from the section.
 Archive: Tags the items with :ARCHIVE: so that org functions can clean them up
 Keep: Leave existing items in the section untouched.
+
+IncludeDiff will add a subsection which includes the entire diff for the pull request.  Warning: This will make the file get very long very quickly.  I recommend only using this for specific workflows which target your non-main reviews org file.
 
 ### Workflow specific configurations
 Single Repo Sync workflow takes an additional parameter, Repo.

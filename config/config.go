@@ -23,6 +23,7 @@ type RawWorkflow struct {
 	ReleaseCheckCommand string
 	Prune               string
 	GithubUsername      string
+	IncludeDiff         bool
 }
 
 // Define your classes
