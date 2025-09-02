@@ -143,7 +143,7 @@ func NewManagerService(workflows []Workflow, oneoff bool, sleep_time time.Durati
 
 func (ms ManagerService) runWorkflow(log *slog.Logger, workflow Workflow, workflow_chan chan FileChanges, file_change_wg *sync.WaitGroup) {
 	// Helper which times the workflow run command.
-	log.Info("Starting Workflow", "workflow", workflow.GetName())
+	log.Info("Starting Workflow", "workflow", "filename", workflow.GetName(), workflow.GetOrgFilename())
 	start := time.Now()
 	result, err := workflow.Run(log, workflow_chan, file_change_wg)
 	duration := time.Since(start)
