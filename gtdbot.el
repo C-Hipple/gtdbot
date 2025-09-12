@@ -28,14 +28,14 @@
 
 ;;;###autoload
 (defun delta-wash()
-  "interactive of the call magit-delta function if you have the package installed."
+  "interactive of the call to magit delta function if you have magit-delta or code-review installed."
   (interactive)
-  (cond (fboundp 'magit-delta-call-delta-and-convert-ansi-escape-sequences)
-        (magit-delta-call-delta-and-convert-ansi-escape-sequences)
-        (fboundp 'code-review-call-delta-and-convert-ansi-escape-sequences)
-        (code-review-call-delta-and)
-        (message "You do not have magit-delta installed!")))
-
+  (cond ((fboundp 'magit-delta-call-delta-and-convert-ansi-escape-sequences)
+         (magit-delta-call-delta-and-convert-ansi-escape-sequences))
+        ((fboundp 'code-review-delta-call-delta)
+         (code-review-delta-call-delta))
+        (t
+         (message "You do not have a delta washer installed!"))))
 
 (defun gtdbot--callback (x)
   ;; TODO: Allow for setting the reviews file
