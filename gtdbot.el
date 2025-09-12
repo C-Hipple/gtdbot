@@ -2,7 +2,7 @@
 
 ;; Author: Chris Hipple
 ;; URL: https://github.com/C-Hipple/gtdbot
-;; Version: 0.1.1
+;; Version: 0.1.2
 ;; Package-Requires: ((emacs "25.1"))
 
 ;; SPDX-License-Identifier: GPL-3.0+
@@ -28,12 +28,14 @@
 
 ;;;###autoload
 (defun delta-wash()
-  "interactive of the call magit-delta function if you have the package installed."
+  "interactive of the call to magit delta function if you have magit-delta or code-review installed."
   (interactive)
-  (if (fboundp 'magit-delta-call-delta-and-convert-ansi-escape-sequences)
-      (magit-delta-call-delta-and-convert-ansi-escape-sequences)
-    (message "You do not have magit-delta installed!")))
-
+  (cond ((fboundp 'magit-delta-call-delta-and-convert-ansi-escape-sequences)
+         (magit-delta-call-delta-and-convert-ansi-escape-sequences))
+        ((fboundp 'code-review-delta-call-delta)
+         (code-review-delta-call-delta))
+        (t
+         (message "You do not have a delta washer installed!"))))
 
 (defun gtdbot--callback (x)
   ;; TODO: Allow for setting the reviews file
@@ -78,12 +80,12 @@
   (cancel-timer gtdbot--timer))
 
 ;; I only bind for evil-mode
-(if (not (eq evil-normal-state-map nil))
+(if (not (eq evil-motion-state-map nil))
     (progn
-      (define-key evil-normal-state-map (kbd ", r S") 'run-gtdbot-service) ;; s I already have bound to review start at url
-      (define-key evil-normal-state-map (kbd ", r l") 'run-gtdbot-oneoff) ;; l for list?
-      (define-key evil-normal-state-map (kbd ", r d") 'delta-wash)
-      (define-key evil-normal-state-map (kbd ", r k") 'stop-gtdbot-service)))
+      (define-key evil-motion-state-map (kbd ", r S") 'run-gtdbot-service) ;; s I already have bound to review start at url
+      (define-key evil-motion-state-map (kbd ", r l") 'run-gtdbot-oneoff) ;; l for list?
+      (define-key evil-motion-state-map (kbd ", r d") 'delta-wash)
+      (define-key evil-motion-state-map (kbd ", r k") 'stop-gtdbot-service)))
 
 
 ;; Theese are testing helper functions to make development a little bit easier
@@ -93,7 +95,7 @@
   (interactive)
   (async-shell-command "gtdbot --parse" "*gtdbot*"))
 
-(define-key evil-normal-state-map (kbd ", r p") 'run-gtdbot-parse-test)
+(define-key evil-motion-state-map (kbd ", r p") 'run-gtdbot-parse-test)
 
 ;; Below this point is the code for doing org agenda reviews in emacs
 ;; To be honest, I copied this from a blog which seems to have been since taken down and I can't find it.
@@ -178,3 +180,5 @@
                  )
                ("~//review/sprint.html")
                ))
+
+(provide 'gtdbot)
