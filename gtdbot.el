@@ -80,12 +80,12 @@
   (cancel-timer gtdbot--timer))
 
 ;; I only bind for evil-mode
-(if (not (eq evil-normal-state-map nil))
+(if (not (eq evil-motion-state-map nil))
     (progn
-      (define-key evil-normal-state-map (kbd ", r S") 'run-gtdbot-service) ;; s I already have bound to review start at url
-      (define-key evil-normal-state-map (kbd ", r l") 'run-gtdbot-oneoff) ;; l for list?
-      (define-key evil-normal-state-map (kbd ", r d") 'delta-wash)
-      (define-key evil-normal-state-map (kbd ", r k") 'stop-gtdbot-service)))
+      (define-key evil-motion-state-map (kbd ", r S") 'run-gtdbot-service) ;; s I already have bound to review start at url
+      (define-key evil-motion-state-map (kbd ", r l") 'run-gtdbot-oneoff) ;; l for list?
+      (define-key evil-motion-state-map (kbd ", r d") 'delta-wash)
+      (define-key evil-motion-state-map (kbd ", r k") 'stop-gtdbot-service)))
 
 
 ;; Theese are testing helper functions to make development a little bit easier
@@ -95,7 +95,7 @@
   (interactive)
   (async-shell-command "gtdbot --parse" "*gtdbot*"))
 
-(define-key evil-normal-state-map (kbd ", r p") 'run-gtdbot-parse-test)
+(define-key evil-motion-state-map (kbd ", r p") 'run-gtdbot-parse-test)
 
 ;; Below this point is the code for doing org agenda reviews in emacs
 ;; To be honest, I copied this from a blog which seems to have been since taken down and I can't find it.
@@ -180,3 +180,5 @@
                  )
                ("~//review/sprint.html")
                ))
+
+(provide 'gtdbot)
