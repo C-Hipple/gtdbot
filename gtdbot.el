@@ -2,7 +2,7 @@
 
 ;; Author: Chris Hipple
 ;; URL: https://github.com/C-Hipple/gtdbot
-;; Version: 0.1.2
+;; Version: 0.1.3
 ;; Package-Requires: ((emacs "25.1"))
 
 ;; SPDX-License-Identifier: GPL-3.0+
@@ -79,14 +79,6 @@
   (interactive)
   (cancel-timer gtdbot--timer))
 
-;; I only bind for evil-mode
-(if (not (eq evil-motion-state-map nil))
-    (progn
-      (define-key evil-motion-state-map (kbd ", r S") 'run-gtdbot-service) ;; s I already have bound to review start at url
-      (define-key evil-motion-state-map (kbd ", r l") 'run-gtdbot-oneoff) ;; l for list?
-      (define-key evil-motion-state-map (kbd ", r d") 'delta-wash)
-      (define-key evil-motion-state-map (kbd ", r k") 'stop-gtdbot-service)))
-
 
 ;; Theese are testing helper functions to make development a little bit easier
 ;;;###autoload
@@ -94,8 +86,6 @@
   "Runs gtdbot with the parse flag to check parsing reviews.org"
   (interactive)
   (async-shell-command "gtdbot --parse" "*gtdbot*"))
-
-(define-key evil-motion-state-map (kbd ", r p") 'run-gtdbot-parse-test)
 
 ;; Below this point is the code for doing org agenda reviews in emacs
 ;; To be honest, I copied this from a blog which seems to have been since taken down and I can't find it.
@@ -180,5 +170,21 @@
                  )
                ("~//review/sprint.html")
                ))
+
+
+;; KEYBINDS
+
+;; I only bind for evil-mode
+(define-key evil-normal-state-map (kbd ", r S") 'run-gtdbot-service) ;; s I already have bound to review start at url
+(define-key evil-normal-state-map (kbd ", r l") 'run-gtdbot-oneoff) ;; l for list?
+(define-key evil-normal-state-map (kbd ", r d") 'delta-wash)
+(define-key evil-normal-state-map (kbd ", r k") 'stop-gtdbot-service)
+
+
+;; maybe useful?
+(define-key evil-normal-state-map (kbd ", r B") (lambda () (interactive) (switch-to-buffer "*gtdbot-async*" nil t)))
+
+;; Debug
+(define-key evil-normal-state-map (kbd ", r p") 'run-gtdbot-parse-test)
 
 (provide 'gtdbot)

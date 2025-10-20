@@ -20,5 +20,9 @@ main
 # Test for other stuff
 *.diff-test
 
+
+# MacOS
+.DS_Store
+
 # the executable
 gtdbot
