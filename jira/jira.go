@@ -49,7 +49,7 @@ func GetProjectPRKeys(domain string, epicKey string, repo_name string) []int {
 		domain += "/"
 	}
 
-	searchURL := fmt.Sprintf("%srest/api/3/search", domain)
+	searchURL := fmt.Sprintf("%srest/api/3/search/jql", domain)
 
 	jiraEmail, token := getAuth()
 
