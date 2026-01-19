@@ -3,7 +3,7 @@
 
 # Project is archived, this code was ported into my other project
 
-see [https://github.com:/C-Hipple/code-review-server]
+see [code-review-server](https://github.com:/C-Hipple/code-review-server)
 
 code-review-server handles this same exact PR workflow runner but in a much more general system and can also be used for actually reviwing code.  Check it out!
 
