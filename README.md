@@ -1,5 +1,15 @@
 # gtdbot
 
+
+# Project is archived, this code was ported into my other project
+
+see [https://github.com:/C-Hipple/code-review-server]
+
+code-review-server handles this same exact PR workflow runner but in a much more general system and can also be used for actually reviwing code.  Check it out!
+
+
+# Old Readme
+
 gtdbot is a service which runs highly configurable workflows to load github reviews which your are interested in locally to org-files.
 
 ## Installation
